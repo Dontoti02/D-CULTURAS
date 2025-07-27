@@ -21,30 +21,65 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useToast } from '@/hooks/use-toast';
 
 export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+    const { toast } = useToast();
+
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const querySnapshot = await getDocs(collection(db, "products"));
+        const productsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+        setProducts(productsData);
+      } catch (error) {
+        console.error("Error fetching products: ", error);
+        toast({ title: "Error", description: "No se pudieron cargar los productos.", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    };
 
     useEffect(() => {
-      const fetchProducts = async () => {
-        try {
-          const querySnapshot = await getDocs(collection(db, "products"));
-          const productsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-          setProducts(productsData);
-        } catch (error) {
-          console.error("Error fetching products: ", error);
-        } finally {
-          setLoading(false);
-        }
-      };
       fetchProducts();
     }, []);
+
+    const handleDeleteProduct = async () => {
+        if (!productToDelete) return;
+        setIsDeleting(true);
+        try {
+            await deleteDoc(doc(db, "products", productToDelete.id));
+            toast({ title: "Producto Eliminado", description: `El producto "${productToDelete.name}" ha sido eliminado.` });
+            setProductToDelete(null);
+            // Refetch products after deletion
+            await fetchProducts();
+        } catch (error) {
+            console.error("Error deleting product: ", error);
+            toast({ title: "Error", description: "No se pudo eliminar el producto.", variant: "destructive" });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     if (loading) {
       return (
@@ -55,73 +90,98 @@ export default function ProductsPage() {
     }
 
     return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Productos</CardTitle>
-                <Link href="/admin/products/new">
-                    <Button size="sm" className="gap-1">
-                        <PlusCircle className="h-4 w-4" />
-                        Agregar Producto
-                    </Button>
-                </Link>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="hidden w-[100px] sm:table-cell">
-                                <span className="sr-only">Imagen</span>
-                            </TableHead>
-                            <TableHead>Nombre</TableHead>
-                            <TableHead>Categoría</TableHead>
-                            <TableHead className="hidden md:table-cell">Precio</TableHead>
-                             <TableHead className="hidden md:table-cell">Stock</TableHead>
-                            <TableHead className="hidden md:table-cell">Calificación</TableHead>
-                             <TableHead>
-                                <span className="sr-only">Acciones</span>
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {products.map((product) => (
-                            <TableRow key={product.id}>
-                                <TableCell className="hidden sm:table-cell">
-                                    <Image
-                                        alt={product.name}
-                                        className="aspect-square rounded-md object-cover"
-                                        height="64"
-                                        src={product.images[0]}
-                                        width="64"
-                                        data-ai-hint="imagen producto"
-                                    />
-                                </TableCell>
-                                <TableCell className="font-medium">{product.name}</TableCell>
-                                <TableCell>
-                                    <Badge variant="outline">{product.category}</Badge>
-                                </TableCell>
-                                <TableCell className="hidden md:table-cell">${product.price.toFixed(2)}</TableCell>
-                                <TableCell className="hidden md:table-cell">{product.stock}</TableCell>
-                                <TableCell className="hidden md:table-cell">{product.rating}</TableCell>
-                                 <TableCell>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button aria-haspopup="true" size="icon" variant="ghost">
-                                                <MoreHorizontal className="h-4 w-4" />
-                                                <span className="sr-only">Alternar menú</span>
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                            <DropdownMenuItem>Editar</DropdownMenuItem>
-                                            <DropdownMenuItem>Eliminar</DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </TableCell>
+        <>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Productos</CardTitle>
+                    <Link href="/admin/products/new">
+                        <Button size="sm" className="gap-1">
+                            <PlusCircle className="h-4 w-4" />
+                            Agregar Producto
+                        </Button>
+                    </Link>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="hidden w-[100px] sm:table-cell">
+                                    <span className="sr-only">Imagen</span>
+                                </TableHead>
+                                <TableHead>Nombre</TableHead>
+                                <TableHead>Categoría</TableHead>
+                                <TableHead className="hidden md:table-cell">Precio</TableHead>
+                                <TableHead className="hidden md:table-cell">Stock</TableHead>
+                                <TableHead className="hidden md:table-cell">Calificación</TableHead>
+                                <TableHead>
+                                    <span className="sr-only">Acciones</span>
+                                </TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
+                        </TableHeader>
+                        <TableBody>
+                            {products.map((product) => (
+                                <TableRow key={product.id}>
+                                    <TableCell className="hidden sm:table-cell">
+                                        <Image
+                                            alt={product.name}
+                                            className="aspect-square rounded-md object-cover"
+                                            height="64"
+                                            src={product.images[0]}
+                                            width="64"
+                                            data-ai-hint="imagen producto"
+                                        />
+                                    </TableCell>
+                                    <TableCell className="font-medium">{product.name}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline">{product.category}</Badge>
+                                    </TableCell>
+                                    <TableCell className="hidden md:table-cell">${product.price.toFixed(2)}</TableCell>
+                                    <TableCell className="hidden md:table-cell">{product.stock}</TableCell>
+                                    <TableCell className="hidden md:table-cell">{product.rating}</TableCell>
+                                    <TableCell>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                    <span className="sr-only">Alternar menú</span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                                <DropdownMenuItem asChild>
+                                                    <Link href={`/admin/products/edit/${product.id}`}>Editar</Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={() => setProductToDelete(product)} className="text-destructive">
+                                                    Eliminar
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+            <AlertDialog open={!!productToDelete} onOpenChange={(open) => !open && setProductToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Esta acción no se puede deshacer. Esto eliminará permanentemente el producto
+                        <span className="font-semibold"> {productToDelete?.name} </span>
+                        de la base de datos.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteProduct} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                        {isDeleting ? <Loader2 className="animate-spin" /> : "Eliminar"}
+                    </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     )
 }

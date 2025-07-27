@@ -11,7 +11,7 @@ import { Star, Minus, Plus, ShoppingCart, Loader2 } from 'lucide-react';
 import ProductCard from './product-card';
 import { Separator } from './ui/separator';
 import { cn } from '@/lib/utils';
-import { collection, getDocs, limit, query, where } from 'firebase/firestore';
+import { collection, getDocs, limit, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
@@ -35,17 +35,22 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
 
    useEffect(() => {
     const fetchRecommendations = async () => {
+      if (!product.category) return;
       setLoadingRecommendations(true);
       try {
         const productsRef = collection(db, 'products');
+        // This query now requires a composite index on 'category' and 'createdAt'
         const q = query(
-            productsRef, 
-            where('category', '==', product.category), 
-            where('id', '!=', product.id), 
-            limit(4)
+            productsRef,
+            where('category', '==', product.category),
+            orderBy('createdAt', 'desc'),
+            limit(5) // Fetch 5 to ensure we can filter out the current product and still have 4
         );
         const querySnapshot = await getDocs(q);
-        const recs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+        const recs = querySnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as Product))
+            .filter(p => p.id !== product.id) // Filter out the current product
+            .slice(0, 4); // Take the first 4
         setRecommendedProducts(recs);
       } catch (error) {
         console.error("Error fetching recommendations: ", error);

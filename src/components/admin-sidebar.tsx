@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Package, ShoppingCart, Users, LineChart, Shirt, ArrowLeft, MoreHorizontal, LogOut, CreditCard, Settings, ChevronRight } from 'lucide-react';
+import { Home, Package, ShoppingCart, Users, CreditCard, Settings, ChevronRight, ArrowLeft, MoreHorizontal, LogOut, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import {
@@ -18,7 +18,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Avatar, AvatarFallback } from './ui/avatar';
 
 
 const navLinks = [
@@ -42,6 +42,15 @@ const navLinks = [
   },
   { href: '/admin/orders', label: 'Pedidos', icon: ShoppingCart },
   { href: '/admin/customers', label: 'Clientes', icon: Users, disabled: true },
+  {
+    href: '/admin/admins',
+    label: 'Administradores',
+    icon: Shield,
+    subItems: [
+      { href: '/admin/admins', label: 'Ver Todos', disabled: true },
+      { href: '/admin/admins/new', label: 'Agregar Nuevo', disabled: true },
+    ]
+  }
 ];
 
 export default function AdminSidebar() {
@@ -51,7 +60,7 @@ export default function AdminSidebar() {
     <aside className="w-64 flex-shrink-0 border-r bg-card p-4 flex flex-col">
        <div className="flex items-center gap-2 mb-6 px-2">
             <Link href="/" className="flex items-center gap-2 font-semibold">
-              <Shirt className="h-6 w-6 text-primary" />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-primary"><path d="M12 2l-7 5 7 5 7-5-7-5zM2 12l7 5 7-5M2 17l7 5 7-5" /></svg>
               <span className="font-bold">stylesUP!</span>
             </Link>
         </div>

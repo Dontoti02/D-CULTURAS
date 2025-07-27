@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -30,14 +29,12 @@ export default function LoginPage() {
       const user = userCredential.user;
 
       if (user) {
-        // Verificar si el usuario es un administrador
         const adminDocRef = doc(db, 'admins', user.uid);
         const adminDoc = await getDoc(adminDocRef);
 
         if (adminDoc.exists() && adminDoc.data().rol?.toLowerCase() === 'admin') {
           router.push('/admin');
         } else {
-          // Si no es admin, cierra sesión y muestra error de permisos
           await auth.signOut();
           toast({
             title: 'Acceso Denegado',
@@ -48,10 +45,24 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       console.error("Error de inicio de sesión:", error);
-      let errorMessage = 'Ocurrió un error inesperado.';
-      // Códigos de error específicos para credenciales inválidas
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        errorMessage = 'El correo electrónico o la contraseña son incorrectos.';
+      let errorMessage = 'Ocurrió un error al intentar iniciar sesión.';
+      if (error.code) {
+        switch (error.code) {
+          case 'auth/invalid-credential':
+          case 'auth/user-not-found':
+          case 'auth/wrong-password':
+            errorMessage = 'El correo electrónico o la contraseña son incorrectos.';
+            break;
+          case 'auth/too-many-requests':
+            errorMessage = 'Demasiados intentos de inicio de sesión. Inténtalo de nuevo más tarde.';
+            break;
+          case 'auth/network-request-failed':
+            errorMessage = 'Error de red. Por favor, comprueba tu conexión a internet.';
+            break;
+          default:
+            errorMessage = `Error: ${error.message}`;
+            break;
+        }
       }
       toast({
         title: 'Error de inicio de sesión',

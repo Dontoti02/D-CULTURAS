@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -12,6 +13,8 @@ import { Separator } from './ui/separator';
 import { cn } from '@/lib/utils';
 import { collection, getDocs, limit, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useCart } from '@/context/cart-context';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProductClientPageProps {
   product: Product;
@@ -26,6 +29,9 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
   const [quantity, setQuantity] = useState(1);
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(true);
+
+  const { addToCart } = useCart();
+  const { toast } = useToast();
 
    useEffect(() => {
     const fetchRecommendations = async () => {
@@ -50,6 +56,22 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
 
     fetchRecommendations();
   }, [product.id, product.category]);
+
+  const handleAddToCart = () => {
+    addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images[0],
+        quantity,
+        size: selectedSize,
+        color: selectedColor
+    });
+    toast({
+        title: '¡Añadido al carrito!',
+        description: `${product.name} ha sido añadido a tu carrito.`,
+    })
+  }
 
   const priceInUsd = (product.price / SOL_TO_USD_RATE).toFixed(2);
 
@@ -159,7 +181,7 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
                     <Plus className="h-4 w-4" />
                 </Button>
             </div>
-            <Button size="lg" className="flex-1">
+            <Button size="lg" className="flex-1" onClick={handleAddToCart}>
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 Añadir al Carrito
             </Button>

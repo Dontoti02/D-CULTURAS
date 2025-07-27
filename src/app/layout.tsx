@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Metadata } from 'next';
@@ -6,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import SiteHeader from '@/components/site-header';
 import SiteFooter from '@/components/site-footer';
 import { usePathname } from 'next/navigation';
+import { CartProvider } from '@/context/cart-context';
 
 // export const metadata: Metadata = {
 //   title: 'stylesUP!',
@@ -30,12 +32,14 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <div className="relative flex min-h-screen flex-col">
-          {!isAdminRoute && <SiteHeader />}
-          <main className="flex-1">{children}</main>
-          {!isAdminRoute && <SiteFooter />}
-        </div>
-        <Toaster />
+        <CartProvider>
+            <div className="relative flex min-h-screen flex-col">
+            {!isAdminRoute && <SiteHeader />}
+            <main className="flex-1">{children}</main>
+            {!isAdminRoute && <SiteFooter />}
+            </div>
+            <Toaster />
+        </CartProvider>
       </body>
     </html>
   );

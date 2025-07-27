@@ -99,12 +99,13 @@ export default function AdminSidebar() {
             }
         } else {
             setAdminData(null);
+            router.push('/login');
         }
         setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
   const handleSignOut = async () => {
     try {

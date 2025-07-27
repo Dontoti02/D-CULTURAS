@@ -16,14 +16,8 @@ import { collection, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { Customer } from '@/lib/types';
 
-interface Customer {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    createdAt: Timestamp;
-}
 
 export default function CustomersPage() {
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -74,8 +68,7 @@ export default function CustomersPage() {
                                 <TableCell>
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-9 w-9">
-                                            {/* You might not have a photoURL for customers yet */}
-                                            {/* <AvatarImage src="/avatars/01.png" alt="Avatar" /> */}
+                                            <AvatarImage src={customer.photoURL} alt="Avatar" />
                                             <AvatarFallback>
                                                 {customer.firstName.charAt(0)}{customer.lastName.charAt(0)}
                                             </AvatarFallback>

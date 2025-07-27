@@ -18,8 +18,8 @@ export interface CartItem {
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (item: CartItem) => void;
-  removeFromCart: (id: string) => void;
-  updateQuantity: (id: string, quantity: number) => void;
+  removeFromCart: (uniqueId: string) => void;
+  updateQuantity: (uniqueId: string, quantity: number) => void;
   clearCart: () => void;
   cartCount: number;
 }
@@ -27,15 +27,23 @@ interface CartContextType {
 // Create the context with a default value
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+// Helper function to create a unique ID for a cart item based on product, size, and color
+const getUniqueCartItemId = (item: {id: string; size: string; color: string}) => `${item.id}-${item.size}-${item.color}`;
+
 // Create a provider component
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   // Load cart from localStorage on initial render
   useEffect(() => {
-    const storedCart = localStorage.getItem('cart');
-    if (storedCart) {
-      setCartItems(JSON.parse(storedCart));
+    try {
+      const storedCart = localStorage.getItem('cart');
+      if (storedCart) {
+        setCartItems(JSON.parse(storedCart));
+      }
+    } catch (error) {
+        console.error("Failed to parse cart from localStorage", error);
+        setCartItems([]);
     }
   }, []);
 
@@ -46,16 +54,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const addToCart = (itemToAdd: CartItem) => {
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => 
-        item.id === itemToAdd.id &&
-        item.size === itemToAdd.size &&
-        item.color === itemToAdd.color
-      );
+      const uniqueId = getUniqueCartItemId(itemToAdd);
+      const existingItem = prevItems.find(item => getUniqueCartItemId(item) === uniqueId);
 
       if (existingItem) {
         // If item with same id, size, and color exists, update its quantity
         return prevItems.map(item =>
-          item.id === itemToAdd.id && item.size === itemToAdd.size && item.color === itemToAdd.color
+          getUniqueCartItemId(item) === uniqueId
             ? { ...item, quantity: item.quantity + itemToAdd.quantity }
             : item
         );
@@ -66,16 +71,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const removeFromCart = (id: string) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== id));
+  const removeFromCart = (uniqueId: string) => {
+    setCartItems(prevItems => prevItems.filter(item => getUniqueCartItemId(item) !== uniqueId));
   };
 
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = (uniqueId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(id);
+      removeFromCart(uniqueId);
     } else {
       setCartItems(prevItems =>
-        prevItems.map(item => (item.id === id ? { ...item, quantity } : item))
+        prevItems.map(item => (getUniqueCartItemId(item) === uniqueId ? { ...item, quantity } : item))
       );
     }
   };

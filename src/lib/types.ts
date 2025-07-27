@@ -13,3 +13,30 @@ export type Product = {
   stock: number;
   createdAt?: Timestamp;
 };
+
+export interface Customer {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    photoURL?: string;
+    createdAt: Timestamp;
+}
+
+export interface Order {
+    id: string;
+    customerId: string;
+    customerName: string;
+    items: {
+        productId: string;
+        name: string;
+        image: string;
+        price: number;
+        quantity: number;
+        size: string;
+        color: string;
+    }[];
+    total: number;
+    status: 'Procesando' | 'Enviado' | 'Entregado' | 'Cancelado';
+    createdAt: Timestamp;
+}

@@ -45,6 +45,7 @@ export default function SignupPage() {
         firstName,
         lastName,
         email,
+        photoURL: '', // Initialize with an empty photo URL
         createdAt: serverTimestamp(),
       });
 

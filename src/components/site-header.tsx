@@ -2,14 +2,20 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, User, Search, Menu } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, LogOut, UserCircle, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/context/cart-context';
 import { Badge } from './ui/badge';
+import { useAuth } from '@/hooks/use-auth';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 const navLinks = [
   { href: '/#products', label: 'Todos' },
@@ -19,7 +25,21 @@ const navLinks = [
 
 export default function SiteHeader() {
   const pathname = usePathname();
+  const router = useRouter();
   const { cartCount } = useCart();
+  const { user, loading } = useAuth();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      toast({ title: "Sesión cerrada", description: "Has cerrado sesión exitosamente." });
+      router.push('/login');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+      toast({ title: "Error", description: "No se pudo cerrar la sesión.", variant: "destructive" });
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
@@ -49,19 +69,60 @@ export default function SiteHeader() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input type="search" placeholder="Buscar productos..." className="pl-8 sm:w-[300px]" />
           </div>
-          <Button variant="ghost" size="icon" aria-label="Carrito de Compras" className="relative">
-            <ShoppingCart className="h-5 w-5" />
-            {cartCount > 0 && (
-                <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0">{cartCount}</Badge>
-            )}
-            <span className="sr-only">Carrito de Compras</span>
-          </Button>
-          <Link href="/login">
-            <Button variant="ghost" size="icon" aria-label="Cuenta de Usuario">
-              <User className="h-5 w-5" />
-              <span className="sr-only">Cuenta de Usuario</span>
-            </Button>
+          <Link href="/profile/cart" passHref>
+              <Button variant="ghost" size="icon" aria-label="Carrito de Compras" className="relative">
+                <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                    <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 justify-center p-0">{cartCount}</Badge>
+                )}
+                <span className="sr-only">Carrito de Compras</span>
+              </Button>
           </Link>
+          
+          {loading ? null : user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Cuenta de Usuario">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.photoURL || undefined} alt="Foto de perfil" />
+                    <AvatarFallback>
+                      {user.email?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                    <p className="font-semibold">{user.displayName || user.email}</p>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <Link href="/profile">
+                        <UserCircle className="mr-2 h-4 w-4" />
+                        <span>Mi Perfil</span>
+                    </Link>
+                </DropdownMenuItem>
+                 <DropdownMenuItem asChild>
+                    <Link href="/profile/orders">
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        <span>Mis Pedidos</span>
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Cerrar Sesión</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link href="/login">
+                <Button variant="ghost" size="icon" aria-label="Cuenta de Usuario">
+                    <User className="h-5 w-5" />
+                    <span className="sr-only">Cuenta de Usuario</span>
+                </Button>
+            </Link>
+          )}
 
           <Sheet>
             <SheetTrigger asChild>

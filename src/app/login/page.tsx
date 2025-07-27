@@ -37,8 +37,8 @@ export default function LoginPage() {
         if (adminDoc.exists() && adminDoc.data().rol?.toLowerCase() === 'admin') {
           router.push('/admin');
         } else {
-          // Si no es admin, puedes redirigirlo a otra parte o mostrar un error
-          await auth.signOut(); // Cerrar sesión si no es admin
+          // Si no es admin, cierra sesión y muestra error de permisos
+          await auth.signOut();
           toast({
             title: 'Acceso Denegado',
             description: 'No tienes permisos de administrador.',
@@ -48,7 +48,8 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       console.error("Error de inicio de sesión:", error);
-      let errorMessage = 'Credenciales inválidas. Por favor, inténtalo de nuevo.';
+      let errorMessage = 'Ocurrió un error inesperado.';
+      // Códigos de error específicos para credenciales inválidas
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         errorMessage = 'El correo electrónico o la contraseña son incorrectos.';
       }

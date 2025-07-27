@@ -110,9 +110,9 @@ function SuccessPageContent() {
                 <div className="space-y-4">
                     {order.items.map((item, index) => (
                          <div key={index} className="flex items-center gap-4 text-sm">
-                            <Image src={item.image} alt={item.name} width={64} height={80} className="rounded-md object-cover" />
-                            <div className="flex-1">
-                                <p className="font-medium">{item.name}</p>
+                            <Image src={item.image} alt={item.name} width={64} height={80} className="rounded-md object-cover flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">{item.name}</p>
                                 <p className="text-muted-foreground">Cant: {item.quantity} | Talla: {item.size}</p>
                             </div>
                             <p className="font-semibold">S/ {(item.price * item.quantity).toFixed(2)}</p>

@@ -14,7 +14,6 @@ import {
   ArrowLeft,
   MoreHorizontal,
   LogOut,
-  Shield,
   Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -57,11 +56,6 @@ const navLinks = [
   { href: '/admin/orders', label: 'Pedidos', icon: ShoppingCart },
   { href: '/admin/customers', label: 'Clientes', icon: Users, disabled: true },
 ];
-
-const adminLinks = [
-    { href: '/admin/admins', label: 'Ver Todos', disabled: true },
-    { href: '/admin/admins/new', label: 'Agregar Nuevo', disabled: false },
-]
 
 interface AdminData {
     firstName: string;
@@ -191,34 +185,6 @@ export default function AdminSidebar() {
             </Link>
           )
         )}
-         <Collapsible defaultOpen={pathname.startsWith('/admin/admins')}>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" className="w-full justify-start gap-3 px-3 text-muted-foreground">
-                  <Shield className="h-4 w-4" />
-                  Administradores
-                  <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]:rotate-90" />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="pl-8 pt-1">
-                  {adminLinks.map(subItem => (
-                     <Link
-                        key={subItem.href}
-                        href={subItem.href}
-                        className={cn(
-                          'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-sm',
-                          {
-                            'text-primary': pathname === subItem.href,
-                            'pointer-events-none opacity-50': subItem.disabled,
-                          }
-                        )}
-                      >
-                       {subItem.label}
-                     </Link>
-                  ))}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
       </nav>
 
       <div className="mt-auto flex flex-col gap-2">

@@ -1,3 +1,4 @@
+
 import { notFound } from 'next/navigation';
 import ProductClientPage from '@/components/product-client-page';
 import type { Metadata } from 'next';
@@ -6,11 +7,12 @@ import { db } from '@/lib/firebase';
 import { Product } from '@/lib/types';
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const docRef = doc(db, 'products', params.id);
+  const { id } = await params;
+  const docRef = doc(db, 'products', id);
   const docSnap = await getDoc(docRef);
 
   if (!docSnap.exists()) {
@@ -27,8 +29,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ProductPage({ params }: { params: { id: string } }) {
-  const docRef = doc(db, 'products', params.id);
+export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const docRef = doc(db, 'products', id);
   const docSnap = await getDoc(docRef);
 
   if (!docSnap.exists()) {

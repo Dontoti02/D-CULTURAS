@@ -15,7 +15,7 @@ import {
   MoreHorizontal,
   LogOut,
   Shield,
-  UserPlus,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -32,9 +32,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Avatar, AvatarFallback } from './ui/avatar';
-import { auth } from '@/lib/firebase';
-import { signOut } from 'firebase/auth';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { auth, db } from '@/lib/firebase';
+import { signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 
 const navLinks = [
   {
@@ -60,9 +62,48 @@ const adminLinks = [
     { href: '/admin/admins/new', label: 'Agregar Nuevo', disabled: false },
 ]
 
+interface AdminData {
+    firstName: string;
+    lastName: string;
+    photoURL: string;
+    email: string;
+}
+
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [adminData, setAdminData] = useState<AdminData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const adminDocRef = doc(db, 'admins', user.uid);
+            const adminDoc = await getDoc(adminDocRef);
+            if (adminDoc.exists()) {
+                const data = adminDoc.data();
+                setAdminData({
+                    firstName: data.firstName || '',
+                    lastName: data.lastName || '',
+                    photoURL: data.photoURL || '',
+                    email: user.email || '',
+                });
+            } else {
+                setAdminData({
+                    firstName: 'Admin',
+                    lastName: '',
+                    photoURL: '',
+                    email: user.email || 'No email',
+                });
+            }
+        } else {
+            setAdminData(null);
+        }
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -190,18 +231,36 @@ export default function AdminSidebar() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="w-full justify-start gap-2 px-2 h-12"
+              className="w-full justify-start gap-2 px-2 h-14"
+              disabled={loading}
             >
-              <Avatar className="h-8 w-8">
-                <AvatarFallback>A</AvatarFallback>
-              </Avatar>
-              <div className="text-left">
-                <p className="text-sm font-medium">Admin</p>
-                <p className="text-xs text-muted-foreground">
-                  admin@ejemplo.com
-                </p>
-              </div>
-              <MoreHorizontal className="ml-auto h-4 w-4" />
+              {loading ? (
+                <div className="flex items-center gap-2 w-full">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <div className="flex flex-col gap-1">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-32" />
+                    </div>
+                </div>
+              ) : adminData ? (
+                <>
+                  <Avatar className="h-8 w-8">
+                     <AvatarImage src={adminData.photoURL} alt="Foto de perfil" />
+                     <AvatarFallback>{adminData.firstName.charAt(0)}{adminData.lastName.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="text-left">
+                    <p className="text-sm font-medium truncate">{`${adminData.firstName} ${adminData.lastName}`}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {adminData.email}
+                    </p>
+                  </div>
+                  <MoreHorizontal className="ml-auto h-4 w-4" />
+                </>
+              ) : (
+                 <div className="text-left">
+                    <p className="text-sm font-medium">No autenticado</p>
+                 </div>
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent

@@ -59,8 +59,12 @@ export default function SignupPage() {
       let description = 'Ocurrió un error inesperado. Inténtalo de nuevo.';
       if (error.code === 'auth/email-already-in-use') {
         description = 'Este correo electrónico ya está en uso por otra cuenta.';
+        // Limpiar campos para que el usuario pueda corregir
+        setEmail('');
+        setPassword('');
       } else if (error.code === 'auth/weak-password') {
         description = 'La contraseña es demasiado débil. Debe tener al menos 6 caracteres.';
+        setPassword('');
       } else if (error.code === 'auth/invalid-email') {
         description = 'El formato del correo electrónico no es válido.';
       }

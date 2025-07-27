@@ -180,8 +180,8 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-6">
                     <div className="relative">
                         <Avatar className="h-24 w-24">
-                            <AvatarImage src={photoURL} alt="Foto de perfil" />
-                            <AvatarFallback>{firstName.charAt(0)}{lastName.charAt(0)}</AvatarFallback>
+                            {photoURL && <AvatarImage src={photoURL} alt="Foto de perfil" />}
+                            <AvatarFallback>{firstName?.charAt(0)}{lastName?.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <Label htmlFor="photo-upload" className="absolute bottom-0 right-0 flex items-center justify-center h-8 w-8 bg-primary rounded-full cursor-pointer hover:bg-primary/90">
                            {isUploading ? <Loader2 className="h-5 w-5 animate-spin text-primary-foreground" /> : <Camera className="h-5 w-5 text-primary-foreground" />}

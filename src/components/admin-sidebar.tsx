@@ -247,8 +247,8 @@ export default function AdminSidebar() {
               ) : adminData ? (
                 <>
                   <Avatar className="h-8 w-8">
-                     <AvatarImage src={adminData.photoURL} alt="Foto de perfil" />
-                     <AvatarFallback>{adminData.firstName.charAt(0)}{adminData.lastName.charAt(0)}</AvatarFallback>
+                     {adminData.photoURL && <AvatarImage src={adminData.photoURL} alt="Foto de perfil" />}
+                     <AvatarFallback>{adminData.firstName?.charAt(0)}{adminData.lastName?.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="text-left overflow-hidden">
                     <p className="text-sm font-medium truncate">{`${adminData.firstName} ${adminData.lastName}`}</p>

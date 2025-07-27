@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -7,16 +8,58 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Upload } from 'lucide-react';
+import { Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
+import Image from 'next/image';
 
 export default function NewProductPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'save_prendas'); 
+
+    try {
+      const response = await fetch('https://api.cloudinary.com/v1_1/dd7fku9br/image/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setImageUrl(data.secure_url);
+        toast({
+            title: 'Imagen Subida',
+            description: 'La imagen del producto se ha subido correctamente.',
+        });
+      } else {
+        throw new Error('Error al subir la imagen');
+      }
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo subir la imagen. Inténtalo de nuevo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Aquí iría la lógica para guardar el nuevo producto
+    // Aquí iría la lógica para guardar el nuevo producto con la imageUrl
+    console.log('Image URL to save:', imageUrl);
     toast({
         title: 'Producto Agregado',
         description: 'El nuevo producto se ha guardado correctamente.',
@@ -78,13 +121,22 @@ export default function NewProductPage() {
                   <div className="grid gap-2">
                     <div className="grid w-full max-w-sm items-center gap-1.5">
                        <div className="flex items-center justify-center w-full">
-                            <Label htmlFor="picture" className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted">
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                                    <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click para subir</span> o arrastra y suelta</p>
-                                    <p className="text-xs text-muted-foreground">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
-                                </div>
-                                <Input id="picture" type="file" className="hidden" />
+                            <Label htmlFor="picture" className="relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted">
+                                {isUploading ? (
+                                    <div className="flex flex-col items-center justify-center">
+                                        <Loader2 className="w-8 h-8 mb-4 text-muted-foreground animate-spin" />
+                                        <p className="text-sm text-muted-foreground">Subiendo imagen...</p>
+                                    </div>
+                                ) : imageUrl ? (
+                                    <Image src={imageUrl} alt="Vista previa del producto" layout="fill" objectFit="cover" className="rounded-lg" />
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
+                                        <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click para subir</span> o arrastra y suelta</p>
+                                        <p className="text-xs text-muted-foreground">SVG, PNG, JPG or GIF</p>
+                                    </div>
+                                )}
+                                <Input id="picture" type="file" className="hidden" onChange={handleImageUpload} accept="image/*" disabled={isUploading} />
                             </Label>
                         </div>
                     </div>

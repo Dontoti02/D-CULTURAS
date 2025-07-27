@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { X } from 'lucide-react';
 import { Button } from './ui/button';
@@ -22,6 +22,12 @@ export default function ImagePreviewModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="p-0 border-0 max-w-4xl w-full bg-transparent shadow-none">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Vista Previa de Imagen</DialogTitle>
+          <DialogDescription>
+            Imagen ampliada del producto: {imageAlt}.
+          </DialogDescription>
+        </DialogHeader>
         <div className="relative w-full h-full">
             <Button
                 variant="ghost"

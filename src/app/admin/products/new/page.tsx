@@ -12,21 +12,23 @@ import { Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 export default function NewProductPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [imageUrls, setImageUrls] = useState<(string | null)[]>(Array(4).fill(null));
+  const [isUploading, setIsUploading] = useState<number | null>(null);
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
+    setIsUploading(index);
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', 'save_prendas'); 
+    formData.append('cloud_name', 'dd7fku9br');
 
     try {
       const response = await fetch('https://api.cloudinary.com/v1_1/dd7fku9br/image/upload', {
@@ -36,9 +38,11 @@ export default function NewProductPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setImageUrl(data.secure_url);
+        const newImageUrls = [...imageUrls];
+        newImageUrls[index] = data.secure_url;
+        setImageUrls(newImageUrls);
         toast({
-            title: 'Imagen Subida',
+            title: `Imagen ${index + 1} Subida`,
             description: 'La imagen del producto se ha subido correctamente.',
         });
       } else {
@@ -52,14 +56,14 @@ export default function NewProductPage() {
         variant: 'destructive',
       });
     } finally {
-      setIsUploading(false);
+      setIsUploading(null);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Aquí iría la lógica para guardar el nuevo producto con la imageUrl
-    console.log('Image URL to save:', imageUrl);
+    // Aquí iría la lógica para guardar el nuevo producto con las imageUrls
+    console.log('Image URLs to save:', imageUrls.filter(url => url !== null));
     toast({
         title: 'Producto Agregado',
         description: 'El nuevo producto se ha guardado correctamente.',
@@ -116,31 +120,30 @@ export default function NewProductPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Imágenes del Producto</CardTitle>
+                  <CardDescription>Sube hasta 4 imágenes para tu producto.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-2">
-                    <div className="grid w-full max-w-sm items-center gap-1.5">
-                       <div className="flex items-center justify-center w-full">
-                            <Label htmlFor="picture" className="relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted">
-                                {isUploading ? (
-                                    <div className="flex flex-col items-center justify-center">
-                                        <Loader2 className="w-8 h-8 mb-4 text-muted-foreground animate-spin" />
-                                        <p className="text-sm text-muted-foreground">Subiendo imagen...</p>
-                                    </div>
-                                ) : imageUrl ? (
-                                    <Image src={imageUrl} alt="Vista previa del producto" layout="fill" objectFit="cover" className="rounded-lg" />
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                        <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                                        <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click para subir</span> o arrastra y suelta</p>
-                                        <p className="text-xs text-muted-foreground">SVG, PNG, JPG or GIF</p>
-                                    </div>
-                                )}
-                                <Input id="picture" type="file" className="hidden" onChange={handleImageUpload} accept="image/*" disabled={isUploading} />
-                            </Label>
-                        </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {imageUrls.map((url, index) => (
+                             <div key={index} className="flex items-center justify-center w-full">
+                                <Label htmlFor={`picture-${index}`} className={cn("relative flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted", { "overflow-hidden": url })}>
+                                    {isUploading === index ? (
+                                        <div className="flex flex-col items-center justify-center">
+                                            <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
+                                        </div>
+                                    ) : url ? (
+                                        <Image src={url} alt={`Vista previa ${index+1}`} layout="fill" objectFit="cover" className="rounded-lg" />
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center text-center p-2">
+                                            <Upload className="w-6 h-6 mb-2 text-muted-foreground" />
+                                            <p className="text-xs text-muted-foreground">Subir Imagen {index + 1}</p>
+                                        </div>
+                                    )}
+                                    <Input id={`picture-${index}`} type="file" className="hidden" onChange={(e) => handleImageUpload(e, index)} accept="image/*" disabled={isUploading !== null} />
+                                </Label>
+                            </div>
+                        ))}
                     </div>
-                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -157,8 +160,8 @@ export default function NewProductPage() {
                         <SelectValue placeholder="Seleccionar categoría" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="hombres">Caballeros</SelectItem>
-                        <SelectItem value="mujeres">Damas</SelectItem>
+                        <SelectItem value="Caballeros">Caballeros</SelectItem>
+                        <SelectItem value="Damas">Damas</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -183,3 +186,4 @@ export default function NewProductPage() {
     </form>
   );
 }
+

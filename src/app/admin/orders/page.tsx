@@ -1,3 +1,6 @@
+
+'use client';
+
 import {
   Table,
   TableBody,
@@ -8,40 +11,71 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Customer, Order } from '@/lib/types';
+import { format } from 'date-fns';
+import { Loader2 } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-const orders = [
-  {
-    id: 'ORD001',
-    customer: 'Juan Pérez',
-    date: '2023-05-01',
-    total: '$150.00',
-    status: 'Enviado',
-  },
-  {
-    id: 'ORD002',
-    customer: 'Maria García',
-    date: '2023-05-02',
-    total: '$75.50',
-    status: 'Procesando',
-  },
-  {
-    id: 'ORD003',
-    customer: 'Carlos Sanchez',
-    date: '2023-05-03',
-    total: '$220.00',
-    status: 'Entregado',
-  },
-  {
-    id: 'ORD004',
-    customer: 'Laura Martinez',
-    date: '2023-05-04',
-    total: '$50.00',
-    status: 'Cancelado',
-  },
-];
-
+interface EnrichedOrder extends Order {
+  customerDetails?: Pick<Customer, 'firstName' | 'lastName' | 'photoURL'>;
+}
 
 export default function OrdersPage() {
+    const [orders, setOrders] = useState<EnrichedOrder[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchOrdersAndCustomers = async () => {
+            setLoading(true);
+            try {
+                // 1. Fetch all customers and create a map
+                const customerSnapshot = await getDocs(collection(db, 'customers'));
+                const customerMap = new Map<string, Customer>();
+                customerSnapshot.forEach(doc => {
+                    customerMap.set(doc.id, { id: doc.id, ...doc.data() } as Customer);
+                });
+
+                // 2. Fetch all orders
+                const ordersRef = collection(db, 'orders');
+                const q = query(ordersRef, orderBy('createdAt', 'desc'));
+                const orderSnapshot = await getDocs(q);
+
+                // 3. Enrich orders with customer details
+                const enrichedOrdersData = orderSnapshot.docs.map(doc => {
+                    const orderData = { id: doc.id, ...doc.data() } as Order;
+                    const customerDetails = customerMap.get(orderData.customerId);
+                    return {
+                        ...orderData,
+                        customerDetails: customerDetails ? {
+                            firstName: customerDetails.firstName,
+                            lastName: customerDetails.lastName,
+                            photoURL: customerDetails.photoURL
+                        } : undefined
+                    };
+                });
+
+                setOrders(enrichedOrdersData);
+            } catch (error) {
+                console.error("Error fetching orders: ", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchOrdersAndCustomers();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <Loader2 className="w-8 h-8 animate-spin" />
+            </div>
+        );
+    }
+
     return (
         <Card>
             <CardHeader>
@@ -53,18 +87,33 @@ export default function OrdersPage() {
                         <TableRow>
                             <TableHead>ID Pedido</TableHead>
                             <TableHead>Cliente</TableHead>
-                            <TableHead>Fecha</TableHead>
-                            <TableHead>Total</TableHead>
+                            <TableHead className="hidden md:table-cell">Fecha</TableHead>
+                            <TableHead className="hidden md:table-cell">Total</TableHead>
                             <TableHead>Estado</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {orders.map((order) => (
                             <TableRow key={order.id}>
-                                <TableCell className="font-medium">{order.id}</TableCell>
-                                <TableCell>{order.customer}</TableCell>
-                                <TableCell>{order.date}</TableCell>
-                                <TableCell>{order.total}</TableCell>
+                                <TableCell className="font-mono text-xs">#{order.id.substring(0, 7)}...</TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-9 w-9">
+                                            <AvatarImage src={order.customerDetails?.photoURL} alt="Avatar" />
+                                            <AvatarFallback>
+                                                {order.customerDetails?.firstName.charAt(0)}
+                                                {order.customerDetails?.lastName.charAt(0)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="grid gap-0.5">
+                                            <p className="font-medium">{order.customerName}</p>
+                                        </div>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="hidden md:table-cell">
+                                    {order.createdAt ? format(order.createdAt.toDate(), 'dd/MM/yyyy') : 'N/A'}
+                                </TableCell>
+                                <TableCell className="hidden md:table-cell font-semibold">S/ {order.total.toFixed(2)}</TableCell>
                                 <TableCell>
                                     <Badge variant={
                                         order.status === 'Enviado' ? 'secondary' : 
@@ -80,5 +129,5 @@ export default function OrdersPage() {
                 </Table>
             </CardContent>
         </Card>
-    )
+    );
 }

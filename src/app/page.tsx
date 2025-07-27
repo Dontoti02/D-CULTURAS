@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Product } from '@/lib/types';
 import ProductCard from '@/components/product-card';
 import ProductFilters from '@/components/product-filters';
@@ -12,8 +12,12 @@ import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Home() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // State for filters
+  const [category, setCategory] = useState<'all' | 'Caballeros' | 'Damas'>('all');
+  const [priceRange, setPriceRange] = useState<[number]>([500]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -26,7 +30,7 @@ export default function Home() {
           id: doc.id,
           ...doc.data()
         } as Product));
-        setProducts(productsData);
+        setAllProducts(productsData);
       } catch (error) {
         console.error("Error fetching products: ", error);
       } finally {
@@ -36,6 +40,15 @@ export default function Home() {
 
     fetchProducts();
   }, []);
+
+  const filteredProducts = useMemo(() => {
+    return allProducts.filter(product => {
+        const categoryMatch = category === 'all' || product.category === category;
+        const priceMatch = product.price <= priceRange[0];
+        return categoryMatch && priceMatch;
+    });
+  }, [allProducts, category, priceRange]);
+
 
   return (
     <>
@@ -48,8 +61,8 @@ export default function Home() {
             Descubre nuestra nueva colección de ropa que combina comodidad y elegancia para la persona moderna.
           </p>
           <div className="mt-8 flex justify-center gap-4">
-            <Button size="lg">Comprar Hombres</Button>
-            <Button size="lg" variant="outline">Comprar Mujeres</Button>
+            <Button size="lg" onClick={() => setCategory('Caballeros')}>Comprar Hombres</Button>
+            <Button size="lg" variant="outline" onClick={() => setCategory('Damas')}>Comprar Mujeres</Button>
           </div>
         </div>
       </section>
@@ -57,12 +70,17 @@ export default function Home() {
       <section className="container mx-auto px-4 md:px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <aside className="md:col-span-1">
-            <ProductFilters />
+            <ProductFilters 
+              category={category}
+              onCategoryChange={setCategory}
+              priceRange={priceRange}
+              onPriceChange={setPriceRange}
+            />
           </aside>
           <main className="md:col-span-3">
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold">Todos los Productos</h2>
-                <p className="text-muted-foreground">{products.length} artículos</p>
+                <p className="text-muted-foreground">{filteredProducts.length} artículos</p>
             </div>
             <Separator className="mb-8" />
             {loading ? (
@@ -79,7 +97,7 @@ export default function Home() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>

@@ -86,9 +86,9 @@ export default function ProfilePage() {
     setIsUploading(true);
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'profiles_images'); 
+    formData.append('upload_preset', 'profiles_clients'); 
     formData.append('cloud_name', 'dd7fku9br');
-    formData.append('folder', 'profilescustomers');
+    formData.append('folder', 'clients');
 
     try {
       const response = await fetch('https://api.cloudinary.com/v1_1/dd7fku9br/image/upload', {

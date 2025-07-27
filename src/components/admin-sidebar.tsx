@@ -14,7 +14,6 @@ import {
   ArrowLeft,
   MoreHorizontal,
   LogOut,
-  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -33,7 +32,7 @@ import {
 } from '@/components/ui/collapsible';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { auth, db } from '@/lib/firebase';
-import { signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Skeleton } from './ui/skeleton';
@@ -54,7 +53,7 @@ const navLinks = [
     ],
   },
   { href: '/admin/orders', label: 'Pedidos', icon: ShoppingCart },
-  { href: '/admin/customers', label: 'Clientes', icon: Users, disabled: true },
+  { href: '/admin/customers', label: 'Clientes', icon: Users },
 ];
 
 interface AdminData {
@@ -84,12 +83,9 @@ export default function AdminSidebar() {
                     email: user.email || '',
                 });
             } else {
-                setAdminData({
-                    firstName: 'Admin',
-                    lastName: '',
-                    photoURL: '',
-                    email: user.email || 'No email',
-                });
+                setAdminData(null);
+                // If user is authenticated but not an admin, they shouldn't be here
+                router.push('/login');
             }
         } else {
             setAdminData(null);
@@ -158,7 +154,6 @@ export default function AdminSidebar() {
                         'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-sm',
                         {
                           'text-primary': pathname === subItem.href,
-                          'pointer-events-none opacity-50': subItem.disabled,
                         }
                       )}
                     >
@@ -176,7 +171,6 @@ export default function AdminSidebar() {
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
                 {
                   'bg-primary/10 text-primary': pathname === link.href,
-                  'pointer-events-none opacity-50': link.disabled,
                 }
               )}
             >

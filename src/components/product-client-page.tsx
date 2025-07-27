@@ -15,6 +15,9 @@ import { collection, getDocs, limit, query, where, orderBy } from 'firebase/fire
 import { db } from '@/lib/firebase';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { useRouter } from 'next/navigation';
 
 interface ProductClientPageProps {
   product: Product;
@@ -29,9 +32,12 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
   const [quantity, setQuantity] = useState(1);
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(true);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const router = useRouter();
 
    useEffect(() => {
     const fetchRecommendations = async () => {
@@ -39,22 +45,20 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
       setLoadingRecommendations(true);
       try {
         const productsRef = collection(db, 'products');
-        // This query now requires a composite index on 'category' and 'createdAt'
         const q = query(
             productsRef,
             where('category', '==', product.category),
             orderBy('createdAt', 'desc'),
-            limit(5) // Fetch 5 to ensure we can filter out the current product and still have 4
+            limit(5)
         );
         const querySnapshot = await getDocs(q);
         const recs = querySnapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() } as Product))
-            .filter(p => p.id !== product.id) // Filter out the current product
-            .slice(0, 4); // Take the first 4
+            .filter(p => p.id !== product.id)
+            .slice(0, 4);
         setRecommendedProducts(recs);
       } catch (error) {
         console.error("Error fetching recommendations: ", error);
-        // Optional: show a toast to the user
       } finally {
         setLoadingRecommendations(false);
       }
@@ -64,6 +68,10 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
   }, [product.id, product.category]);
 
   const handleAddToCart = () => {
+    if (!user) {
+        setShowAuthDialog(true);
+        return;
+    }
     addToCart({
         id: product.id,
         name: product.name,
@@ -209,6 +217,23 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
             </div>
         )}
       </div>
+
+       <AlertDialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¡Un momento!</AlertDialogTitle>
+            <AlertDialogDescription>
+              Para añadir productos a tu carrito, necesitas tener una cuenta. Por favor, inicia sesión o regístrate.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => router.push('/signup')}>Registrarse</AlertDialogAction>
+            <AlertDialogAction onClick={() => router.push('/login')}>Iniciar Sesión</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }

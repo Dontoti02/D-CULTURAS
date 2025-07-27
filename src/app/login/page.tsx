@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -11,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,25 +30,28 @@ export default function LoginPage() {
       const user = userCredential.user;
 
       if (user) {
-        // Log the UID to the browser console for debugging
-        console.log('Firebase Auth User UID:', user.uid);
-        
         const adminDocRef = doc(db, 'admins', user.uid);
         const adminDoc = await getDoc(adminDocRef);
 
-        if (adminDoc.exists() && adminDoc.data().rol?.toLowerCase() === 'admin') {
+        if (adminDoc.exists()) {
           router.push('/admin');
+          toast({ title: '¡Bienvenido, Admin!', description: 'Has iniciado sesión correctamente.' });
         } else {
-          console.log('Admin check failed. Document exists:', adminDoc.exists());
-          if(adminDoc.exists()){
-            console.log('Document data:', adminDoc.data());
+          // Check if it's a customer
+          const customerDocRef = doc(db, 'customers', user.uid);
+          const customerDoc = await getDoc(customerDocRef);
+          if (customerDoc.exists()) {
+            router.push('/');
+            toast({ title: '¡Bienvenido!', description: 'Has iniciado sesión correctamente.' });
+          } else {
+             // If user exists in Auth but not in Firestore admins or customers collections
+             await auth.signOut();
+             toast({
+               title: 'Acceso Denegado',
+               description: 'Tu cuenta no está registrada como cliente o administrador.',
+               variant: 'destructive',
+             });
           }
-          await auth.signOut();
-          toast({
-            title: 'Acceso Denegado',
-            description: 'No tienes permisos de administrador.',
-            variant: 'destructive',
-          });
         }
       }
     } catch (error: any) {
@@ -87,7 +91,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
           <CardDescription>
-            Ingresa tu correo para iniciar sesión en tu cuenta de administrador.
+            Ingresa tu correo para acceder a tu cuenta.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -127,10 +131,7 @@ export default function LoginPage() {
               </div>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
-            </Button>
-            <Button variant="outline" className="w-full" disabled={isLoading}>
-              Iniciar sesión con Google
+              {isLoading ? <Loader2 className="animate-spin" /> : 'Iniciar sesión'}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">

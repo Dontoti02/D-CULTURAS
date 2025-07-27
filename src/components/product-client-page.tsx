@@ -54,6 +54,7 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
         setRecommendedProducts(recs);
       } catch (error) {
         console.error("Error fetching recommendations: ", error);
+        // Optional: show a toast to the user
       } finally {
         setLoadingRecommendations(false);
       }

@@ -34,7 +34,7 @@ export default function LoginPage() {
         const adminDocRef = doc(db, 'admins', user.uid);
         const adminDoc = await getDoc(adminDocRef);
 
-        if (adminDoc.exists() && adminDoc.data().rol === 'admin') {
+        if (adminDoc.exists() && adminDoc.data().rol?.toLowerCase() === 'admin') {
           router.push('/admin');
         } else {
           // Si no es admin, puedes redirigirlo a otra parte o mostrar un error

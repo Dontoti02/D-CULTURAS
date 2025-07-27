@@ -32,11 +32,22 @@ export default function NewProductPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (!category) {
+      toast({
+        title: 'Selecciona una categoría primero',
+        description: 'Debes elegir una categoría para el producto antes de subir imágenes.',
+        variant: 'destructive',
+      });
+      event.target.value = ''; // Reset file input
+      return;
+    }
+
     setIsUploading(index);
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', 'save_prendas');
     formData.append('cloud_name', 'dd7fku9br');
+    formData.append('folder', category.toLowerCase());
 
     try {
       const response = await fetch('https://api.cloudinary.com/v1_1/dd7fku9br/image/upload', {
@@ -88,7 +99,6 @@ export default function NewProductPage() {
         price: parseFloat(price),
         stock: parseInt(stock, 10),
         images: imageUrls.filter((url): url is string => url !== null),
-        // Valores predeterminados o lógicos que puedes ajustar
         sizes: ['S', 'M', 'L', 'XL'],
         colors: [{ name: 'Default', hex: '#000000' }],
         rating: 0,
@@ -166,13 +176,13 @@ export default function NewProductPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Imágenes del Producto</CardTitle>
-                  <CardDescription>Sube hasta 4 imágenes para tu producto.</CardDescription>
+                  <CardDescription>Sube hasta 4 imágenes para tu producto. Debes seleccionar una categoría primero.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {imageUrls.map((url, index) => (
                              <div key={index} className="flex items-center justify-center w-full">
-                                <Label htmlFor={`picture-${index}`} className={cn("relative flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted", { "overflow-hidden": url })}>
+                                <Label htmlFor={`picture-${index}`} className={cn("relative flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted", { "overflow-hidden": url, "cursor-not-allowed opacity-50": !category })}>
                                     {isUploading === index ? (
                                         <div className="flex flex-col items-center justify-center">
                                             <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
@@ -185,7 +195,7 @@ export default function NewProductPage() {
                                             <p className="text-xs text-muted-foreground">Subir Imagen {index + 1}</p>
                                         </div>
                                     )}
-                                    <Input id={`picture-${index}`} type="file" className="hidden" onChange={(e) => handleImageUpload(e, index)} accept="image/*" disabled={isUploading !== null || isSubmitting} />
+                                    <Input id={`picture-${index}`} type="file" className="hidden" onChange={(e) => handleImageUpload(e, index)} accept="image/*" disabled={!category || isUploading !== null || isSubmitting} />
                                 </Label>
                             </div>
                         ))}

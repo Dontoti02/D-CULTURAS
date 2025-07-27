@@ -10,8 +10,11 @@ interface ProductCardProps {
   product: Product;
 }
 
+const SOL_TO_USD_RATE = 3.85;
+
 export default function ProductCard({ product }: ProductCardProps) {
   const isNew = product.createdAt && differenceInDays(new Date(), product.createdAt.toDate()) <= 7;
+  const priceInUsd = (product.price / SOL_TO_USD_RATE).toFixed(2);
 
   return (
     <Link href={`/product/${product.id}`}>
@@ -39,7 +42,10 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
             <div className="flex items-center justify-between mt-2">
                 <Badge variant="outline">{product.category}</Badge>
-                <p className="font-semibold text-primary">${product.price.toFixed(2)}</p>
+                <div className="text-right">
+                  <p className="font-semibold text-primary">S/ {product.price.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground">aprox. ${priceInUsd} USD</p>
+                </div>
             </div>
           </div>
         </CardContent>

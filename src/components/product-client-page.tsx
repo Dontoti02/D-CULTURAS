@@ -17,6 +17,8 @@ interface ProductClientPageProps {
   product: Product;
 }
 
+const SOL_TO_USD_RATE = 3.85;
+
 export default function ProductClientPage({ product }: ProductClientPageProps) {
   const [selectedImage, setSelectedImage] = useState(product.images[0]);
   const [selectedColor, setSelectedColor] = useState(product.colors[0]?.name);
@@ -48,6 +50,8 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
 
     fetchRecommendations();
   }, [product.id, product.category]);
+
+  const priceInUsd = (product.price / SOL_TO_USD_RATE).toFixed(2);
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12">
@@ -99,7 +103,10 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
             </div>
           </div>
           <p className="text-muted-foreground">{product.description}</p>
-          <p className="text-4xl font-bold text-primary">${product.price.toFixed(2)}</p>
+          <div>
+            <p className="text-4xl font-bold text-primary">S/ {product.price.toFixed(2)}</p>
+            <p className="text-sm text-muted-foreground">Precio referencial: ${priceInUsd} USD</p>
+          </div>
 
           <div className="grid gap-4">
             {product.colors && product.colors.length > 0 && (

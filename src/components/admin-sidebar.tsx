@@ -249,13 +249,13 @@ export default function AdminSidebar() {
                      <AvatarImage src={adminData.photoURL} alt="Foto de perfil" />
                      <AvatarFallback>{adminData.firstName.charAt(0)}{adminData.lastName.charAt(0)}</AvatarFallback>
                   </Avatar>
-                  <div className="text-left">
+                  <div className="text-left overflow-hidden">
                     <p className="text-sm font-medium truncate">{`${adminData.firstName} ${adminData.lastName}`}</p>
                     <p className="text-xs text-muted-foreground truncate">
                       {adminData.email}
                     </p>
                   </div>
-                  <MoreHorizontal className="ml-auto h-4 w-4" />
+                  <MoreHorizontal className="ml-auto h-4 w-4 flex-shrink-0" />
                 </>
               ) : (
                  <div className="text-left">

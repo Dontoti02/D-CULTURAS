@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Package, ShoppingCart, Users, LineChart, Shirt } from 'lucide-react';
+import { Home, Package, ShoppingCart, Users, LineChart, Shirt, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from './ui/button';
 
 const navLinks = [
   { href: '/admin', label: 'Panel', icon: Home },
@@ -17,14 +18,14 @@ export default function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 flex-shrink-0 border-r bg-card p-6">
+    <aside className="w-64 flex-shrink-0 border-r bg-card p-6 flex flex-col">
        <div className="flex items-center gap-2 mb-8">
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <Shirt className="h-6 w-6 text-primary" />
               <span>stylesUP!</span>
             </Link>
         </div>
-      <nav className="flex flex-col gap-2">
+      <nav className="flex flex-col gap-2 flex-grow">
         {navLinks.map((link) => (
           <Link
             key={link.href}
@@ -42,6 +43,14 @@ export default function AdminSidebar() {
           </Link>
         ))}
       </nav>
+      <div className="mt-auto">
+        <Link href="/">
+          <Button variant="outline" className="w-full">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Ir a la Tienda
+          </Button>
+        </Link>
+      </div>
     </aside>
   );
 }

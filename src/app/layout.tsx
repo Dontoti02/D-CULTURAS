@@ -1,31 +1,39 @@
+'use client';
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import SiteHeader from '@/components/site-header';
 import SiteFooter from '@/components/site-footer';
+import { usePathname } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'stylesUP!',
-  description: 'Ropa moderna para hombre y mujer.',
-};
+// export const metadata: Metadata = {
+//   title: 'stylesUP!',
+//   description: 'Ropa moderna para hombre y mujer.',
+// };
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const isAdminRoute = pathname.startsWith('/admin');
+
   return (
     <html lang="es">
       <head>
+        <title>stylesUP!</title>
+        <meta name="description" content="Ropa moderna para hombre y mujer." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
         <div className="relative flex min-h-screen flex-col">
-          <SiteHeader />
+          {!isAdminRoute && <SiteHeader />}
           <main className="flex-1">{children}</main>
-          <SiteFooter />
+          {!isAdminRoute && <SiteFooter />}
         </div>
         <Toaster />
       </body>

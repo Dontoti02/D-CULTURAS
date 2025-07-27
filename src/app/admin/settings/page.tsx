@@ -123,7 +123,7 @@ export default function SettingsPage() {
     formData.append('file', file);
     formData.append('upload_preset', 'profiles_images'); 
     formData.append('cloud_name', 'dd7fku9br');
-    formData.append('folder', 'avatars');
+    formData.append('folder', 'profilesadmins');
 
     try {
       const response = await fetch('https://api.cloudinary.com/v1_1/dd7fku9br/image/upload', {

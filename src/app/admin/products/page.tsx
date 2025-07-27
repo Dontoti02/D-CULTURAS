@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { products } from '@/lib/data';
 import Image from 'next/image';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,13 +19,20 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import Link from 'next/link';
 
 
 export default function ProductsPage() {
     return (
         <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Productos</CardTitle>
+                <Link href="/admin/products/new">
+                    <Button size="sm" className="gap-1">
+                        <PlusCircle className="h-4 w-4" />
+                        Agregar Producto
+                    </Button>
+                </Link>
             </CardHeader>
             <CardContent>
                 <Table>
@@ -37,6 +44,7 @@ export default function ProductsPage() {
                             <TableHead>Nombre</TableHead>
                             <TableHead>Categoría</TableHead>
                             <TableHead className="hidden md:table-cell">Precio</TableHead>
+                             <TableHead className="hidden md:table-cell">Stock</TableHead>
                             <TableHead className="hidden md:table-cell">Calificación</TableHead>
                              <TableHead>
                                 <span className="sr-only">Acciones</span>
@@ -61,6 +69,7 @@ export default function ProductsPage() {
                                     <Badge variant="outline">{product.category}</Badge>
                                 </TableCell>
                                 <TableCell className="hidden md:table-cell">${product.price.toFixed(2)}</TableCell>
+                                <TableCell className="hidden md:table-cell">{product.stock}</TableCell>
                                 <TableCell className="hidden md:table-cell">{product.rating}</TableCell>
                                  <TableCell>
                                     <DropdownMenu>

@@ -18,6 +18,7 @@ export const products: Product[] = [
       { name: 'Negro', hex: '#000000' },
     ],
     rating: 4.5,
+    stock: 100,
   },
   {
     id: '2',
@@ -32,6 +33,7 @@ export const products: Product[] = [
       { name: 'Verde Azulado Océano', hex: '#2DD4BF' },
     ],
     rating: 4.8,
+    stock: 75,
   },
   {
     id: '3',
@@ -46,6 +48,7 @@ export const products: Product[] = [
       { name: 'Beige', hex: '#F5F5DC' },
     ],
     rating: 4.2,
+    stock: 120,
   },
   {
     id: '4',
@@ -60,6 +63,7 @@ export const products: Product[] = [
       { name: 'Lavado Claro', hex: '#93C5FD' },
     ],
     rating: 4.6,
+    stock: 80,
   },
   {
     id: '5',
@@ -74,6 +78,7 @@ export const products: Product[] = [
       { name: 'Azul Marino', hex: '#000080' },
     ],
     rating: 4.4,
+    stock: 90,
   },
   {
     id: '6',
@@ -88,6 +93,7 @@ export const products: Product[] = [
       { name: 'Gris Jaspeado', hex: '#D1D5DB' },
     ],
     rating: 4.9,
+    stock: 60,
   },
   {
     id: '7',
@@ -102,6 +108,7 @@ export const products: Product[] = [
       { name: 'Carbón', hex: '#36454F' },
     ],
     rating: 4.1,
+    stock: 150,
   },
   {
     id: '8',
@@ -116,5 +123,6 @@ export const products: Product[] = [
       { name: 'Esmeralda', hex: '#50C878' },
     ],
     rating: 4.7,
+    stock: 50,
   },
 ];

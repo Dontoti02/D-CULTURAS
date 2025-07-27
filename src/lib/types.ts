@@ -8,4 +8,5 @@ export type Product = {
   sizes: ('XS' | 'S' | 'M' | 'L' | 'XL')[];
   colors: { name: string, hex: string }[];
   rating: number;
+  stock: number;
 };

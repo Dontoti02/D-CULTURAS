@@ -1,16 +1,41 @@
+
 'use client';
 
-import { useState } from 'react';
-import { products as allProducts } from '@/lib/data';
+import { useEffect, useState } from 'react';
+import { Product } from '@/lib/types';
 import ProductCard from '@/components/product-card';
 import ProductFilters from '@/components/product-filters';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Home() {
-  const [products, setProducts] = useState(allProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // La lógica de filtrado iría aquí en una aplicación real
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const productsRef = collection(db, 'products');
+        const q = query(productsRef, orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const productsData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Product));
+        setProducts(productsData);
+      } catch (error) {
+        console.error("Error fetching products: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   return (
     <>
@@ -40,11 +65,25 @@ export default function Home() {
                 <p className="text-muted-foreground">{products.length} artículos</p>
             </div>
             <Separator className="mb-8" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex flex-col space-y-3">
+                    <Skeleton className="h-[300px] w-full rounded-lg" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-[200px]" />
+                      <Skeleton className="h-4 w-[150px]" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
           </main>
         </div>
       </section>

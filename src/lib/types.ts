@@ -1,12 +1,15 @@
+import { Timestamp } from "firebase/firestore";
+
 export type Product = {
   id: string;
   name: string;
   description: string;
   price: number;
   images: string[];
-  category: 'Hombres' | 'Mujeres';
+  category: 'Caballeros' | 'Damas';
   sizes: ('XS' | 'S' | 'M' | 'L' | 'XL')[];
   colors: { name: string, hex: string }[];
   rating: number;
   stock: number;
+  createdAt?: Timestamp;
 };

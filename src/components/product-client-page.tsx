@@ -1,16 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { type Product } from '@/lib/types';
-import { products as allProducts } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Star, Minus, Plus, ShoppingCart } from 'lucide-react';
+import { Star, Minus, Plus, ShoppingCart, Loader2 } from 'lucide-react';
 import ProductCard from './product-card';
 import { Separator } from './ui/separator';
 import { cn } from '@/lib/utils';
+import { collection, getDocs, limit, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface ProductClientPageProps {
   product: Product;
@@ -18,13 +19,35 @@ interface ProductClientPageProps {
 
 export default function ProductClientPage({ product }: ProductClientPageProps) {
   const [selectedImage, setSelectedImage] = useState(product.images[0]);
-  const [selectedColor, setSelectedColor] = useState(product.colors[0].name);
+  const [selectedColor, setSelectedColor] = useState(product.colors[0]?.name);
   const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
   const [quantity, setQuantity] = useState(1);
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(true);
 
-  const recommendedProducts = allProducts
-    .filter((p) => p.id !== product.id && p.category === product.category)
-    .slice(0, 4);
+   useEffect(() => {
+    const fetchRecommendations = async () => {
+      setLoadingRecommendations(true);
+      try {
+        const productsRef = collection(db, 'products');
+        const q = query(
+            productsRef, 
+            where('category', '==', product.category), 
+            where('id', '!=', product.id), 
+            limit(4)
+        );
+        const querySnapshot = await getDocs(q);
+        const recs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+        setRecommendedProducts(recs);
+      } catch (error) {
+        console.error("Error fetching recommendations: ", error);
+      } finally {
+        setLoadingRecommendations(false);
+      }
+    };
+
+    fetchRecommendations();
+  }, [product.id, product.category]);
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12">
@@ -79,40 +102,44 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
           <p className="text-4xl font-bold text-primary">${product.price.toFixed(2)}</p>
 
           <div className="grid gap-4">
-            <div>
-              <Label className="font-semibold text-lg">Color</Label>
-              <div className="flex items-center gap-2 mt-2">
-                {product.colors.map((color) => (
-                  <button
-                    key={color.name}
-                    onClick={() => setSelectedColor(color.name)}
-                    className={cn(
-                      'h-8 w-8 rounded-full border-2 transition-all',
-                      selectedColor === color.name ? 'ring-2 ring-primary ring-offset-2' : ''
-                    )}
-                    style={{ backgroundColor: color.hex }}
-                    aria-label={`Seleccionar color ${color.name}`}
-                  />
-                ))}
+            {product.colors && product.colors.length > 0 && (
+              <div>
+                <Label className="font-semibold text-lg">Color</Label>
+                <div className="flex items-center gap-2 mt-2">
+                  {product.colors.map((color) => (
+                    <button
+                      key={color.name}
+                      onClick={() => setSelectedColor(color.name)}
+                      className={cn(
+                        'h-8 w-8 rounded-full border-2 transition-all',
+                        selectedColor === color.name ? 'ring-2 ring-primary ring-offset-2' : ''
+                      )}
+                      style={{ backgroundColor: color.hex }}
+                      aria-label={`Seleccionar color ${color.name}`}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-            <div>
-              <Label className="font-semibold text-lg">Talla</Label>
-              <RadioGroup value={selectedSize} onValueChange={setSelectedSize} className="flex gap-2 mt-2">
-                {product.sizes.map((size) => (
-                    <Label
-                        key={size}
-                        htmlFor={`size-${size}`}
-                        className={cn("border rounded-md px-4 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground", {
-                            "bg-primary text-primary-foreground": selectedSize === size,
-                        })}
-                    >
-                        <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" />
-                        {size}
-                    </Label>
-                ))}
-              </RadioGroup>
-            </div>
+            )}
+            {product.sizes && product.sizes.length > 0 && (
+              <div>
+                <Label className="font-semibold text-lg">Talla</Label>
+                <RadioGroup value={selectedSize} onValueChange={setSelectedSize} className="flex gap-2 mt-2">
+                  {product.sizes.map((size) => (
+                      <Label
+                          key={size}
+                          htmlFor={`size-${size}`}
+                          className={cn("border rounded-md px-4 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground", {
+                              "bg-primary text-primary-foreground": selectedSize === size,
+                          })}
+                      >
+                          <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" />
+                          {size}
+                      </Label>
+                  ))}
+                </RadioGroup>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-4">
@@ -133,13 +160,19 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
         </div>
       </div>
       
-      {/* Recomendaciones de IA */}
+      {/* Recomendaciones */}
       <div className="mt-16 pt-8">
         <h2 className="text-2xl font-bold mb-6">También te podría gustar</h2>
         <Separator className="mb-8" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {recommendedProducts.map(p => <ProductCard key={p.id} product={p} />)}
-        </div>
+        {loadingRecommendations ? (
+           <div className="flex items-center justify-center h-40">
+                <Loader2 className="w-8 h-8 animate-spin" />
+            </div>
+        ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {recommendedProducts.map(p => <ProductCard key={p.id} product={p} />)}
+            </div>
+        )}
       </div>
     </div>
   );

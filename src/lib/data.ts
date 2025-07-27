@@ -1,5 +1,9 @@
 import type { Product } from './types';
 
+// Este archivo ya no es la fuente principal de datos, 
+// pero se puede mantener como referencia o para pruebas iniciales.
+// La aplicación ahora carga los productos desde Firebase.
+
 export const products: Product[] = [
   {
     id: '1',
@@ -11,7 +15,7 @@ export const products: Product[] = [
       'https://placehold.co/600x800.png',
       'https://placehold.co/600x800.png',
     ],
-    category: 'Hombres',
+    category: 'Caballeros',
     sizes: ['S', 'M', 'L', 'XL'],
     colors: [
       { name: 'Azul Clásico', hex: '#3B82F6' },
@@ -26,7 +30,7 @@ export const products: Product[] = [
     description: 'Un vestido maxi elegante y cómodo con un estampado floral, perfecto para los días de verano u ocasiones especiales.',
     price: 120.0,
     images: ['https://placehold.co/600x800.png', 'https://placehold.co/600x800.png'],
-    category: 'Mujeres',
+    category: 'Damas',
     sizes: ['XS', 'S', 'M', 'L'],
     colors: [
       { name: 'Coral Atardecer', hex: '#FF7F50' },
@@ -41,7 +45,7 @@ export const products: Product[] = [
     description: 'Una camisa de lino transpirable y elegante, ideal para climas cálidos. Se puede vestir formal o informal.',
     price: 65.5,
     images: ['https://placehold.co/600x800.png'],
-    category: 'Hombres',
+    category: 'Caballeros',
     sizes: ['S', 'M', 'L'],
     colors: [
       { name: 'Blanco', hex: '#FFFFFF' },
@@ -56,7 +60,7 @@ export const products: Product[] = [
     description: 'Jeans ajustados de cintura alta que favorecen la figura y brindan comodidad y estilo. Un básico versátil para el guardarropa.',
     price: 75.0,
     images: ['https://placehold.co/600x800.png', 'https://placehold.co/600x800.png'],
-    category: 'Mujeres',
+    category: 'Damas',
     sizes: ['XS', 'S', 'M', 'L'],
     colors: [
       { name: 'Lavado Oscuro', hex: '#1E3A8A' },
@@ -71,7 +75,7 @@ export const products: Product[] = [
     description: 'Chinos modernos de corte entallado que ofrecen un aspecto casual e inteligente. Hechos de cómodo algodón elástico.',
     price: 70.0,
     images: ['https://placehold.co/600x800.png', 'https://placehold.co/600x800.png'],
-    category: 'Hombres',
+    category: 'Caballeros',
     sizes: ['S', 'M', 'L', 'XL'],
     colors: [
       { name: 'Caqui', hex: '#C3B091' },
@@ -86,7 +90,7 @@ export const products: Product[] = [
     description: 'Un suéter de punto suave y acogedor, perfecto para las tardes frescas. Presenta un clásico patrón de punto de ochos.',
     price: 95.0,
     images: ['https://placehold.co/600x800.png', 'https://placehold.co/600x800.png'],
-    category: 'Mujeres',
+    category: 'Damas',
     sizes: ['S', 'M', 'L'],
     colors: [
       { name: 'Crema', hex: '#FFFDD0' },
@@ -101,7 +105,7 @@ export const products: Product[] = [
     description: 'Una cómoda camiseta de algodón con un estampado gráfico único. Perfecta para un look casual y expresivo.',
     price: 35.0,
     images: ['https://placehold.co/600x800.png'],
-    category: 'Hombres',
+    category: 'Caballeros',
     sizes: ['S', 'M', 'L', 'XL'],
     colors: [
       { name: 'Blanco', hex: '#FFFFFF' },
@@ -116,7 +120,7 @@ export const products: Product[] = [
     description: 'Una lujosa blusa de mezcla de seda con una hermosa caída. Perfecta para la oficina o una salida nocturna elegante.',
     price: 110.0,
     images: ['https://placehold.co/600x800.png', 'https://placehold.co/600x800.png'],
-    category: 'Mujeres',
+    category: 'Damas',
     sizes: ['XS', 'S', 'M'],
     colors: [
       { name: 'Champán', hex: '#F7E7CE' },

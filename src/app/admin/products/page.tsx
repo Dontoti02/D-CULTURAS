@@ -1,3 +1,6 @@
+
+'use client'
+
 import {
   Table,
   TableBody,
@@ -9,9 +12,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { products } from '@/lib/data';
+import { Product } from '@/lib/types';
 import Image from 'next/image';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Loader2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,9 +23,37 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-
+import { useEffect, useState } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export default function ProductsPage() {
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+      const fetchProducts = async () => {
+        try {
+          const querySnapshot = await getDocs(collection(db, "products"));
+          const productsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+          setProducts(productsData);
+        } catch (error) {
+          console.error("Error fetching products: ", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchProducts();
+    }, []);
+
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-full">
+            <Loader2 className="w-8 h-8 animate-spin" />
+        </div>
+      )
+    }
+
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">

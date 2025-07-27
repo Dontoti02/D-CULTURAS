@@ -8,17 +8,25 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Upload, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export default function NewProductPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState<'Caballeros' | 'Damas' | ''>('');
+  const [price, setPrice] = useState('');
+  const [stock, setStock] = useState('');
   const [imageUrls, setImageUrls] = useState<(string | null)[]>(Array(4).fill(null));
   const [isUploading, setIsUploading] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = event.target.files?.[0];
@@ -27,7 +35,7 @@ export default function NewProductPage() {
     setIsUploading(index);
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'save_prendas'); 
+    formData.append('upload_preset', 'save_prendas');
     formData.append('cloud_name', 'dd7fku9br');
 
     try {
@@ -42,8 +50,8 @@ export default function NewProductPage() {
         newImageUrls[index] = data.secure_url;
         setImageUrls(newImageUrls);
         toast({
-            title: `Imagen ${index + 1} Subida`,
-            description: 'La imagen del producto se ha subido correctamente.',
+          title: `Imagen ${index + 1} Subida`,
+          description: 'La imagen del producto se ha subido correctamente.',
         });
       } else {
         throw new Error('Error al subir la imagen');
@@ -60,15 +68,47 @@ export default function NewProductPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Aquí iría la lógica para guardar el nuevo producto con las imageUrls
-    console.log('Image URLs to save:', imageUrls.filter(url => url !== null));
-    toast({
+    if (!name || !description || !category || !price || !stock || imageUrls.every(url => url === null)) {
+        toast({
+            title: 'Campos Incompletos',
+            description: 'Por favor, rellena todos los campos y sube al menos una imagen.',
+            variant: 'destructive',
+        });
+        return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await addDoc(collection(db, 'products'), {
+        name,
+        description,
+        category,
+        price: parseFloat(price),
+        stock: parseInt(stock, 10),
+        images: imageUrls.filter((url): url is string => url !== null),
+        // Valores predeterminados o lógicos que puedes ajustar
+        sizes: ['S', 'M', 'L', 'XL'],
+        colors: [{ name: 'Default', hex: '#000000' }],
+        rating: 0,
+        createdAt: serverTimestamp(),
+      });
+      toast({
         title: 'Producto Agregado',
-        description: 'El nuevo producto se ha guardado correctamente.',
-    });
-    router.push('/admin/products');
+        description: 'El nuevo producto se ha guardado correctamente en Firebase.',
+      });
+      router.push('/admin/products');
+    } catch (error) {
+      console.error("Error al guardar el producto: ", error);
+      toast({
+        title: 'Error al Guardar',
+        description: 'No se pudo guardar el producto en la base de datos.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -80,10 +120,12 @@ export default function NewProductPage() {
               Nuevo Producto
             </h1>
             <div className="hidden items-center gap-2 md:ml-auto md:flex">
-              <Button variant="outline" size="sm" onClick={() => router.back()}>
+              <Button variant="outline" size="sm" onClick={() => router.back()} disabled={isSubmitting}>
                 Cancelar
               </Button>
-              <Button size="sm" type="submit">Guardar Producto</Button>
+              <Button size="sm" type="submit" disabled={isSubmitting || isUploading !== null}>
+                {isSubmitting ? <Loader2 className="animate-spin" /> : 'Guardar Producto'}
+              </Button>
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
@@ -104,6 +146,8 @@ export default function NewProductPage() {
                       className="w-full"
                       placeholder="Ej. Camiseta Gráfica"
                       required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                     />
                   </div>
                   <div className="grid gap-3">
@@ -113,6 +157,8 @@ export default function NewProductPage() {
                       placeholder="Describe tu producto..."
                       className="min-h-32"
                       required
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
                     />
                   </div>
                 </CardContent>
@@ -139,7 +185,7 @@ export default function NewProductPage() {
                                             <p className="text-xs text-muted-foreground">Subir Imagen {index + 1}</p>
                                         </div>
                                     )}
-                                    <Input id={`picture-${index}`} type="file" className="hidden" onChange={(e) => handleImageUpload(e, index)} accept="image/*" disabled={isUploading !== null} />
+                                    <Input id={`picture-${index}`} type="file" className="hidden" onChange={(e) => handleImageUpload(e, index)} accept="image/*" disabled={isUploading !== null || isSubmitting} />
                                 </Label>
                             </div>
                         ))}
@@ -155,7 +201,7 @@ export default function NewProductPage() {
                 <CardContent className="grid gap-6">
                   <div className="grid gap-3">
                     <Label htmlFor="category">Categoría</Label>
-                    <Select required>
+                    <Select required onValueChange={(value: 'Caballeros' | 'Damas') => setCategory(value)} value={category}>
                       <SelectTrigger id="category" aria-label="Seleccionar categoría">
                         <SelectValue placeholder="Seleccionar categoría" />
                       </SelectTrigger>
@@ -167,23 +213,24 @@ export default function NewProductPage() {
                   </div>
                    <div className="grid gap-3">
                     <Label htmlFor="price">Precio</Label>
-                    <Input id="price" type="number" placeholder="99.99" required />
+                    <Input id="price" type="number" placeholder="99.99" required value={price} onChange={(e) => setPrice(e.target.value)} />
                   </div>
                    <div className="grid gap-3">
                     <Label htmlFor="stock">Stock</Label>
-                    <Input id="stock" type="number" placeholder="100" required />
+                    <Input id="stock" type="number" placeholder="100" required value={stock} onChange={(e) => setStock(e.target.value)} />
                   </div>
                 </CardContent>
               </Card>
             </div>
           </div>
           <div className="flex items-center justify-center gap-2 md:hidden">
-            <Button variant="outline" size="sm" onClick={() => router.back()}>Cancelar</Button>
-            <Button size="sm" type="submit">Guardar Producto</Button>
+            <Button variant="outline" size="sm" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
+            <Button size="sm" type="submit" disabled={isSubmitting || isUploading !== null}>
+                {isSubmitting ? <Loader2 className="animate-spin" /> : 'Guardar Producto'}
+            </Button>
           </div>
         </div>
       </div>
     </form>
   );
 }
-

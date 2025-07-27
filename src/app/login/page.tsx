@@ -8,23 +8,54 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === 'admin@ejemplo.com' && password === 'admin123') {
-      router.push('/admin');
-    } else {
+    setIsLoading(true);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      if (user) {
+        // Verificar si el usuario es un administrador
+        const adminDocRef = doc(db, 'admins', user.uid);
+        const adminDoc = await getDoc(adminDocRef);
+
+        if (adminDoc.exists() && adminDoc.data().rol === 'admin') {
+          router.push('/admin');
+        } else {
+          // Si no es admin, puedes redirigirlo a otra parte o mostrar un error
+          await auth.signOut(); // Cerrar sesión si no es admin
+          toast({
+            title: 'Acceso Denegado',
+            description: 'No tienes permisos de administrador.',
+            variant: 'destructive',
+          });
+        }
+      }
+    } catch (error: any) {
+      console.error("Error de inicio de sesión:", error);
+      let errorMessage = 'Credenciales inválidas. Por favor, inténtalo de nuevo.';
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        errorMessage = 'El correo electrónico o la contraseña son incorrectos.';
+      }
       toast({
         title: 'Error de inicio de sesión',
-        description: 'Credenciales inválidas. Por favor, inténtalo de nuevo.',
+        description: errorMessage,
         variant: 'destructive',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -34,12 +65,7 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
           <CardDescription>
-            Ingresa tu correo electrónico a continuación para iniciar sesión en tu cuenta.
-            <br />
-            <br />
-            <strong>Usuario de prueba:</strong> admin@ejemplo.com
-            <br />
-            <strong>Contraseña de prueba:</strong> admin123
+            Ingresa tu correo electrónico a continuación para iniciar sesión en tu cuenta de administrador.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -53,6 +79,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
               />
             </div>
             <div className="grid gap-2">
@@ -63,12 +90,13 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full">
-              Iniciar sesión
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
             </Button>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" disabled={isLoading}>
               Iniciar sesión con Google
             </Button>
           </form>

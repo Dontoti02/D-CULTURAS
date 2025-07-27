@@ -37,6 +37,7 @@ import { auth, db } from '@/lib/firebase';
 import { signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
+import { Skeleton } from './ui/skeleton';
 
 const navLinks = [
   {

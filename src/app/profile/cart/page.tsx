@@ -44,18 +44,18 @@ export default function CartPage() {
                                             <p className="text-sm font-semibold text-primary">S/ {item.price.toFixed(2)}</p>
                                         </div>
                                         <div className="flex items-center gap-2 border rounded-md">
-                                            <Button variant="ghost" size="icon" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
+                                            <Button variant="ghost" size="icon" onClick={() => updateQuantity(`${item.id}-${item.size}-${item.color}`, item.quantity - 1)}>
                                                 <Minus className="h-4 w-4" />
                                             </Button>
                                             <span className="w-8 text-center font-semibold">{item.quantity}</span>
-                                            <Button variant="ghost" size="icon" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
+                                            <Button variant="ghost" size="icon" onClick={() => updateQuantity(`${item.id}-${item.size}-${item.color}`, item.quantity + 1)}>
                                                 <Plus className="h-4 w-4" />
                                             </Button>
                                         </div>
                                         <div>
                                             <p className="font-bold">S/ {(item.price * item.quantity).toFixed(2)}</p>
                                         </div>
-                                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(item.id)}>
+                                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(`${item.id}-${item.size}-${item.color}`)}>
                                             <Trash2 className="h-5 w-5" />
                                         </Button>
                                     </div>
@@ -89,8 +89,8 @@ export default function CartPage() {
                         </p>
                     </CardContent>
                     <CardFooter>
-                        <Button className="w-full" size="lg" disabled={cartItems.length === 0}>
-                            Proceder al Pago
+                        <Button asChild className="w-full" size="lg" disabled={cartItems.length === 0}>
+                            <Link href="/profile/checkout">Proceder al Pago</Link>
                         </Button>
                     </CardFooter>
                 </Card>

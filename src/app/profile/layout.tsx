@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { User, ShoppingCart, Package, LogOut } from 'lucide-react';
+import { User, ShoppingCart, Package, LogOut, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
@@ -15,6 +15,7 @@ const profileNavLinks = [
   { href: '/profile', label: 'Mi Perfil', icon: User },
   { href: '/profile/orders', label: 'Mis Pedidos', icon: Package },
   { href: '/profile/cart', label: 'Carrito', icon: ShoppingCart },
+  { href: '/profile/checkout', label: 'Pagar', icon: CreditCard },
 ];
 
 export default function ProfileLayout({
@@ -56,6 +57,7 @@ export default function ProfileLayout({
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
                   {
                     'bg-primary/10 text-primary font-semibold': pathname === link.href,
+                    'hidden': link.href === '/profile/checkout' && !pathname.startsWith('/profile/checkout')
                   }
                 )}
               >

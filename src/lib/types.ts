@@ -38,5 +38,11 @@ export interface Order {
     }[];
     total: number;
     status: 'Procesando' | 'Enviado' | 'Entregado' | 'Cancelado';
+    shippingAddress: {
+        address: string;
+        city: string;
+        department: string;
+        zip: string;
+    },
     createdAt: Timestamp;
 }

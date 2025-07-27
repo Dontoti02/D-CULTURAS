@@ -24,6 +24,14 @@ export default function NewAdminPage() {
   const [rol, setRol] = useState<'Admin' | 'Ayudante'>('Admin');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const resetForm = () => {
+    setFirstName('');
+    setLastName('');
+    setEmail('');
+    setPassword('');
+    setRol('Admin');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!firstName || !lastName || !email || !password || !rol) {
@@ -55,7 +63,7 @@ export default function NewAdminPage() {
         title: 'Administrador Agregado',
         description: 'El nuevo administrador ha sido creado y guardado correctamente.',
       });
-      router.push('/admin/admins'); // Redirect to the list of admins
+      resetForm(); // Reset form for next entry
     } catch (error: any) {
       console.error("Error al crear administrador: ", error);
       let description = 'Ocurrió un error inesperado. Inténtalo de nuevo.';
@@ -85,8 +93,8 @@ export default function NewAdminPage() {
                 Agregar Nuevo Administrador
             </h1>
             <div className="hidden items-center gap-2 md:ml-auto md:flex">
-                <Button variant="outline" size="sm" onClick={() => router.back()} disabled={isSubmitting}>
-                    Cancelar
+                <Button variant="outline" size="sm" onClick={() => router.push('/admin/admins')} disabled={isSubmitting}>
+                    Ir a la Lista
                 </Button>
                 <Button size="sm" type="submit" disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="animate-spin" /> : 'Guardar Administrador'}
@@ -150,7 +158,7 @@ export default function NewAdminPage() {
             </div>
             <div className="grid gap-3">
                 <Label htmlFor="rol">Rol</Label>
-                <Select required onValueChange={(value: 'Admin' | 'Ayudante') => setRol(value)} defaultValue="Admin" disabled={isSubmitting}>
+                <Select required onValueChange={(value: 'Admin' | 'Ayudante') => setRol(value)} value={rol} disabled={isSubmitting}>
                     <SelectTrigger id="rol" aria-label="Seleccionar rol">
                     <SelectValue placeholder="Seleccionar rol" />
                     </SelectTrigger>
@@ -164,7 +172,7 @@ export default function NewAdminPage() {
         </Card>
         
         <div className="flex items-center justify-center gap-2 md:hidden mt-6">
-            <Button variant="outline" size="sm" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
+            <Button variant="outline" size="sm" onClick={() => router.push('/admin/admins')} disabled={isSubmitting}>Ir a la Lista</Button>
             <Button size="sm" type="submit" disabled={isSubmitting}>
                 {isSubmitting ? <Loader2 className="animate-spin" /> : 'Guardar Administrador'}
             </Button>

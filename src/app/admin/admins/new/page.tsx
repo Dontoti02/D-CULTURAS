@@ -21,7 +21,7 @@ export default function NewAdminPage() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rol, setRol] = useState<'Admin' | 'Editor'>('Admin');
+  const [rol, setRol] = useState<'Admin' | 'Ayudante'>('Admin');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -150,13 +150,13 @@ export default function NewAdminPage() {
             </div>
             <div className="grid gap-3">
                 <Label htmlFor="rol">Rol</Label>
-                <Select required onValueChange={(value: 'Admin' | 'Editor') => setRol(value)} defaultValue="Admin" disabled={isSubmitting}>
+                <Select required onValueChange={(value: 'Admin' | 'Ayudante') => setRol(value)} defaultValue="Admin" disabled={isSubmitting}>
                     <SelectTrigger id="rol" aria-label="Seleccionar rol">
                     <SelectValue placeholder="Seleccionar rol" />
                     </SelectTrigger>
                     <SelectContent>
                     <SelectItem value="Admin">Admin</SelectItem>
-                    <SelectItem value="Editor">Editor</SelectItem>
+                    <SelectItem value="Ayudante">Ayudante</SelectItem>
                     </SelectContent>
                 </Select>
             </div>

@@ -22,7 +22,7 @@ export default function SiteHeader() {
       <div className="container mx-auto flex h-16 items-center px-4 md:px-6">
         <Link href="/" className="mr-6 flex items-center gap-2">
           <Shirt className="h-6 w-6 text-primary" />
-          <span className="hidden font-bold sm:inline-block">Verano Style</span>
+          <span className="hidden font-bold sm:inline-block">stylesUP!</span>
         </Link>
 
         <nav className="hidden gap-6 md:flex">
@@ -67,7 +67,7 @@ export default function SiteHeader() {
               <nav className="grid gap-6 text-lg font-medium">
                 <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
                   <Shirt className="h-6 w-6 text-primary" />
-                  <span>Verano Style</span>
+                  <span>stylesUP!</span>
                 </Link>
                 {navLinks.map((link) => (
                   <Link

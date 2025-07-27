@@ -5,7 +5,7 @@ import SiteHeader from '@/components/site-header';
 import SiteFooter from '@/components/site-footer';
 
 export const metadata: Metadata = {
-  title: 'Verano Style',
+  title: 'stylesUP!',
   description: 'Modern clothing for men and women.',
 };
 

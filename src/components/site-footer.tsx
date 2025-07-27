@@ -9,7 +9,7 @@ export default function SiteFooter() {
           <div className="flex flex-col items-start gap-2">
             <Link href="/" className="flex items-center gap-2">
               <Shirt className="h-6 w-6 text-primary" />
-              <span className="font-bold">Verano Style</span>
+              <span className="font-bold">stylesUP!</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               Your destination for modern and stylish clothing.
@@ -50,7 +50,7 @@ export default function SiteFooter() {
           </div>
         </div>
         <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Verano Style. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} stylesUP!. All rights reserved.</p>
         </div>
       </div>
     </footer>

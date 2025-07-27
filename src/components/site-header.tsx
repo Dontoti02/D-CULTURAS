@@ -86,14 +86,15 @@ export default function SiteHeader() {
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user.photoURL || undefined} alt="Foto de perfil" />
                     <AvatarFallback>
-                      {user.email?.charAt(0).toUpperCase()}
+                      {(user.firstName || user.email)?.charAt(0).toUpperCase()}
+                      {user.lastName?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
-                    <p className="font-semibold">{user.displayName || user.email}</p>
+                    <p className="font-semibold">{user.firstName ? `${user.firstName} ${user.lastName}` : (user.displayName || user.email)}</p>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>

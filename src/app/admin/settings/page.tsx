@@ -121,7 +121,7 @@ export default function SettingsPage() {
     setIsUploading(true);
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'save_prendas'); 
+    formData.append('upload_preset', 'profiles_images'); 
     formData.append('cloud_name', 'dd7fku9br');
     formData.append('folder', 'avatars');
 

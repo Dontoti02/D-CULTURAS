@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -210,9 +211,11 @@ export default function AdminSidebar() {
           >
             <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Ajustes</span>
+            <DropdownMenuItem asChild>
+              <Link href="/admin/settings">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Ajustes</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <CreditCard className="mr-2 h-4 w-4" />

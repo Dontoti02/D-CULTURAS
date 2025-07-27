@@ -4,7 +4,7 @@ export type Product = {
   description: string;
   price: number;
   images: string[];
-  category: 'Men' | 'Women';
+  category: 'Hombres' | 'Mujeres';
   sizes: ('XS' | 'S' | 'M' | 'L' | 'XL')[];
   colors: { name: string, hex: string }[];
   rating: number;

@@ -9,9 +9,9 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 const navLinks = [
-  { href: '/#products', label: 'All' },
-  { href: '/#men', label: 'Men' },
-  { href: '/#women', label: 'Women' },
+  { href: '/#products', label: 'Todos' },
+  { href: '/#men', label: 'Hombres' },
+  { href: '/#women', label: 'Mujeres' },
 ];
 
 export default function SiteHeader() {
@@ -43,16 +43,16 @@ export default function SiteHeader() {
         <div className="ml-auto flex items-center gap-4">
           <div className="relative hidden md:block">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input type="search" placeholder="Search products..." className="pl-8 sm:w-[300px]" />
+            <Input type="search" placeholder="Buscar productos..." className="pl-8 sm:w-[300px]" />
           </div>
-          <Button variant="ghost" size="icon" aria-label="Shopping Cart">
+          <Button variant="ghost" size="icon" aria-label="Carrito de Compras">
             <ShoppingCart className="h-5 w-5" />
-            <span className="sr-only">Shopping Cart</span>
+            <span className="sr-only">Carrito de Compras</span>
           </Button>
           <Link href="/login">
-            <Button variant="ghost" size="icon" aria-label="User Account">
+            <Button variant="ghost" size="icon" aria-label="Cuenta de Usuario">
               <User className="h-5 w-5" />
-              <span className="sr-only">User Account</span>
+              <span className="sr-only">Cuenta de Usuario</span>
             </Button>
           </Link>
 
@@ -60,7 +60,7 @@ export default function SiteHeader() {
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="md:hidden">
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle navigation menu</span>
+                <span className="sr-only">Abrir menú de navegación</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left">

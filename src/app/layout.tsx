@@ -6,7 +6,7 @@ import SiteFooter from '@/components/site-footer';
 
 export const metadata: Metadata = {
   title: 'stylesUP!',
-  description: 'Modern clothing for men and women.',
+  description: 'Ropa moderna para hombre y mujer.',
 };
 
 export default function RootLayout({
@@ -15,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="es">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

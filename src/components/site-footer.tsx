@@ -12,45 +12,45 @@ export default function SiteFooter() {
               <span className="font-bold">stylesUP!</span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              Your destination for modern and stylish clothing.
+              Tu destino para ropa moderna y con estilo.
             </p>
           </div>
           <div className="grid gap-2">
-            <h3 className="font-semibold">Shop</h3>
+            <h3 className="font-semibold">Tienda</h3>
             <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
-              Men
+              Hombres
             </Link>
             <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
-              Women
+              Mujeres
             </Link>
             <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
-              New Arrivals
+              Novedades
             </Link>
           </div>
           <div className="grid gap-2">
-            <h3 className="font-semibold">Support</h3>
+            <h3 className="font-semibold">Soporte</h3>
             <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
-              Contact Us
+              Contáctanos
             </Link>
             <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
-              FAQ
+              Preguntas frecuentes
             </Link>
             <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
-              Shipping & Returns
+              Envíos y Devoluciones
             </Link>
           </div>
           <div className="grid gap-2">
             <h3 className="font-semibold">Legal</h3>
             <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
-              Terms of Service
+              Términos de Servicio
             </Link>
             <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
-              Privacy Policy
+              Política de Privacidad
             </Link>
           </div>
         </div>
         <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} stylesUP!. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} stylesUP!. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>

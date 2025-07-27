@@ -29,7 +29,7 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
   return (
     <div className="container mx-auto px-4 md:px-6 py-12">
       <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-        {/* Image Gallery */}
+        {/* Galería de Imágenes */}
         <div className="grid gap-4">
           <div className="relative aspect-square overflow-hidden rounded-lg">
             <Image
@@ -37,7 +37,7 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
               alt={product.name}
               fill
               className="object-cover"
-              data-ai-hint="product image"
+              data-ai-hint="imagen del producto"
             />
           </div>
           <div className="grid grid-cols-4 gap-4">
@@ -52,17 +52,17 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
               >
                 <Image
                   src={img}
-                  alt={`${product.name} thumbnail ${index + 1}`}
+                  alt={`${product.name} miniatura ${index + 1}`}
                   fill
                   className="object-cover"
-                  data-ai-hint="product image thumbnail"
+                  data-ai-hint="miniatura imagen producto"
                 />
               </button>
             ))}
           </div>
         </div>
 
-        {/* Product Details */}
+        {/* Detalles del Producto */}
         <div className="grid gap-6">
           <div>
             <h1 className="text-3xl lg:text-4xl font-bold">{product.name}</h1>
@@ -72,7 +72,7 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
                         <Star key={i} className={cn('w-5 h-5', i < Math.floor(product.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/50')} />
                     ))}
                 </div>
-                <p className="text-sm text-muted-foreground">{product.rating} stars</p>
+                <p className="text-sm text-muted-foreground">{product.rating} estrellas</p>
             </div>
           </div>
           <p className="text-muted-foreground">{product.description}</p>
@@ -91,13 +91,13 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
                       selectedColor === color.name ? 'ring-2 ring-primary ring-offset-2' : ''
                     )}
                     style={{ backgroundColor: color.hex }}
-                    aria-label={`Select color ${color.name}`}
+                    aria-label={`Seleccionar color ${color.name}`}
                   />
                 ))}
               </div>
             </div>
             <div>
-              <Label className="font-semibold text-lg">Size</Label>
+              <Label className="font-semibold text-lg">Talla</Label>
               <RadioGroup value={selectedSize} onValueChange={setSelectedSize} className="flex gap-2 mt-2">
                 {product.sizes.map((size) => (
                     <Label
@@ -127,15 +127,15 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
             </div>
             <Button size="lg" className="flex-1">
                 <ShoppingCart className="mr-2 h-5 w-5" />
-                Add to Cart
+                Añadir al Carrito
             </Button>
           </div>
         </div>
       </div>
       
-      {/* AI Recommendations */}
+      {/* Recomendaciones de IA */}
       <div className="mt-16 pt-8">
-        <h2 className="text-2xl font-bold mb-6">You Might Also Like</h2>
+        <h2 className="text-2xl font-bold mb-6">También te podría gustar</h2>
         <Separator className="mb-8" />
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {recommendedProducts.map(p => <ProductCard key={p.id} product={p} />)}

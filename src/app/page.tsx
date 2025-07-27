@@ -10,21 +10,21 @@ import { Separator } from '@/components/ui/separator';
 export default function Home() {
   const [products, setProducts] = useState(allProducts);
 
-  // Filtering logic would go here in a real app
+  // La lógica de filtrado iría aquí en una aplicación real
 
   return (
     <>
       <section className="bg-card py-20 md:py-32">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-primary">
-            Feel the Style of Summer
+            Siente el Estilo del Verano
           </h1>
           <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
-            Discover our new collection of clothing that combines comfort and elegance for the modern individual.
+            Descubre nuestra nueva colección de ropa que combina comodidad y elegancia para la persona moderna.
           </p>
           <div className="mt-8 flex justify-center gap-4">
-            <Button size="lg">Shop Men</Button>
-            <Button size="lg" variant="outline">Shop Women</Button>
+            <Button size="lg">Comprar Hombres</Button>
+            <Button size="lg" variant="outline">Comprar Mujeres</Button>
           </div>
         </div>
       </section>
@@ -36,8 +36,8 @@ export default function Home() {
           </aside>
           <main className="md:col-span-3">
             <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">All Products</h2>
-                <p className="text-muted-foreground">{products.length} items</p>
+                <h2 className="text-2xl font-bold">Todos los Productos</h2>
+                <p className="text-muted-foreground">{products.length} artículos</p>
             </div>
             <Separator className="mb-8" />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

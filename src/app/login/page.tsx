@@ -29,12 +29,19 @@ export default function LoginPage() {
       const user = userCredential.user;
 
       if (user) {
+        // Log the UID to the browser console for debugging
+        console.log('Firebase Auth User UID:', user.uid);
+        
         const adminDocRef = doc(db, 'admins', user.uid);
         const adminDoc = await getDoc(adminDocRef);
 
         if (adminDoc.exists() && adminDoc.data().rol?.toLowerCase() === 'admin') {
           router.push('/admin');
         } else {
+          console.log('Admin check failed. Document exists:', adminDoc.exists());
+          if(adminDoc.exists()){
+            console.log('Document data:', adminDoc.data());
+          }
           await auth.signOut();
           toast({
             title: 'Acceso Denegado',

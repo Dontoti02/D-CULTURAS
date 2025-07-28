@@ -60,5 +60,6 @@ export interface Promotion {
   startDate: Timestamp;
   endDate: Timestamp;
   status: 'active' | 'inactive' | 'scheduled';
+  imageUrl?: string;
   createdAt: Timestamp;
 }

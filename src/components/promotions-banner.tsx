@@ -16,6 +16,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Gift } from 'lucide-react';
+import Image from 'next/image';
 
 export default function PromotionsBanner() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -24,20 +25,14 @@ export default function PromotionsBanner() {
   useEffect(() => {
     const fetchPromotions = async () => {
       try {
-        // 1. Fetch all promotions, ordered by creation date
-        const q = query(
-          collection(db, 'promotions'),
-          orderBy('createdAt', 'desc')
-        );
+        const q = query(collection(db, 'promotions'), orderBy('createdAt', 'desc'));
         
         const querySnapshot = await getDocs(q);
         const now = new Date();
         
-        // 2. Filter promotions on the client-side
         const promotionsData = querySnapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() } as Promotion))
           .filter(promo => {
-              // Ensure the promo is active AND within the valid date range
               const startDate = promo.startDate.toDate();
               const endDate = promo.endDate.toDate();
               return promo.status === 'active' && startDate <= now && endDate >= now;
@@ -46,7 +41,6 @@ export default function PromotionsBanner() {
         setPromotions(promotionsData);
       } catch (error) {
         console.error("Error fetching promotions: ", error);
-        // Do not toast error to user for a background task
       }
     };
 
@@ -62,7 +56,7 @@ export default function PromotionsBanner() {
   };
 
   if (promotions.length === 0) {
-    return null; // Don't render anything if there are no active promotions
+    return null; 
   }
 
   return (
@@ -79,24 +73,35 @@ export default function PromotionsBanner() {
             {promotions.map((promo) => (
               <CarouselItem key={promo.id}>
                 <div className="p-1">
-                  <Card className="bg-accent/50 border-accent">
-                    <CardContent className="flex flex-col md:flex-row items-center justify-center p-6 gap-6 text-center md:text-left">
-                       <div className="p-4 bg-accent rounded-full">
-                         <Gift className="h-8 w-8 text-accent-foreground" />
-                       </div>
-                       <div className="flex-grow">
-                          <h3 className="text-xl font-bold text-accent-foreground">{promo.name}</h3>
-                          <p className="text-accent-foreground/90">{promo.description}</p>
-                       </div>
-                       <div className="flex items-center gap-2">
-                            <p className="font-mono text-lg border-2 border-dashed border-accent-foreground/50 bg-background rounded-md px-4 py-2">
-                                {promo.code}
-                            </p>
-                            <Button onClick={() => handleCopyCode(promo.code)}>
-                                Copiar
-                            </Button>
-                       </div>
-                    </CardContent>
+                  <Card className="bg-card border-border overflow-hidden">
+                    <div className="grid md:grid-cols-2">
+                        <div className="relative aspect-video md:aspect-auto">
+                           {promo.imageUrl && (
+                             <Image
+                                src={promo.imageUrl}
+                                alt={promo.name}
+                                fill
+                                className="object-cover"
+                                data-ai-hint="imagen promocion"
+                             />
+                           )}
+                        </div>
+                        <CardContent className="flex flex-col items-center justify-center p-6 gap-4 text-center">
+                          <Gift className="h-10 w-10 text-primary" />
+                          <div className="flex-grow">
+                              <h3 className="text-xl font-bold text-primary">{promo.name}</h3>
+                              <p className="text-muted-foreground">{promo.description}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                                <p className="font-mono text-lg border-2 border-dashed border-primary/50 bg-background rounded-md px-4 py-2">
+                                    {promo.code}
+                                </p>
+                                <Button onClick={() => handleCopyCode(promo.code)}>
+                                    Copiar
+                                </Button>
+                          </div>
+                        </CardContent>
+                    </div>
                   </Card>
                 </div>
               </CarouselItem>

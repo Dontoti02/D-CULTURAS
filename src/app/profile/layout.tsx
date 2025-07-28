@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { User, ShoppingCart, Package, LogOut, CreditCard } from 'lucide-react';
+import { User, ShoppingCart, Package, LogOut, CreditCard, TicketPercent } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 const profileNavLinks = [
   { href: '/profile', label: 'Mi Perfil', icon: User },
   { href: '/profile/orders', label: 'Mis Pedidos', icon: Package },
+  { href: '/profile/promotions', label: 'Promociones', icon: TicketPercent },
   { href: '/profile/cart', label: 'Carrito', icon: ShoppingCart },
   { href: '/profile/checkout', label: 'Pagar', icon: CreditCard },
 ];

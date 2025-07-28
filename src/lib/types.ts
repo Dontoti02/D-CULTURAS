@@ -1,3 +1,4 @@
+
 import { Timestamp } from "firebase/firestore";
 
 export type Product = {
@@ -45,4 +46,15 @@ export interface Order {
         zip: string;
     },
     createdAt: Timestamp;
+}
+
+export interface Promotion {
+  id: string;
+  customerId: string;
+  title: string;
+  description: string;
+  discount: number; // Percentage
+  code: string;
+  createdAt: Timestamp;
+  status: 'active' | 'used' | 'expired';
 }

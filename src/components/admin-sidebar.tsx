@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   MoreHorizontal,
   LogOut,
+  Award,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -54,6 +55,7 @@ const navLinks = [
   },
   { href: '/admin/orders', label: 'Pedidos', icon: ShoppingCart },
   { href: '/admin/customers', label: 'Clientes', icon: Users },
+  { href: '/admin/loyal-customers', label: 'Clientes Leales', icon: Award },
 ];
 
 interface AdminData {

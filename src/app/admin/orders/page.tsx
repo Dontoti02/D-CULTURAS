@@ -10,19 +10,31 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Customer, Order } from '@/lib/types';
 import { format } from 'date-fns';
-import { Loader2 } from 'lucide-react';
+import { Loader2, FileDown } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useRouter } from 'next/navigation';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 interface EnrichedOrder extends Order {
   customerDetails?: Pick<Customer, 'firstName' | 'lastName' | 'photoURL'>;
 }
+
+// Extend jsPDF interface for autoTable plugin
+declare module 'jspdf' {
+    interface jsPDF {
+        autoTable: (options: any) => jsPDF;
+    }
+}
+
 
 export default function OrdersPage() {
     const [orders, setOrders] = useState<EnrichedOrder[]>([]);
@@ -74,6 +86,51 @@ export default function OrdersPage() {
         router.push(`/admin/orders/${orderId}`);
     };
 
+    const handleExportPDF = () => {
+        const doc = new jsPDF();
+        doc.text("Reporte de Pedidos", 14, 16);
+        
+        const tableColumn = ["ID Pedido", "Cliente", "Fecha", "Total (S/)", "Estado"];
+        const tableRows: any[][] = [];
+
+        orders.forEach(order => {
+            const orderData = [
+                `#${order.id.substring(0, 7)}...`,
+                order.customerName,
+                order.createdAt ? format(order.createdAt.toDate(), 'dd/MM/yyyy') : 'N/A',
+                order.total.toFixed(2),
+                order.status
+            ];
+            tableRows.push(orderData);
+        });
+
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 20,
+        });
+
+        doc.save("reporte_pedidos.pdf");
+    };
+
+    const handleExportExcel = () => {
+        const worksheet = XLSX.utils.json_to_sheet(orders.map(order => ({
+            "ID Pedido": order.id,
+            "Cliente": order.customerName,
+            "Fecha": order.createdAt ? format(order.createdAt.toDate(), 'dd/MM/yyyy') : 'N/A',
+            "Total (S/)": order.total.toFixed(2),
+            "Estado": order.status,
+            "Descuento Cupón": order.couponDiscount?.toFixed(2) || '0.00',
+            "Código Cupón": order.couponCode || 'N/A',
+            "Dirección": order.shippingAddress.address,
+            "Ciudad": order.shippingAddress.city,
+        })));
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Pedidos");
+        XLSX.writeFile(workbook, "reporte_pedidos.xlsx");
+    };
+
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-full">
@@ -84,8 +141,18 @@ export default function OrdersPage() {
 
     return (
         <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Pedidos</CardTitle>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={orders.length === 0}>
+                        <FileDown className="mr-2 h-4 w-4" />
+                        Exportar a PDF
+                    </Button>
+                     <Button variant="outline" size="sm" onClick={handleExportExcel} disabled={orders.length === 0}>
+                        <FileDown className="mr-2 h-4 w-4" />
+                        Exportar a Excel
+                    </Button>
+                </div>
             </CardHeader>
             <CardContent>
                 <Table>

@@ -29,7 +29,7 @@ export default function EditProductPage() {
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<'Caballeros' | 'Damas' | ''>('');
+  const [category, setCategory] = useState<'Caballeros' | 'Damas' | 'Novedades Caballeros' | 'Novedades Damas' | ''>('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
   const [imageUrls, setImageUrls] = useState<(string | null)[]>(Array(4).fill(null));
@@ -275,13 +275,15 @@ export default function EditProductPage() {
                 <CardContent className="grid gap-6">
                   <div className="grid gap-3">
                     <Label htmlFor="category">Categoría</Label>
-                    <Select required onValueChange={(value: 'Caballeros' | 'Damas') => setCategory(value)} value={category}>
+                    <Select required onValueChange={(value: 'Caballeros' | 'Damas' | 'Novedades Caballeros' | 'Novedades Damas') => setCategory(value)} value={category}>
                       <SelectTrigger id="category" aria-label="Seleccionar categoría">
                         <SelectValue placeholder="Seleccionar categoría" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Caballeros">Caballeros</SelectItem>
                         <SelectItem value="Damas">Damas</SelectItem>
+                        <SelectItem value="Novedades Caballeros">Novedades Caballeros</SelectItem>
+                        <SelectItem value="Novedades Damas">Novedades Damas</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

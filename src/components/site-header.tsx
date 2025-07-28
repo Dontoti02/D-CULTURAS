@@ -18,9 +18,9 @@ import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 
 const navLinks = [
-  { href: '/#products', label: 'Todos' },
-  { href: '/#men', label: 'Hombres' },
-  { href: '/#women', label: 'Mujeres' },
+  { href: '/?category=all', label: 'Novedades' },
+  { href: '/?category=Caballeros', label: 'Hombres' },
+  { href: '/?category=Damas', label: 'Mujeres' },
 ];
 
 export default function SiteHeader() {

@@ -7,7 +7,7 @@ export type Product = {
   description: string;
   price: number;
   images: string[];
-  category: 'Caballeros' | 'Damas';
+  category: 'Caballeros' | 'Damas' | 'Novedades Caballeros' | 'Novedades Damas';
   sizes: ('XS' | 'S' | 'M' | 'L' | 'XL')[];
   colors: { name: string, hex: string }[];
   rating: number;

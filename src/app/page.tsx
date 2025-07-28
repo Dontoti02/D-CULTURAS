@@ -12,12 +12,14 @@ import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import PromotionsBanner from '@/components/promotions-banner';
 
+type Category = 'all' | 'Caballeros' | 'Damas' | 'Novedades Caballeros' | 'Novedades Damas';
+
 export default function Home() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   
   // State for filters
-  const [category, setCategory] = useState<'all' | 'Caballeros' | 'Damas'>('all');
+  const [category, setCategory] = useState<Category>('all');
   const [priceRange, setPriceRange] = useState<[number]>([500]);
 
   useEffect(() => {
@@ -44,7 +46,16 @@ export default function Home() {
 
   const filteredProducts = useMemo(() => {
     return allProducts.filter(product => {
-        const categoryMatch = category === 'all' || product.category === category;
+        const categoryMatch = category === 'all' || product.category === category || (category === 'Novedades Caballeros' && product.category.startsWith('Novedades')) || (category === 'Novedades Damas' && product.category.startsWith('Novedades'));
+        if (category === 'all') {
+             return product.price <= priceRange[0];
+        }
+        if (category === 'Novedades Caballeros') {
+            return (product.category === 'Novedades Caballeros' || product.category === 'Caballeros') && product.price <= priceRange[0]
+        }
+        if (category === 'Novedades Damas') {
+            return (product.category === 'Novedades Damas' || product.category === 'Damas') && product.price <= priceRange[0]
+        }
         const priceMatch = product.price <= priceRange[0];
         return categoryMatch && priceMatch;
     });

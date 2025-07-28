@@ -7,9 +7,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 
+type Category = 'all' | 'Caballeros' | 'Damas' | 'Novedades Caballeros' | 'Novedades Damas';
+
 interface ProductFiltersProps {
-  category: 'all' | 'Caballeros' | 'Damas';
-  onCategoryChange: (value: 'all' | 'Caballeros' | 'Damas') => void;
+  category: Category;
+  onCategoryChange: (value: Category) => void;
   priceRange: [number];
   onPriceChange: (value: [number]) => void;
 }
@@ -39,18 +41,26 @@ export default function ProductFilters({
       <CardContent className="grid gap-6">
         <div className="grid gap-2">
           <Label className="font-semibold">Categoría</Label>
-          <RadioGroup value={category} onValueChange={(value: 'all' | 'Caballeros' | 'Damas') => onCategoryChange(value)}>
+          <RadioGroup value={category} onValueChange={(value: Category) => onCategoryChange(value)}>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="all" id="cat-all" />
               <Label htmlFor="cat-all">Todos</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="Caballeros" id="cat-men" />
-              <Label htmlFor="cat-men">Hombres</Label>
+              <Label htmlFor="cat-men">Caballeros</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="Damas" id="cat-women" />
-              <Label htmlFor="cat-women">Mujeres</Label>
+              <Label htmlFor="cat-women">Damas</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="Novedades Caballeros" id="cat-new-men" />
+              <Label htmlFor="cat-new-men">Novedades Caballeros</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="Novedades Damas" id="cat-new-women" />
+              <Label htmlFor="cat-new-women">Novedades Damas</Label>
             </div>
           </RadioGroup>
         </div>

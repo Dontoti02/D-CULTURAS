@@ -46,7 +46,7 @@ export default function NewPromotionPage() {
     setIsUploading(true);
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'profiles_images'); // Re-using a preset, consider creating a specific one
+    formData.append('upload_preset', 'save_prendas');
     formData.append('cloud_name', 'dd7fku9br');
     formData.append('folder', 'promotions');
 

@@ -41,10 +41,10 @@ export default function SiteFooter() {
           </div>
           <div className="grid gap-2">
             <h3 className="font-semibold">Legal</h3>
-            <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
+            <Link href="/terms" className="text-sm text-muted-foreground hover:text-primary">
               Términos de Servicio
             </Link>
-            <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
+            <Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary">
               Política de Privacidad
             </Link>
           </div>

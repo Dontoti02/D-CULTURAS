@@ -38,6 +38,8 @@ export interface Order {
         color: string;
     }[];
     total: number;
+    subtotal: number;
+    discount: number;
     status: 'Procesando' | 'Enviado' | 'Entregado' | 'Cancelado' | 'Reportado';
     shippingAddress: {
         address: string;
@@ -46,15 +48,4 @@ export interface Order {
         zip: string;
     },
     createdAt: Timestamp;
-}
-
-export interface Promotion {
-  id: string;
-  customerId: string;
-  title: string;
-  description: string;
-  discount: number; // Percentage
-  code: string;
-  createdAt: Timestamp;
-  status: 'active' | 'used' | 'expired';
 }

@@ -5,16 +5,21 @@ import { useCart } from "@/context/cart-context";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCart, Percent } from "lucide-react";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 
 const SOL_TO_USD_RATE = 3.85;
+const DISCOUNT_THRESHOLD = 10; // Apply discount if 10 or more items are in the cart
+const DISCOUNT_PERCENTAGE = 0.50; // 50% discount
 
 export default function CartPage() {
     const { cartItems, removeFromCart, updateQuantity, cartCount } = useCart();
 
     const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    const applyDiscount = cartCount >= DISCOUNT_THRESHOLD;
+    const discountAmount = applyDiscount ? subtotal * DISCOUNT_PERCENTAGE : 0;
+    const total = subtotal - discountAmount;
 
     return (
         <div className="grid md:grid-cols-3 gap-8">
@@ -75,6 +80,15 @@ export default function CartPage() {
                             <span className="text-muted-foreground">Subtotal</span>
                             <span className="font-semibold">S/ {subtotal.toFixed(2)}</span>
                         </div>
+                        {applyDiscount && (
+                            <div className="flex justify-between text-destructive">
+                                <span className="flex items-center gap-1">
+                                    <Percent className="w-4 h-4" /> 
+                                    Descuento por volumen (50%)
+                                </span>
+                                <span className="font-semibold">- S/ {discountAmount.toFixed(2)}</span>
+                            </div>
+                        )}
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Envío</span>
                             <span className="font-semibold">Gratis</span>
@@ -82,10 +96,10 @@ export default function CartPage() {
                         <Separator />
                         <div className="flex justify-between font-bold text-lg">
                             <span>Total</span>
-                            <span>S/ {subtotal.toFixed(2)}</span>
+                            <span>S/ {total.toFixed(2)}</span>
                         </div>
                          <p className="text-xs text-muted-foreground text-center">
-                            aprox. ${(subtotal / SOL_TO_USD_RATE).toFixed(2)} USD
+                            aprox. ${(total / SOL_TO_USD_RATE).toFixed(2)} USD
                         </p>
                     </CardContent>
                     <CardFooter>

@@ -15,8 +15,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
-import { Loader2, CreditCard, Landmark } from 'lucide-react';
+import { Loader2, CreditCard, Landmark, Percent } from 'lucide-react';
 import Link from 'next/link';
+
+const DISCOUNT_THRESHOLD = 10; // Apply discount if 10 or more items are in the cart
+const DISCOUNT_PERCENTAGE = 0.50; // 50% discount
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -32,7 +35,9 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const total = subtotal; // Assuming free shipping for now
+  const applyDiscount = cartCount >= DISCOUNT_THRESHOLD;
+  const discountAmount = applyDiscount ? subtotal * DISCOUNT_PERCENTAGE : 0;
+  const total = subtotal - discountAmount;
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +65,8 @@ export default function CheckoutPage() {
                 size: item.size,
                 color: item.color,
             })),
+            subtotal,
+            discount: discountAmount,
             total,
             status: 'Procesando',
             shippingAddress: { address, city, department, zip },
@@ -183,6 +190,15 @@ export default function CheckoutPage() {
                     <span className="text-muted-foreground">Subtotal</span>
                     <span className="font-semibold">S/ {subtotal.toFixed(2)}</span>
                 </div>
+                 {applyDiscount && (
+                    <div className="flex justify-between text-destructive">
+                        <span className="flex items-center gap-1 text-sm">
+                            <Percent className="w-4 h-4" /> 
+                            Descuento (50%)
+                        </span>
+                        <span className="font-semibold">- S/ {discountAmount.toFixed(2)}</span>
+                    </div>
+                )}
                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Envío</span>
                     <span className="font-semibold">Gratis</span>

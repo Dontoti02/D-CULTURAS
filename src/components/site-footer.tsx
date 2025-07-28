@@ -16,34 +16,34 @@ export default function SiteFooter() {
           </div>
           <div className="grid gap-2">
             <h3 className="font-semibold">Tienda</h3>
-            <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
+            <Link href="/?category=Caballeros" className="text-sm text-muted-foreground hover:text-primary">
               Hombres
             </Link>
-            <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
+            <Link href="/?category=Damas" className="text-sm text-muted-foreground hover:text-primary">
               Mujeres
             </Link>
-            <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
+            <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
               Novedades
             </Link>
           </div>
           <div className="grid gap-2">
             <h3 className="font-semibold">Soporte</h3>
-            <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
+            <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
               Contáctanos
             </Link>
-            <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
+            <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
               Preguntas frecuentes
             </Link>
-            <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
+            <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
               Envíos y Devoluciones
             </Link>
           </div>
           <div className="grid gap-2">
             <h3 className="font-semibold">Legal</h3>
-            <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
+            <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
               Términos de Servicio
             </Link>
-            <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
+            <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
               Política de Privacidad
             </Link>
           </div>

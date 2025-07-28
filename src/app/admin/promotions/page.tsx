@@ -21,6 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
@@ -33,32 +34,54 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
-
-// Dummy data for now
-const dummyPromotions = [
-    { id: 'promo1', name: 'Cyber Wow', type: 'percentage', value: 40, status: 'active', startDate: '2024-10-20', endDate: '2024-10-27' },
-    { id: 'promo2', name: '20% Off Polos', type: 'percentage', value: 20, status: 'inactive', startDate: '2024-09-01', endDate: '2024-09-30' },
-    { id: 'promo3', name: 'Descuento Primera Compra', type: 'fixed', value: 15, status: 'active', startDate: '2024-01-01', endDate: '2024-12-31' },
-    { id: 'promo4', name: 'Liquidacion Verano', type: 'percentage', value: 50, status: 'scheduled', startDate: '2025-02-15', endDate: '2025-02-28' },
-];
+import { collection, getDocs, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Promotion } from '@/lib/types';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export default function PromotionsPage() {
-  const [promotions, setPromotions] = useState(dummyPromotions);
-  const [loading, setLoading] = useState(false);
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [promotionToDelete, setPromotionToDelete] = useState<any>(null);
+  const [promotionToDelete, setPromotionToDelete] = useState<Promotion | null>(null);
   const { toast } = useToast();
 
-  // Here you would fetch promotions from Firestore
-  // useEffect(() => {
-  //   fetchPromotions();
-  // }, []);
+  const fetchPromotions = async () => {
+    setLoading(true);
+    try {
+      const q = query(collection(db, "promotions"), orderBy("createdAt", "desc"));
+      const querySnapshot = await getDocs(q);
+      const promotionsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Promotion));
+      setPromotions(promotionsData);
+    } catch (error) {
+      console.error("Error fetching promotions: ", error);
+      toast({ title: "Error", description: "No se pudieron cargar las promociones.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleDeletePromotion = () => {
-    // Logic to delete from Firestore
-    toast({ title: "Promoción Eliminada", description: "La promoción ha sido eliminada." });
-    setPromotionToDelete(null);
-  }
+  useEffect(() => {
+    fetchPromotions();
+  }, []);
+
+  const handleDeletePromotion = async () => {
+    if (!promotionToDelete) return;
+    setIsDeleting(true);
+    try {
+        await deleteDoc(doc(db, "promotions", promotionToDelete.id));
+        toast({ title: "Promoción Eliminada", description: "La promoción ha sido eliminada correctamente." });
+        setPromotionToDelete(null);
+        await fetchPromotions(); // Refetch promotions list
+    } catch (error) {
+        console.error("Error deleting promotion: ", error);
+        toast({ title: "Error", description: "No se pudo eliminar la promoción.", variant: "destructive" });
+    } finally {
+        setIsDeleting(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -85,7 +108,7 @@ export default function PromotionsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Promociones Activas y Pasadas</CardTitle>
+          <CardTitle>Todas las Promociones</CardTitle>
           <CardDescription>
             Aquí puedes ver todas las campañas promocionales que has creado.
           </CardDescription>
@@ -94,8 +117,8 @@ export default function PromotionsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nombre de la Campaña</TableHead>
-                <TableHead>Tipo</TableHead>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Código</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead>Vigencia</TableHead>
                 <TableHead>Estado</TableHead>
@@ -108,16 +131,15 @@ export default function PromotionsPage() {
               {promotions.map((promo) => (
                 <TableRow key={promo.id}>
                   <TableCell className="font-medium">{promo.name}</TableCell>
-                  <TableCell>{promo.type === 'percentage' ? 'Porcentaje' : 'Monto Fijo'}</TableCell>
+                   <TableCell>
+                    <Badge variant="secondary">{promo.code}</Badge>
+                  </TableCell>
                   <TableCell>
                     {promo.type === 'percentage' ? `${promo.value}%` : `S/ ${promo.value.toFixed(2)}`}
                   </TableCell>
-                  <TableCell>{promo.startDate} - {promo.endDate}</TableCell>
+                  <TableCell>{format(promo.startDate.toDate(), 'P', { locale: es })} - {format(promo.endDate.toDate(), 'P', { locale: es })}</TableCell>
                   <TableCell>
-                    <Badge variant={
-                      promo.status === 'active' ? 'default' :
-                      promo.status === 'scheduled' ? 'secondary' : 'outline'
-                    } className="capitalize">{promo.status}</Badge>
+                    <Badge variant={promo.status === 'active' ? 'default' : 'outline'} className="capitalize">{promo.status}</Badge>
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -130,6 +152,7 @@ export default function PromotionsPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuItem>Editar</DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => setPromotionToDelete(promo)} className="text-destructive">
                           Eliminar
                         </DropdownMenuItem>

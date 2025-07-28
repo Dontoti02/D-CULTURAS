@@ -49,3 +49,16 @@ export interface Order {
     },
     createdAt: Timestamp;
 }
+
+export interface Promotion {
+  id: string;
+  name: string;
+  description: string;
+  type: 'percentage' | 'fixed';
+  value: number;
+  code: string;
+  startDate: Timestamp;
+  endDate: Timestamp;
+  status: 'active' | 'inactive' | 'scheduled';
+  createdAt: Timestamp;
+}

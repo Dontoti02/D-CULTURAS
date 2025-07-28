@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Loader2, ArrowLeft } from 'lucide-react';
+import { Upload, Loader2, ArrowLeft, Check } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -17,6 +17,21 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+
+const availableColors = [
+    { name: 'Negro', hex: '#000000' },
+    { name: 'Blanco', hex: '#FFFFFF' },
+    { name: 'Gris', hex: '#808080' },
+    { name: 'Rojo', hex: '#FF0000' },
+    { name: 'Azul', hex: '#0000FF' },
+    { name: 'Verde', hex: '#008000' },
+    { name: 'Amarillo', hex: '#FFFF00' },
+    { name: 'Rosa', hex: '#FFC0CB' },
+    { name: 'Naranja', hex: '#FFA500' },
+    { name: 'Morado', hex: '#800080' },
+    { name: 'Marrón', hex: '#A52A2A' },
+    { name: 'Beige', hex: '#F5F5DC' },
+];
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -33,6 +48,7 @@ export default function EditProductPage() {
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
   const [imageUrls, setImageUrls] = useState<(string | null)[]>(Array(4).fill(null));
+  const [selectedColors, setSelectedColors] = useState<{ name: string; hex: string }[]>([]);
   const [isUploading, setIsUploading] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -54,6 +70,7 @@ export default function EditProductPage() {
           setStock(productData.stock.toString());
           const images = [...productData.images, ...Array(4 - productData.images.length).fill(null)];
           setImageUrls(images);
+          setSelectedColors(productData.colors || []);
         } else {
           toast({ title: "Error", description: "Producto no encontrado.", variant: "destructive" });
           router.push('/admin/products');
@@ -67,6 +84,14 @@ export default function EditProductPage() {
     };
     fetchProduct();
   }, [id, router, toast]);
+
+  const handleColorToggle = (color: { name: string; hex: string }) => {
+    setSelectedColors((prev) =>
+      prev.find((c) => c.hex === color.hex)
+        ? prev.filter((c) => c.hex !== color.hex)
+        : [...prev, color]
+    );
+  };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = event.target.files?.[0];
@@ -121,10 +146,10 @@ export default function EditProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !description || !category || !price || !stock || imageUrls.every(url => url === null)) {
+    if (!name || !description || !category || !price || !stock || imageUrls.every(url => url === null) || selectedColors.length === 0) {
         toast({
             title: 'Campos Incompletos',
-            description: 'Por favor, rellena todos los campos y sube al menos una imagen.',
+            description: 'Por favor, rellena todos los campos, sube al menos una imagen y selecciona al menos un color.',
             variant: 'destructive',
         });
         return;
@@ -140,6 +165,7 @@ export default function EditProductPage() {
         price: parseFloat(price),
         stock: parseInt(stock, 10),
         images: imageUrls.filter((url): url is string => url !== null),
+        colors: selectedColors,
       });
       toast({
         title: 'Producto Actualizado',
@@ -239,6 +265,37 @@ export default function EditProductPage() {
               </Card>
               <Card>
                 <CardHeader>
+                  <CardTitle>Colores del Producto</CardTitle>
+                   <CardDescription>Selecciona los colores disponibles para este producto.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex flex-wrap gap-4">
+                        {availableColors.map((color) => {
+                            const isSelected = selectedColors.some((c) => c.hex === color.hex);
+                            return (
+                                <button
+                                    type="button"
+                                    key={color.hex}
+                                    onClick={() => handleColorToggle(color)}
+                                    className={cn(
+                                        'relative h-10 w-10 rounded-full border-2 transition-all',
+                                        isSelected ? 'ring-2 ring-primary ring-offset-2' : 'border-muted'
+                                    )}
+                                    style={{ backgroundColor: color.hex }}
+                                >
+                                    {isSelected && (
+                                        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/30">
+                                            <Check className="h-5 w-5 text-white" />
+                                        </div>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
                   <CardTitle>Imágenes del Producto</CardTitle>
                   <CardDescription>Sube hasta 4 imágenes para tu producto. Debes seleccionar una categoría primero.</CardDescription>
                 </CardHeader>
@@ -310,3 +367,5 @@ export default function EditProductPage() {
     </form>
   );
 }
+
+    

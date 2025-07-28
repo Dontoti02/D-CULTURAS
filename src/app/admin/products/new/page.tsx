@@ -8,13 +8,28 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Loader2 } from 'lucide-react';
+import { Upload, Loader2, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+
+const availableColors = [
+    { name: 'Negro', hex: '#000000' },
+    { name: 'Blanco', hex: '#FFFFFF' },
+    { name: 'Gris', hex: '#808080' },
+    { name: 'Rojo', hex: '#FF0000' },
+    { name: 'Azul', hex: '#0000FF' },
+    { name: 'Verde', hex: '#008000' },
+    { name: 'Amarillo', hex: '#FFFF00' },
+    { name: 'Rosa', hex: '#FFC0CB' },
+    { name: 'Naranja', hex: '#FFA500' },
+    { name: 'Morado', hex: '#800080' },
+    { name: 'Marrón', hex: '#A52A2A' },
+    { name: 'Beige', hex: '#F5F5DC' },
+];
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -25,8 +40,17 @@ export default function NewProductPage() {
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
   const [imageUrls, setImageUrls] = useState<(string | null)[]>(Array(4).fill(null));
+  const [selectedColors, setSelectedColors] = useState<{ name: string; hex: string }[]>([]);
   const [isUploading, setIsUploading] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleColorToggle = (color: { name: string; hex: string }) => {
+    setSelectedColors((prev) =>
+      prev.find((c) => c.hex === color.hex)
+        ? prev.filter((c) => c.hex !== color.hex)
+        : [...prev, color]
+    );
+  };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = event.target.files?.[0];
@@ -81,10 +105,10 @@ export default function NewProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !description || !category || !price || !stock || imageUrls.every(url => url === null)) {
+    if (!name || !description || !category || !price || !stock || imageUrls.every(url => url === null) || selectedColors.length === 0) {
         toast({
             title: 'Campos Incompletos',
-            description: 'Por favor, rellena todos los campos y sube al menos una imagen.',
+            description: 'Por favor, rellena todos los campos, sube al menos una imagen y selecciona al menos un color.',
             variant: 'destructive',
         });
         return;
@@ -100,7 +124,7 @@ export default function NewProductPage() {
         stock: parseInt(stock, 10),
         images: imageUrls.filter((url): url is string => url !== null),
         sizes: ['S', 'M', 'L', 'XL'],
-        colors: [{ name: 'Default', hex: '#000000' }],
+        colors: selectedColors,
         rating: 0,
         createdAt: serverTimestamp(),
       });
@@ -171,6 +195,37 @@ export default function NewProductPage() {
                       onChange={(e) => setDescription(e.target.value)}
                     />
                   </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Colores del Producto</CardTitle>
+                   <CardDescription>Selecciona los colores disponibles para este producto.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex flex-wrap gap-4">
+                        {availableColors.map((color) => {
+                            const isSelected = selectedColors.some((c) => c.hex === color.hex);
+                            return (
+                                <button
+                                    type="button"
+                                    key={color.hex}
+                                    onClick={() => handleColorToggle(color)}
+                                    className={cn(
+                                        'relative h-10 w-10 rounded-full border-2 transition-all',
+                                        isSelected ? 'ring-2 ring-primary ring-offset-2' : 'border-muted'
+                                    )}
+                                    style={{ backgroundColor: color.hex }}
+                                >
+                                    {isSelected && (
+                                        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/30">
+                                            <Check className="h-5 w-5 text-white" />
+                                        </div>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </CardContent>
               </Card>
               <Card>
@@ -246,3 +301,5 @@ export default function NewProductPage() {
     </form>
   );
 }
+
+    

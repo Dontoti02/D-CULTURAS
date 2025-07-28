@@ -18,6 +18,7 @@ import { Customer, Order } from '@/lib/types';
 import { format } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useRouter } from 'next/navigation';
 
 interface EnrichedOrder extends Order {
   customerDetails?: Pick<Customer, 'firstName' | 'lastName' | 'photoURL'>;
@@ -26,6 +27,7 @@ interface EnrichedOrder extends Order {
 export default function OrdersPage() {
     const [orders, setOrders] = useState<EnrichedOrder[]>([]);
     const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
     useEffect(() => {
         const fetchOrdersAndCustomers = async () => {
@@ -68,6 +70,10 @@ export default function OrdersPage() {
         fetchOrdersAndCustomers();
     }, []);
 
+    const handleRowClick = (orderId: string) => {
+        router.push(`/admin/orders/${orderId}`);
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-full">
@@ -94,15 +100,15 @@ export default function OrdersPage() {
                     </TableHeader>
                     <TableBody>
                         {orders.map((order) => (
-                            <TableRow key={order.id}>
+                            <TableRow key={order.id} onClick={() => handleRowClick(order.id)} className="cursor-pointer">
                                 <TableCell className="font-mono text-xs">#{order.id.substring(0, 7)}...</TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-9 w-9">
                                             <AvatarImage src={order.customerDetails?.photoURL} alt="Avatar" />
                                             <AvatarFallback>
-                                                {order.customerDetails?.firstName.charAt(0)}
-                                                {order.customerDetails?.lastName.charAt(0)}
+                                                {order.customerDetails?.firstName?.charAt(0)}
+                                                {order.customerDetails?.lastName?.charAt(0)}
                                             </AvatarFallback>
                                         </Avatar>
                                         <div className="grid gap-0.5">

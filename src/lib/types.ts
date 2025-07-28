@@ -37,7 +37,7 @@ export interface Order {
         color: string;
     }[];
     total: number;
-    status: 'Procesando' | 'Enviado' | 'Entregado' | 'Cancelado';
+    status: 'Procesando' | 'Enviado' | 'Entregado' | 'Cancelado' | 'Reportado';
     shippingAddress: {
         address: string;
         city: string;

@@ -5,21 +5,37 @@ import { useCart } from "@/context/cart-context";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { Minus, Plus, Trash2, ShoppingCart, Percent } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCart, Percent, Loader2, XCircle, Tag } from "lucide-react";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const SOL_TO_USD_RATE = 3.85;
-const DISCOUNT_THRESHOLD = 10; // Apply discount if 10 or more items are in the cart
-const DISCOUNT_PERCENTAGE = 0.50; // 50% discount
 
 export default function CartPage() {
-    const { cartItems, removeFromCart, updateQuantity, cartCount } = useCart();
+    const { 
+        cartItems, 
+        removeFromCart, 
+        updateQuantity, 
+        cartCount,
+        subtotal,
+        total,
+        applyCoupon,
+        removeCoupon,
+        appliedCoupon,
+        couponError,
+        couponDiscount,
+        loadingCoupon
+    } = useCart();
 
-    const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-    const applyDiscount = cartCount >= DISCOUNT_THRESHOLD;
-    const discountAmount = applyDiscount ? subtotal * DISCOUNT_PERCENTAGE : 0;
-    const total = subtotal - discountAmount;
+    const [couponCode, setCouponCode] = useState('');
+
+    const handleApplyCoupon = async () => {
+        if (!couponCode.trim()) return;
+        await applyCoupon(couponCode.toUpperCase());
+    };
 
     return (
         <div className="grid md:grid-cols-3 gap-8">
@@ -76,17 +92,49 @@ export default function CartPage() {
                         <CardTitle>Resumen del Pedido</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                             {!appliedCoupon && (
+                                <div className="flex items-center gap-2">
+                                    <Input 
+                                        placeholder="Código de cupón" 
+                                        value={couponCode}
+                                        onChange={(e) => setCouponCode(e.target.value)}
+                                        disabled={loadingCoupon}
+                                    />
+                                    <Button onClick={handleApplyCoupon} disabled={loadingCoupon}>
+                                        {loadingCoupon ? <Loader2 className="animate-spin"/> : "Aplicar"}
+                                    </Button>
+                                </div>
+                             )}
+                             {couponError && (
+                                <Alert variant="destructive" className="p-2 text-xs">
+                                    <AlertDescription>{couponError}</AlertDescription>
+                                </Alert>
+                             )}
+                             {appliedCoupon && (
+                                <div className="flex justify-between items-center bg-muted p-2 rounded-md">
+                                    <p className="text-sm font-medium text-primary flex items-center gap-1.5">
+                                        <Tag className="w-4 h-4"/> Cupón aplicado: 
+                                        <span className="font-bold">{appliedCoupon.code}</span>
+                                    </p>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={removeCoupon}>
+                                        <XCircle className="w-4 h-4 text-muted-foreground" />
+                                    </Button>
+                                </div>
+                             )}
+                        </div>
+                        <Separator />
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Subtotal</span>
                             <span className="font-semibold">S/ {subtotal.toFixed(2)}</span>
                         </div>
-                        {applyDiscount && (
+                        {couponDiscount > 0 && (
                             <div className="flex justify-between text-destructive">
                                 <span className="flex items-center gap-1">
                                     <Percent className="w-4 h-4" /> 
-                                    Descuento por volumen (50%)
+                                    Descuento por cupón
                                 </span>
-                                <span className="font-semibold">- S/ {discountAmount.toFixed(2)}</span>
+                                <span className="font-semibold">- S/ {couponDiscount.toFixed(2)}</span>
                             </div>
                         )}
                         <div className="flex justify-between">

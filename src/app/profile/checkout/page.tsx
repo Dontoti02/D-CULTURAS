@@ -18,14 +18,11 @@ import Image from 'next/image';
 import { Loader2, CreditCard, Landmark, Percent } from 'lucide-react';
 import Link from 'next/link';
 
-const DISCOUNT_THRESHOLD = 10; // Apply discount if 10 or more items are in the cart
-const DISCOUNT_PERCENTAGE = 0.50; // 50% discount
-
 export default function CheckoutPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
-  const { cartItems, cartCount, clearCart } = useCart();
+  const { cartItems, clearCart, subtotal, total, appliedCoupon, couponDiscount } = useCart();
   
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
@@ -33,11 +30,6 @@ export default function CheckoutPage() {
   const [zip, setZip] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const applyDiscount = cartCount >= DISCOUNT_THRESHOLD;
-  const discountAmount = applyDiscount ? subtotal * DISCOUNT_PERCENTAGE : 0;
-  const total = subtotal - discountAmount;
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +58,8 @@ export default function CheckoutPage() {
                 color: item.color,
             })),
             subtotal,
-            discount: discountAmount,
+            couponCode: appliedCoupon?.code || null,
+            couponDiscount: couponDiscount,
             total,
             status: 'Procesando',
             shippingAddress: { address, city, department, zip },
@@ -190,13 +183,13 @@ export default function CheckoutPage() {
                     <span className="text-muted-foreground">Subtotal</span>
                     <span className="font-semibold">S/ {subtotal.toFixed(2)}</span>
                 </div>
-                 {applyDiscount && (
+                 {couponDiscount > 0 && (
                     <div className="flex justify-between text-destructive">
                         <span className="flex items-center gap-1 text-sm">
                             <Percent className="w-4 h-4" /> 
-                            Descuento (50%)
+                            Descuento ({appliedCoupon?.code})
                         </span>
-                        <span className="font-semibold">- S/ {discountAmount.toFixed(2)}</span>
+                        <span className="font-semibold">- S/ {couponDiscount.toFixed(2)}</span>
                     </div>
                 )}
                  <div className="flex justify-between">

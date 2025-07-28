@@ -39,7 +39,8 @@ export interface Order {
     }[];
     total: number;
     subtotal: number;
-    discount: number;
+    couponDiscount: number;
+    couponCode: string | null;
     status: 'Procesando' | 'Enviado' | 'Entregado' | 'Cancelado' | 'Reportado';
     shippingAddress: {
         address: string;

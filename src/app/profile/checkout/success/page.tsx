@@ -10,7 +10,7 @@ import { Order } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle, Loader2, Percent } from 'lucide-react';
+import { CheckCircle, Loader2, Percent, Tag } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -125,13 +125,13 @@ function SuccessPageContent() {
                         <span className="text-muted-foreground">Subtotal</span>
                         <span className="font-semibold">S/ {order.subtotal.toFixed(2)}</span>
                     </div>
-                    {order.discount > 0 && (
+                    {order.couponDiscount > 0 && (
                          <div className="flex justify-between text-destructive">
                             <span className="flex items-center gap-1 text-sm">
-                                <Percent className="w-4 h-4" /> 
-                                Descuento (50%)
+                                <Tag className="w-4 h-4" /> 
+                                Descuento ({order.couponCode})
                             </span>
-                            <span className="font-semibold">- S/ {order.discount.toFixed(2)}</span>
+                            <span className="font-semibold">- S/ {order.couponDiscount.toFixed(2)}</span>
                         </div>
                     )}
                      <div className="flex justify-between">

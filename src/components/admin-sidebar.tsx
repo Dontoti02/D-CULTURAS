@@ -125,7 +125,7 @@ export default function AdminSidebar() {
           >
             <path d="M12 2l-7 5 7 5 7-5-7-5zM2 12l7 5 7-5M2 17l7 5 7-5" />
           </svg>
-          <span className="font-bold">stylesUP!</span>
+          <span className="font-bold">StylesUP!</span>
         </Link>
       </div>
 

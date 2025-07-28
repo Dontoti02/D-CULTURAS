@@ -11,7 +11,7 @@ import { CartProvider } from '@/context/cart-context';
 import { AuthProvider } from '@/hooks/use-auth';
 
 // export const metadata: Metadata = {
-//   title: 'stylesUP!',
+//   title: 'StylesUP!',
 //   description: 'Ropa moderna para hombre y mujer.',
 // };
 
@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
-        <title>stylesUP!</title>
+        <title>StylesUP!</title>
         <meta name="description" content="Ropa moderna para hombre y mujer." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

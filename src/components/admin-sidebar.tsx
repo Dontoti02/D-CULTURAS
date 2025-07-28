@@ -55,6 +55,7 @@ const navLinks = [
   },
   { href: '/admin/orders', label: 'Pedidos', icon: ShoppingCart },
   { href: '/admin/customers', label: 'Clientes', icon: Users },
+  { href: '/admin/promotions', label: 'Promociones', icon: Award },
 ];
 
 interface AdminData {

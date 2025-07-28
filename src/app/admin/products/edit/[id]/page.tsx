@@ -31,6 +31,12 @@ const availableColors = [
     { name: 'Morado', hex: '#800080' },
     { name: 'Marrón', hex: '#A52A2A' },
     { name: 'Beige', hex: '#F5F5DC' },
+    { name: 'Azul Marino', hex: '#000080' },
+    { name: 'Verde Oliva', hex: '#808000' },
+    { name: 'Cian', hex: '#00FFFF' },
+    { name: 'Magenta', hex: '#FF00FF' },
+    { name: 'Plata', hex: '#C0C0C0' },
+    { name: 'Dorado', hex: '#FFD700' },
 ];
 
 export default function EditProductPage() {

@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Promotion } from '@/lib/types';
 import {
@@ -24,17 +24,21 @@ export default function PromotionsBanner() {
   useEffect(() => {
     const fetchPromotions = async () => {
       try {
-        const now = Timestamp.now();
         const q = query(
           collection(db, 'promotions'),
           where('status', '==', 'active'),
-          where('startDate', '<=', now)
+          orderBy('createdAt', 'desc')
         );
         
         const querySnapshot = await getDocs(q);
+        const now = new Date();
         const promotionsData = querySnapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() } as Promotion))
-          .filter(promo => promo.endDate.toDate() >= now.toDate());
+          .filter(promo => {
+              const startDate = promo.startDate.toDate();
+              const endDate = promo.endDate.toDate();
+              return startDate <= now && endDate >= now;
+          });
 
         setPromotions(promotionsData);
       } catch (error) {

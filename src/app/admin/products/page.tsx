@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Product } from '@/lib/types';
 import Image from 'next/image';
-import { MoreHorizontal, PlusCircle, Loader2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Loader2, Upload } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,8 +24,8 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import React, { useEffect, useState, useRef } from 'react';
+import { collection, getDocs, deleteDoc, doc, addDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import {
   AlertDialog,
@@ -38,13 +38,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
+import * as XLSX from 'xlsx';
 
 export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const [productToDelete, setProductToDelete] = useState<Product | null>(null);
     const { toast } = useToast();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const fetchProducts = async () => {
       setLoading(true);
@@ -63,7 +66,7 @@ export default function ProductsPage() {
     useEffect(() => {
       fetchProducts();
     }, []);
-
+    
     const handleDeleteProduct = async () => {
         if (!productToDelete) return;
         setIsDeleting(true);
@@ -71,7 +74,6 @@ export default function ProductsPage() {
             await deleteDoc(doc(db, "products", productToDelete.id));
             toast({ title: "Producto Eliminado", description: `El producto "${productToDelete.name}" ha sido eliminado.` });
             setProductToDelete(null);
-            // Refetch products after deletion
             await fetchProducts();
         } catch (error) {
             console.error("Error deleting product: ", error);
@@ -80,6 +82,72 @@ export default function ProductsPage() {
             setIsDeleting(false);
         }
     };
+
+    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const data = new Uint8Array(e.target?.result as ArrayBuffer);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const json = XLSX.utils.sheet_to_json(worksheet);
+
+                if (json.length === 0) {
+                    toast({ title: "Archivo Vacío", description: "El archivo de Excel no contiene filas.", variant: "destructive" });
+                    return;
+                }
+
+                const batch = writeBatch(db);
+                let productsAdded = 0;
+
+                json.forEach((row: any) => {
+                    if (!row.name || !row.price || !row.stock || !row.category) {
+                        console.warn("Fila omitida por datos faltantes:", row);
+                        return; // Omitir filas sin datos esenciales
+                    }
+                    const newProductRef = doc(collection(db, 'products'));
+                    const newProduct: Omit<Product, 'id'> = {
+                        name: row.name,
+                        description: row.description || '',
+                        price: parseFloat(row.price),
+                        stock: parseInt(row.stock, 10),
+                        category: row.category,
+                        images: [], // Las imágenes se suben después
+                        sizes: row.sizes ? (row.sizes as string).split(',').map(s => s.trim() as any) : ['S', 'M', 'L'],
+                        colors: row.colors ? (row.colors as string).split(',').map(c => {
+                            const [name, hex] = c.split(':');
+                            return { name: name.trim(), hex: hex.trim() };
+                        }) : [],
+                        rating: 0,
+                        createdAt: serverTimestamp() as any,
+                    };
+                    batch.set(newProductRef, newProduct);
+                    productsAdded++;
+                });
+
+                await batch.commit();
+                toast({
+                    title: "Importación Exitosa",
+                    description: `Se han agregado ${productsAdded} productos nuevos.`,
+                });
+                await fetchProducts(); // Refrescar la lista de productos
+            } catch (error) {
+                console.error("Error al procesar el archivo Excel: ", error);
+                toast({ title: "Error de Importación", description: "Hubo un problema al leer o guardar los datos del archivo.", variant: "destructive" });
+            } finally {
+                setIsUploading(false);
+                // Reset file input
+                if(fileInputRef.current) fileInputRef.current.value = "";
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    };
+
 
     if (loading) {
       return (
@@ -94,12 +162,25 @@ export default function ProductsPage() {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Productos</CardTitle>
-                    <Link href="/admin/products/new">
-                        <Button size="sm" className="gap-1">
-                            <PlusCircle className="h-4 w-4" />
-                            Agregar Producto
+                    <div className="flex items-center gap-2">
+                         <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileUpload}
+                            className="hidden"
+                            accept=".xlsx, .xls"
+                        />
+                        <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                            Importar desde Excel
                         </Button>
-                    </Link>
+                        <Button asChild size="sm" className="gap-1">
+                            <Link href="/admin/products/new">
+                                <PlusCircle className="h-4 w-4" />
+                                Agregar Producto
+                            </Link>
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -122,14 +203,20 @@ export default function ProductsPage() {
                             {products.map((product) => (
                                 <TableRow key={product.id}>
                                     <TableCell className="hidden sm:table-cell">
-                                        <Image
-                                            alt={product.name}
-                                            className="aspect-square rounded-md object-cover"
-                                            height="64"
-                                            src={product.images[0]}
-                                            width="64"
-                                            data-ai-hint="imagen producto"
-                                        />
+                                        {product.images && product.images.length > 0 ? (
+                                            <Image
+                                                alt={product.name}
+                                                className="aspect-square rounded-md object-cover"
+                                                height="64"
+                                                src={product.images[0]}
+                                                width="64"
+                                                data-ai-hint="imagen producto"
+                                            />
+                                        ) : (
+                                            <div className="aspect-square w-16 h-16 bg-muted rounded-md flex items-center justify-center">
+                                                <span className="text-xs text-muted-foreground">Sin img.</span>
+                                            </div>
+                                        )}
                                     </TableCell>
                                     <TableCell className="font-medium">{product.name}</TableCell>
                                     <TableCell>
@@ -185,3 +272,5 @@ export default function ProductsPage() {
         </>
     )
 }
+
+      

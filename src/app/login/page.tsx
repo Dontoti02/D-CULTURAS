@@ -9,10 +9,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,6 +23,40 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+
+
+  const handlePasswordReset = async () => {
+    if (!resetEmail) {
+        toast({ title: "Correo requerido", description: "Por favor, ingresa tu correo electrónico.", variant: "destructive" });
+        return;
+    }
+    setIsResetting(true);
+    try {
+        await sendPasswordResetEmail(auth, resetEmail);
+        toast({
+            title: "Correo Enviado",
+            description: "Se ha enviado un enlace para restablecer tu contraseña a tu correo.",
+        });
+        setIsResetDialogOpen(false);
+        setResetEmail('');
+    } catch (error: any) {
+        console.error("Error al restablecer la contraseña:", error);
+        let description = "Ocurrió un error. Inténtalo de nuevo.";
+        if (error.code === 'auth/user-not-found') {
+            description = "No se encontró ninguna cuenta con este correo electrónico.";
+        }
+        toast({
+            title: "Error",
+            description,
+            variant: "destructive",
+        });
+    } finally {
+        setIsResetting(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +145,41 @@ export default function LoginPage() {
               />
             </div>
             <div className="grid gap-2 text-left">
-              <Label htmlFor="password">Contraseña</Label>
+                <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Contraseña</Label>
+                     <AlertDialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="link" type="button" className="p-0 h-auto text-xs">
+                                ¿Olvidaste tu contraseña?
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Restablecer Contraseña</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Ingresa tu correo electrónico y te enviaremos un enlace para que puedas restablecer tu contraseña.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <div className="grid gap-2">
+                                <Label htmlFor="reset-email" className="sr-only">Correo electrónico</Label>
+                                <Input
+                                    id="reset-email"
+                                    type="email"
+                                    placeholder="tu@email.com"
+                                    value={resetEmail}
+                                    onChange={(e) => setResetEmail(e.target.value)}
+                                    disabled={isResetting}
+                                />
+                            </div>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel disabled={isResetting}>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={handlePasswordReset} disabled={isResetting}>
+                                     {isResetting ? <Loader2 className="animate-spin" /> : 'Enviar Enlace'}
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
               <div className="relative">
                 <Input
                   id="password"

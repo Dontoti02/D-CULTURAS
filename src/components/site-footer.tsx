@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 
 export default function SiteFooter() {
@@ -31,10 +32,10 @@ export default function SiteFooter() {
             <Link href="/contact" className="text-sm text-muted-foreground hover:text-primary">
               Contáctanos
             </Link>
-            <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
+            <Link href="/faq" className="text-sm text-muted-foreground hover:text-primary">
               Preguntas frecuentes
             </Link>
-            <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
+            <Link href="/shipping" className="text-sm text-muted-foreground hover:text-primary">
               Envíos y Devoluciones
             </Link>
           </div>

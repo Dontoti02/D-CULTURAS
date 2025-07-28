@@ -28,7 +28,7 @@ export default function SiteFooter() {
           </div>
           <div className="grid gap-2">
             <h3 className="font-semibold">Soporte</h3>
-            <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
+            <Link href="/contact" className="text-sm text-muted-foreground hover:text-primary">
               Contáctanos
             </Link>
             <Link href="/" className="text-sm text-muted-foreground hover:text-primary">

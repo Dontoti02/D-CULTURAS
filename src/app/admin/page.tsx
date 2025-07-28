@@ -7,11 +7,13 @@ import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore
 import { db } from '@/lib/firebase';
 import { DollarSign, Package, Users } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Order } from '@/lib/types';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Customer, Order } from '@/lib/types';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   LineChart,
   Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -19,7 +21,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { format, startOfWeek, startOfMonth, subDays } from 'date-fns';
+import { format, startOfWeek, startOfMonth, subDays, subMonths } from 'date-fns';
 
 interface DashboardStats {
   totalSales: number;
@@ -29,14 +31,16 @@ interface DashboardStats {
 
 interface ChartData {
   date: string;
-  Ventas: number;
+  [key: string]: number | string;
 }
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [deliveredOrders, setDeliveredOrders] = useState<Order[]>([]);
+  const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState<'daily' | 'weekly' | 'monthly'>('monthly');
+  const [salesTimeRange, setSalesTimeRange] = useState<'daily' | 'weekly' | 'monthly'>('monthly');
+  const [customerTimeRange, setCustomerTimeRange] = useState<'weekly' | 'monthly'>('monthly');
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -55,9 +59,12 @@ export default function AdminDashboard() {
         const ordersSnapshot = await getDocs(collection(db, 'orders'));
         const totalOrders = ordersSnapshot.size;
         
-        // 3. Fetch total customers
+        // 3. Fetch total customers & all customers for chart
         const customersSnapshot = await getDocs(collection(db, 'customers'));
         const totalCustomers = customersSnapshot.size;
+        const customersData = customersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer));
+        setAllCustomers(customersData);
+
 
         setStats({
           totalSales,
@@ -83,7 +90,7 @@ export default function AdminDashboard() {
     let formatStr: string;
     let aggregationUnit: 'day' | 'week' | 'month';
 
-    switch (timeRange) {
+    switch (salesTimeRange) {
         case 'daily':
             startDate = subDays(now, 30);
             formatStr = 'dd MMM';
@@ -113,7 +120,7 @@ export default function AdminDashboard() {
         if (aggregationUnit === 'day') {
              key = format(date, 'yyyy-MM-dd');
         } else if (aggregationUnit === 'week') {
-            key = format(startOfWeek(date), 'yyyy-MM-dd');
+            key = format(startOfWeek(date, { weekStartsOn: 1 }), 'yyyy-MM-dd');
         } else { // month
             key = format(startOfMonth(date), 'yyyy-MM-dd');
         }
@@ -131,11 +138,63 @@ export default function AdminDashboard() {
         }))
         .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  }, [deliveredOrders, timeRange]);
+  }, [deliveredOrders, salesTimeRange]);
+
+  const newCustomersChartData = useMemo(() => {
+    if (!allCustomers.length) return [];
+
+    const now = new Date();
+    let startDate: Date;
+    let formatStr: string;
+    let aggregationUnit: 'week' | 'month';
+
+    switch (customerTimeRange) {
+      case 'weekly':
+        startDate = subDays(now, 90); // Last 90 days for weekly view
+        formatStr = 'dd MMM';
+        aggregationUnit = 'week';
+        break;
+      case 'monthly':
+      default:
+        startDate = subMonths(now, 12); // Last 12 months for monthly view
+        formatStr = 'MMM yy';
+        aggregationUnit = 'month';
+        break;
+    }
+
+    const filteredCustomers = allCustomers.filter(customer => customer.createdAt?.toDate() >= startDate);
+    
+    const aggregatedData: { [key: string]: number } = {};
+
+    filteredCustomers.forEach(customer => {
+      if (!customer.createdAt) return;
+      const date = customer.createdAt.toDate();
+      let key: string;
+
+      if (aggregationUnit === 'week') {
+        key = format(startOfWeek(date, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+      } else { // month
+        key = format(startOfMonth(date), 'yyyy-MM-dd');
+      }
+
+      if (!aggregatedData[key]) {
+        aggregatedData[key] = 0;
+      }
+      aggregatedData[key]++;
+    });
+
+    return Object.entries(aggregatedData)
+      .map(([dateKey, total]) => ({
+        date: format(new Date(dateKey), formatStr),
+        Clientes: total,
+      }))
+      .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      
+  }, [allCustomers, customerTimeRange]);
 
   const renderLoadingState = () => (
-    <div>
-        <h1 className="text-3xl font-bold mb-6">Panel de Administración</h1>
+    <div className="space-y-6">
+        <h1 className="text-3xl font-bold">Panel de Administración</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -227,45 +286,81 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+              <div className='flex justify-between items-start'>
+                  <div>
+                      <CardTitle>Resumen de Ventas</CardTitle>
+                      <CardDescription>
+                          Un resumen de las ventas brutas de tu tienda.
+                      </CardDescription>
+                  </div>
+                  <Tabs value={salesTimeRange} onValueChange={(value) => setSalesTimeRange(value as any)}>
+                      <TabsList className="text-xs">
+                          <TabsTrigger value="daily">Diario</TabsTrigger>
+                          <TabsTrigger value="weekly">Semanal</TabsTrigger>
+                          <TabsTrigger value="monthly">Mensual</TabsTrigger>
+                      </TabsList>
+                  </Tabs>
+              </div>
+          </CardHeader>
+          <CardContent className="h-[350px] w-full pt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                      data={salesChartData}
+                      margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+                  >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" fontSize={12} />
+                      <YAxis tickFormatter={(value) => `S/${value}`} fontSize={12} />
+                      <Tooltip
+                          contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+                          formatter={(value: number) => [`S/ ${value.toFixed(2)}`, 'Ventas']}
+                      />
+                      <Legend />
+                      <Line type="monotone" dataKey="Ventas" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} dot={false} />
+                  </LineChart>
+              </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-       <Card>
-        <CardHeader>
-            <div className='flex justify-between items-start'>
-                <div>
-                    <CardTitle>Resumen de Ventas</CardTitle>
-                    <CardDescription>
-                        Un resumen de las ventas brutas de tu tienda.
-                    </CardDescription>
-                </div>
-                <Tabs value={timeRange} onValueChange={(value) => setTimeRange(value as any)}>
-                    <TabsList>
-                        <TabsTrigger value="daily">Diario</TabsTrigger>
-                        <TabsTrigger value="weekly">Semanal</TabsTrigger>
-                        <TabsTrigger value="monthly">Mensual</TabsTrigger>
-                    </TabsList>
-                </Tabs>
-            </div>
-        </CardHeader>
-        <CardContent className="h-[350px] w-full pt-4">
-             <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                    data={salesChartData}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
+        <Card>
+          <CardHeader>
+              <div className='flex justify-between items-start'>
+                  <div>
+                      <CardTitle>Nuevos Clientes</CardTitle>
+                      <CardDescription>
+                          Un resumen de los nuevos clientes registrados.
+                      </CardDescription>
+                  </div>
+                  <Tabs value={customerTimeRange} onValueChange={(value) => setCustomerTimeRange(value as any)}>
+                      <TabsList className="text-xs">
+                          <TabsTrigger value="weekly">Semanal</TabsTrigger>
+                          <TabsTrigger value="monthly">Mensual</TabsTrigger>
+                      </TabsList>
+                  </Tabs>
+              </div>
+          </CardHeader>
+          <CardContent className="h-[350px] w-full pt-4">
+            <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={newCustomersChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis tickFormatter={(value) => `S/ ${value}`} />
+                    <XAxis dataKey="date" fontSize={12} />
+                    <YAxis allowDecimals={false} fontSize={12} />
                     <Tooltip
                         contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
-                        formatter={(value: number) => [`S/ ${value.toFixed(2)}`, 'Ventas']}
+                        formatter={(value: number) => [value, 'Nuevos Clientes']}
                     />
                     <Legend />
-                    <Line type="monotone" dataKey="Ventas" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />
-                </LineChart>
+                    <Bar dataKey="Clientes" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
             </ResponsiveContainer>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
 
+    

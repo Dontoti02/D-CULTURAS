@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Loader2, ArrowLeft, Check } from 'lucide-react';
+import { Upload, Loader2, ArrowLeft, Plus, X } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -17,27 +17,8 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-
-const availableColors = [
-    { name: 'Negro', hex: '#000000' },
-    { name: 'Blanco', hex: '#FFFFFF' },
-    { name: 'Gris', hex: '#808080' },
-    { name: 'Rojo', hex: '#FF0000' },
-    { name: 'Azul', hex: '#0000FF' },
-    { name: 'Verde', hex: '#008000' },
-    { name: 'Amarillo', hex: '#FFFF00' },
-    { name: 'Rosa', hex: '#FFC0CB' },
-    { name: 'Naranja', hex: '#FFA500' },
-    { name: 'Morado', hex: '#800080' },
-    { name: 'Marrón', hex: '#A52A2A' },
-    { name: 'Beige', hex: '#F5F5DC' },
-    { name: 'Azul Marino', hex: '#000080' },
-    { name: 'Verde Oliva', hex: '#808000' },
-    { name: 'Cian', hex: '#00FFFF' },
-    { name: 'Magenta', hex: '#FF00FF' },
-    { name: 'Plata', hex: '#C0C0C0' },
-    { name: 'Dorado', hex: '#FFD700' },
-];
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ChromePicker, ColorResult } from 'react-color';
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -57,6 +38,12 @@ export default function EditProductPage() {
   const [selectedColors, setSelectedColors] = useState<{ name: string; hex: string }[]>([]);
   const [isUploading, setIsUploading] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // State for the color picker
+  const [newColorHex, setNewColorHex] = useState('#000000');
+  const [newColorName, setNewColorName] = useState('');
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+
 
   useEffect(() => {
     if (!id) return;
@@ -91,13 +78,25 @@ export default function EditProductPage() {
     fetchProduct();
   }, [id, router, toast]);
 
-  const handleColorToggle = (color: { name: string; hex: string }) => {
-    setSelectedColors((prev) =>
-      prev.find((c) => c.hex === color.hex)
-        ? prev.filter((c) => c.hex !== color.hex)
-        : [...prev, color]
-    );
+  const handleAddColor = () => {
+    if (!newColorName.trim()) {
+        toast({ title: 'Error', description: 'Por favor, ingresa un nombre para el color.', variant: 'destructive' });
+        return;
+    }
+    if (selectedColors.some(c => c.name.toLowerCase() === newColorName.toLowerCase() || c.hex === newColorHex)) {
+         toast({ title: 'Error', description: 'El nombre o el valor del color ya existen.', variant: 'destructive' });
+        return;
+    }
+    setSelectedColors([...selectedColors, { name: newColorName, hex: newColorHex }]);
+    setNewColorName('');
+    setNewColorHex('#000000');
+    setIsColorPickerOpen(false);
   };
+
+  const handleRemoveColor = (hex: string) => {
+    setSelectedColors(selectedColors.filter(c => c.hex !== hex));
+  };
+
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = event.target.files?.[0];
@@ -272,32 +271,36 @@ export default function EditProductPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Colores del Producto</CardTitle>
-                   <CardDescription>Selecciona los colores disponibles para este producto.</CardDescription>
+                   <CardDescription>Añade o modifica los colores disponibles para este producto.</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                     <div className="flex flex-wrap gap-4">
-                        {availableColors.map((color) => {
-                            const isSelected = selectedColors.some((c) => c.hex === color.hex);
-                            return (
-                                <button
-                                    type="button"
-                                    key={color.hex}
-                                    onClick={() => handleColorToggle(color)}
-                                    className={cn(
-                                        'relative h-10 w-10 rounded-full border-2 transition-all',
-                                        isSelected ? 'ring-2 ring-primary ring-offset-2' : 'border-muted'
-                                    )}
-                                    style={{ backgroundColor: color.hex }}
-                                >
-                                    {isSelected && (
-                                        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/30">
-                                            <Check className="h-5 w-5 text-white" />
-                                        </div>
-                                    )}
-                                </button>
-                            );
-                        })}
+                        {selectedColors.map((color) => (
+                            <div key={color.hex} className="flex items-center gap-2 border rounded-md p-2">
+                                <div className="h-6 w-6 rounded-full border" style={{ backgroundColor: color.hex }} />
+                                <span className="text-sm font-medium">{color.name}</span>
+                                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveColor(color.hex)}>
+                                    <X className="h-4 w-4"/>
+                                </Button>
+                            </div>
+                        ))}
                     </div>
+                    <Popover open={isColorPickerOpen} onOpenChange={setIsColorPickerOpen}>
+                        <PopoverTrigger asChild>
+                            <Button type="button" variant="outline">
+                                <Plus className="mr-2 h-4 w-4"/>
+                                Añadir Color
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-4 space-y-4">
+                            <ChromePicker color={newColorHex} onChangeComplete={(color: ColorResult) => setNewColorHex(color.hex)} />
+                            <div className="grid gap-2">
+                                <Label htmlFor="color-name">Nombre del Color</Label>
+                                <Input id="color-name" value={newColorName} onChange={(e) => setNewColorName(e.target.value)} placeholder="Ej. Azul Cielo" />
+                            </div>
+                            <Button type="button" onClick={handleAddColor} className="w-full">Confirmar Color</Button>
+                        </PopoverContent>
+                    </Popover>
                 </CardContent>
               </Card>
               <Card>
@@ -374,4 +377,3 @@ export default function EditProductPage() {
   );
 }
 
-    

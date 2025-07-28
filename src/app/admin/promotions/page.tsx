@@ -3,8 +3,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -14,6 +12,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { MoreHorizontal, PlusCircle, Loader2 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -39,6 +39,7 @@ import { db } from '@/lib/firebase';
 import { Promotion } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useRouter } from 'next/navigation';
 
 export default function PromotionsPage() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -46,6 +47,7 @@ export default function PromotionsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [promotionToDelete, setPromotionToDelete] = useState<Promotion | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   const fetchPromotions = async () => {
     setLoading(true);
@@ -151,7 +153,9 @@ export default function PromotionsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem>Editar</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push(`/admin/promotions/edit/${promo.id}`)}>
+                            Editar
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => setPromotionToDelete(promo)} className="text-destructive">
                           Eliminar

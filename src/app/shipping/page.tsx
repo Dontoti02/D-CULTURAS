@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Truck, PackageReturn } from "lucide-react";
+import { Truck, Undo2 } from "lucide-react";
 
 
 export default function ShippingReturnsPage() {
@@ -48,7 +48,7 @@ export default function ShippingReturnsPage() {
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-2xl">
-                    <PackageReturn className="w-8 h-8 text-primary"/>
+                    <Undo2 className="w-8 h-8 text-primary"/>
                     Política de Devoluciones
                 </CardTitle>
             </CardHeader>

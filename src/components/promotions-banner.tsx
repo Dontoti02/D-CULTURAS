@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, Timestamp, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Promotion } from '@/lib/types';
 import {
@@ -24,25 +24,29 @@ export default function PromotionsBanner() {
   useEffect(() => {
     const fetchPromotions = async () => {
       try {
+        // 1. Fetch all promotions, ordered by creation date
         const q = query(
           collection(db, 'promotions'),
-          where('status', '==', 'active'),
           orderBy('createdAt', 'desc')
         );
         
         const querySnapshot = await getDocs(q);
         const now = new Date();
+        
+        // 2. Filter promotions on the client-side
         const promotionsData = querySnapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() } as Promotion))
           .filter(promo => {
+              // Ensure the promo is active AND within the valid date range
               const startDate = promo.startDate.toDate();
               const endDate = promo.endDate.toDate();
-              return startDate <= now && endDate >= now;
+              return promo.status === 'active' && startDate <= now && endDate >= now;
           });
 
         setPromotions(promotionsData);
       } catch (error) {
         console.error("Error fetching promotions: ", error);
+        // Do not toast error to user for a background task
       }
     };
 

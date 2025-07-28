@@ -140,19 +140,6 @@ export default function SignupPage() {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? <Loader2 className="animate-spin" /> : 'Crear una cuenta'}
             </Button>
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  O continuar con
-                </span>
-              </div>
-            </div>
-            <Button variant="outline" className="w-full" disabled={isLoading}>
-              Registrarse con Google
-            </Button>
             <div className="mt-4 text-center text-sm">
               ¿Ya tienes una cuenta?{' '}
               <Link href="/login" className="underline text-primary">

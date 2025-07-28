@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/cart-context';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, doc, runTransaction, increment } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,14 +59,37 @@ export default function CheckoutPage() {
             })),
             subtotal,
             couponCode: appliedCoupon?.code || null,
+            couponId: appliedCoupon?.id || null,
             couponDiscount: couponDiscount,
             total,
             status: 'Procesando',
             shippingAddress: { address, city, department, zip },
             createdAt: serverTimestamp(),
         };
+        
+        // Use a transaction to create the order and update the coupon usage
+        const orderRef = await runTransaction(db, async (transaction) => {
+            const newOrderRef = doc(collection(db, "orders"));
+            transaction.set(newOrderRef, orderData);
 
-        const docRef = await addDoc(collection(db, "orders"), orderData);
+            if (appliedCoupon) {
+                const usedCouponRef = doc(db, `customers/${user.uid}/usedCoupons`, appliedCoupon.id);
+                const usedCouponDoc = await transaction.get(usedCouponRef);
+                
+                if (usedCouponDoc.exists()) {
+                    transaction.update(usedCouponRef, {
+                        useCount: increment(1)
+                    });
+                } else {
+                    transaction.set(usedCouponRef, {
+                        code: appliedCoupon.code,
+                        useCount: 1,
+                        lastUsed: serverTimestamp(),
+                    });
+                }
+            }
+            return newOrderRef;
+        });
 
         toast({
             title: "¡Pedido Realizado!",
@@ -74,7 +97,7 @@ export default function CheckoutPage() {
         });
 
         clearCart();
-        router.push(`/profile/checkout/success?orderId=${docRef.id}`);
+        router.push(`/profile/checkout/success?orderId=${orderRef.id}`);
 
     } catch (error) {
         console.error("Error al crear el pedido: ", error);

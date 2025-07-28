@@ -3,8 +3,9 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { Promotion } from '@/lib/types';
-import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/hooks/use-auth';
 
 export interface CartItem {
   id: string; // Product ID
@@ -42,6 +43,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [appliedCoupon, setAppliedCoupon] = useState<Promotion | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [loadingCoupon, setLoadingCoupon] = useState(false);
+  const { user } = useAuth(); // Get the current user
+
+  const COUPON_USAGE_LIMIT = 5;
 
   useEffect(() => {
     try {
@@ -78,6 +82,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
 
   const applyCoupon = useCallback(async (code: string) => {
+    if (!user) {
+        setCouponError("Debes iniciar sesión para usar un cupón.");
+        return;
+    }
+
     setLoadingCoupon(true);
     setCouponError(null);
     
@@ -101,7 +110,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           return;
       }
 
-      setAppliedCoupon(promotion);
+      // Check usage limit
+      const usedCouponRef = doc(db, `customers/${user.uid}/usedCoupons`, promotion.id);
+      const usedCouponSnap = await getDoc(usedCouponRef);
+      const currentUsage = usedCouponSnap.exists() ? usedCouponSnap.data().useCount : 0;
+
+      if (currentUsage >= COUPON_USAGE_LIMIT) {
+          setCouponError(`Has alcanzado el límite de uso (${COUPON_USAGE_LIMIT}) para este cupón.`);
+          setAppliedCoupon(null);
+          return;
+      }
+
+      setAppliedCoupon({...promotion, usedCount: currentUsage });
+
     } catch (error) {
       console.error("Error applying coupon: ", error);
       setCouponError("No se pudo aplicar el cupón. Inténtalo de nuevo.");
@@ -109,7 +130,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoadingCoupon(false);
     }
-  }, []);
+  }, [user]);
 
   const removeCoupon = useCallback(() => {
       setAppliedCoupon(null);

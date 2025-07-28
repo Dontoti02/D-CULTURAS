@@ -25,7 +25,7 @@ export interface Customer {
 }
 
 export interface Order {
-    id: string;
+    id:string;
     customerId: string;
     customerName: string;
     items: {
@@ -41,6 +41,7 @@ export interface Order {
     subtotal: number;
     couponDiscount: number;
     couponCode: string | null;
+    couponId: string | null;
     status: 'Procesando' | 'Enviado' | 'Entregado' | 'Cancelado' | 'Reportado';
     shippingAddress: {
         address: string;
@@ -63,4 +64,5 @@ export interface Promotion {
   status: 'active' | 'inactive' | 'scheduled';
   imageUrl?: string;
   createdAt: Timestamp;
+  usedCount?: number;
 }

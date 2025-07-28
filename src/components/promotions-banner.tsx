@@ -17,6 +17,7 @@ import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Gift } from 'lucide-react';
 import Image from 'next/image';
+import CountdownTimer from './countdown-timer';
 
 export default function PromotionsBanner() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -92,6 +93,7 @@ export default function PromotionsBanner() {
                               <h3 className="text-xl font-bold text-primary">{promo.name}</h3>
                               <p className="text-muted-foreground">{promo.description}</p>
                           </div>
+                          <CountdownTimer endDate={promo.endDate.toDate()} />
                           <div className="flex items-center gap-2">
                                 <p className="font-mono text-lg border-2 border-dashed border-primary/50 bg-background rounded-md px-4 py-2">
                                     {promo.code}

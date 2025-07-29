@@ -6,10 +6,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { CreditCard, Download, ExternalLink, Check, Loader2 } from 'lucide-react';
+import { CreditCard, Download, ExternalLink, Check, Loader2, MoreHorizontal, Trash2, Star, Plus } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 
 const invoiceHistory = [
@@ -56,12 +61,27 @@ const plans = [
             'Cuentas de administrador ilimitadas',
         ],
     },
-]
+];
+
+interface PaymentMethod {
+    id: string;
+    brand: 'Visa' | 'Mastercard';
+    last4: string;
+    expiryMonth: string;
+    expiryYear: string;
+    isPrimary: boolean;
+}
 
 export default function BillingPage() {
     const [currentPlan, setCurrentPlan] = useState<string | null>(null);
     const [isLoadingPlan, setIsLoadingPlan] = useState<string | null>(null);
     const { toast } = useToast();
+
+    const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
+        { id: 'pm_1', brand: 'Visa', last4: '4242', expiryMonth: '12', expiryYear: '26', isPrimary: true },
+    ]);
+    const [isAddCardOpen, setIsAddCardOpen] = useState(false);
+    const [newCard, setNewCard] = useState({ brand: 'Visa' as 'Visa' | 'Mastercard', number: '', expiry: '', cvc: ''});
 
     const handleSelectPlan = (planName: string) => {
         setIsLoadingPlan(planName);
@@ -72,8 +92,44 @@ export default function BillingPage() {
                 title: '¡Plan Activado!',
                 description: `Has seleccionado el plan ${planName}.`,
             });
-        }, 1500); // Simula una llamada a la API de pagos
+        }, 1500);
     };
+
+    const handleAddCard = (e: React.FormEvent) => {
+        e.preventDefault();
+        const last4 = newCard.number.slice(-4);
+        const [expiryMonth, expiryYear] = newCard.expiry.split('/');
+        
+        if (!/^\d{16}$/.test(newCard.number) || !/^\d{2}\/\d{2}$/.test(newCard.expiry) || !/^\d{3}$/.test(newCard.cvc)) {
+            toast({ title: 'Datos de tarjeta inválidos', description: 'Por favor, revisa los datos de la tarjeta.', variant: 'destructive'});
+            return;
+        }
+
+        const newPaymentMethod: PaymentMethod = {
+            id: `pm_${Date.now()}`,
+            brand: newCard.brand,
+            last4,
+            expiryMonth,
+            expiryYear: expiryYear.slice(-2),
+            isPrimary: paymentMethods.length === 0,
+        };
+        
+        setPaymentMethods([...paymentMethods, newPaymentMethod]);
+        toast({ title: 'Método de pago agregado'});
+        setNewCard({ brand: 'Visa', number: '', expiry: '', cvc: ''});
+        setIsAddCardOpen(false);
+    };
+    
+    const setPrimaryMethod = (id: string) => {
+        setPaymentMethods(paymentMethods.map(pm => ({ ...pm, isPrimary: pm.id === id })));
+        toast({ title: 'Método de pago principal actualizado'});
+    };
+
+    const removeMethod = (id: string) => {
+        setPaymentMethods(paymentMethods.filter(pm => pm.id !== id));
+        toast({ title: 'Método de pago eliminado'});
+    };
+
 
     return (
         <div className="space-y-8">
@@ -173,20 +229,89 @@ export default function BillingPage() {
                             <CardTitle>Método de Pago</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="border rounded-lg p-4 flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                     <Image src="/visa-logo.svg" alt="Visa" width={48} height={30} />
-                                     <div>
-                                        <p className="font-semibold">Visa **** 4242</p>
-                                        <p className="text-sm text-muted-foreground">Expira 12/26</p>
-                                     </div>
+                            {paymentMethods.map((pm) => (
+                                <div key={pm.id} className="border rounded-lg p-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Image src={pm.brand === 'Visa' ? "/visa-logo.svg" : "/mastercard-logo.svg"} alt={pm.brand} width={36} height={24} />
+                                        <div>
+                                            <p className="font-semibold">{pm.brand} **** {pm.last4}</p>
+                                            <p className="text-sm text-muted-foreground">Expira {pm.expiryMonth}/{pm.expiryYear}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                         {pm.isPrimary && <Badge variant="secondary">Principal</Badge>}
+                                         <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent>
+                                                {!pm.isPrimary && (
+                                                    <DropdownMenuItem onClick={() => setPrimaryMethod(pm.id)}>
+                                                        <Star className="mr-2 h-4 w-4" />
+                                                        Marcar como principal
+                                                    </DropdownMenuItem>
+                                                )}
+                                                <DropdownMenuItem onClick={() => removeMethod(pm.id)} className="text-destructive">
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    Eliminar
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                         </DropdownMenu>
+                                    </div>
                                 </div>
-                                <Badge variant="secondary">Primario</Badge>
-                            </div>
-                            <Button className="w-full">
-                                <CreditCard className="mr-2 h-4 w-4"/>
-                                Agregar nuevo método
-                            </Button>
+                            ))}
+
+                            <Dialog open={isAddCardOpen} onOpenChange={setIsAddCardOpen}>
+                                <DialogTrigger asChild>
+                                    <Button className="w-full" variant="outline">
+                                        <Plus className="mr-2 h-4 w-4"/>
+                                        Agregar nuevo método
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Agregar Nueva Tarjeta</DialogTitle>
+                                        <DialogDescription>
+                                            Ingresa los detalles de tu tarjeta de crédito o débito.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <form onSubmit={handleAddCard}>
+                                        <div className="grid gap-4 py-4">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="card-brand">Marca</Label>
+                                                <Select value={newCard.brand} onValueChange={(v: 'Visa' | 'Mastercard') => setNewCard({...newCard, brand: v})}>
+                                                    <SelectTrigger id="card-brand">
+                                                        <SelectValue placeholder="Selecciona una marca" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="Visa">Visa</SelectItem>
+                                                        <SelectItem value="Mastercard">Mastercard</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="card-number">Número de Tarjeta</Label>
+                                                <Input id="card-number" placeholder="0000 0000 0000 0000" value={newCard.number} onChange={(e) => setNewCard({...newCard, number: e.target.value.replace(/\s/g, '')})} maxLength={16} />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="card-expiry">Expiración (MM/YY)</Label>
+                                                    <Input id="card-expiry" placeholder="MM/YY" value={newCard.expiry} onChange={(e) => setNewCard({...newCard, expiry: e.target.value})} maxLength={5}/>
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="card-cvc">CVC</Label>
+                                                    <Input id="card-cvc" placeholder="123" value={newCard.cvc} onChange={(e) => setNewCard({...newCard, cvc: e.target.value})} maxLength={3}/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <DialogFooter>
+                                            <Button type="submit">Agregar Tarjeta</Button>
+                                        </DialogFooter>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
                         </CardContent>
                         <CardFooter>
                             <p className="text-xs text-muted-foreground">
@@ -199,6 +324,5 @@ export default function BillingPage() {
             </div>
         </div>
     );
-}
 
     

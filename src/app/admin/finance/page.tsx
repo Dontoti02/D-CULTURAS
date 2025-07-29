@@ -23,6 +23,7 @@ import {
   FunnelChart,
   Funnel,
   LabelList,
+  Cell,
 } from 'recharts';
 import { format, startOfWeek, startOfMonth, subDays, subMonths } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -112,21 +113,24 @@ export default function FinancePage() {
     if (!allProducts.length) return [];
 
     const categories = Array.from(new Set(allProducts.map(p => p.category)));
-    const funnelColors = ['#8884d8', '#83a6ed', '#8dd1e1', '#82ca9d', '#a4de6c'];
+    const funnelColors = ['#8884d8', '#83a6ed', '#8dd1e1', '#82ca9d', '#a4de6c', '#d0ed57', '#ffc658'];
 
     return categories.map((cat, index) => {
         const categoryProducts = allProducts.filter(p => p.category === cat);
         const getAvgRating = (p: Product) => p.ratingCount > 0 ? p.ratingSum / p.ratingCount : 0;
 
+        const stages = [
+            { name: 'Oportunidad (4.5+)', value: categoryProducts.filter(p => getAvgRating(p) >= 4.5).length },
+            { name: 'Consideración (4.0+)', value: categoryProducts.filter(p => getAvgRating(p) >= 4.0).length },
+            { name: 'Exploración (3.0+)', value: categoryProducts.filter(p => getAvgRating(p) >= 3.0).length },
+        ].map(stage => ({...stage, fill: funnelColors[index % funnelColors.length]}));
+
+
         return {
             name: cat,
             value: categoryProducts.filter(p => getAvgRating(p) >= 3.0).length,
             fill: funnelColors[index % funnelColors.length],
-            stages: [
-                 { name: 'Exploración (3.0+)', value: categoryProducts.filter(p => getAvgRating(p) >= 3.0).length },
-                 { name: 'Consideración (4.0+)', value: categoryProducts.filter(p => getAvgRating(p) >= 4.0).length },
-                 { name: 'Oportunidad (4.5+)', value: categoryProducts.filter(p => getAvgRating(p) >= 4.5).length },
-            ]
+            stages: stages
         };
     }).sort((a, b) => b.value - a.value);
 
@@ -454,7 +458,7 @@ export default function FinancePage() {
               <CardTitle>Embudo de Oportunidad por Calificación</CardTitle>
               <CardDescription>Visualiza los productos con mejor calificación por categoría para identificar oportunidades de venta.</CardDescription>
             </CardHeader>
-            <CardContent className="grid md:grid-cols-2 gap-6">
+            <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
                 {opportunityFunnelData?.map((categoryData) => (
                     <div key={categoryData.name}>
                          <h3 className="font-semibold text-center mb-2">{categoryData.name} ({categoryData.value} productos)</h3>
@@ -465,10 +469,16 @@ export default function FinancePage() {
                                 />
                                 <Funnel 
                                     dataKey="value" 
-                                    data={categoryData.stages}
+                                    data={categoryData.stages.reverse()}
                                     nameKey="name"
+                                    isAnimationActive={true}
                                 >
-                                  <LabelList position="right" fill="#000" stroke="none" dataKey="name" />
+                                  <LabelList position="right" fill="hsl(var(--foreground))" stroke="none" dataKey="name" className="text-xs"/>
+                                  {
+                                    categoryData.stages.map((entry, index) => (
+                                      <Cell key={`cell-${index}`} fill={categoryData.fill} />
+                                    ))
+                                  }
                                 </Funnel>
                              </FunnelChart>
                          </ResponsiveContainer>
@@ -479,5 +489,3 @@ export default function FinancePage() {
     </div>
   );
 }
-
-    

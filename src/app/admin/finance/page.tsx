@@ -113,7 +113,7 @@ export default function FinancePage() {
     if (!allProducts.length) return [];
 
     const categories = Array.from(new Set(allProducts.map(p => p.category)));
-    const funnelColors = ['#8884d8', '#83a6ed', '#8dd1e1', '#82ca9d', '#a4de6c', '#d0ed57', '#ffc658'];
+    const funnelColors = ['#22c55e', '#3b82f6', '#ef4444', '#eab308', '#8b5cf6', '#f97316', '#14b8a6'];
 
     return categories.map((cat, index) => {
         const categoryProducts = allProducts.filter(p => p.category === cat);

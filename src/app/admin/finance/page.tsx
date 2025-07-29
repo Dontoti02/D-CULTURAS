@@ -337,8 +337,8 @@ export default function FinancePage() {
                         formatter={(value: number, name: string) => [`S/ ${value.toFixed(2)}`, name]}
                     />
                     <Legend />
-                    <Bar dataKey="Ingresos" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Ganancias" fill="hsl(var(--primary) / 0.5)" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Ingresos" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Ganancias" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

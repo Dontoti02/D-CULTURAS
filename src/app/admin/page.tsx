@@ -10,10 +10,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Customer, Order } from '@/lib/types';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -307,10 +305,16 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="h-[350px] w-full pt-4">
               <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
+                  <AreaChart
                       data={salesChartData}
                       margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
                   >
+                      <defs>
+                          <linearGradient id="colorVentas" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                          </linearGradient>
+                      </defs>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" fontSize={12} />
                       <YAxis tickFormatter={(value) => `S/${value}`} fontSize={12} />
@@ -319,8 +323,8 @@ export default function AdminDashboard() {
                           formatter={(value: number) => [`S/ ${value.toFixed(2)}`, 'Ventas']}
                       />
                       <Legend />
-                      <Line type="monotone" dataKey="Ventas" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} dot={false} />
-                  </LineChart>
+                      <Area type="monotone" dataKey="Ventas" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorVentas)" strokeWidth={2} activeDot={{ r: 8 }} dot={false} />
+                  </AreaChart>
               </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -344,7 +348,13 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="h-[350px] w-full pt-4">
             <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={newCustomersChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <AreaChart data={newCustomersChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                    <defs>
+                        <linearGradient id="colorClientes" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                        </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" fontSize={12} />
                     <YAxis allowDecimals={false} fontSize={12} />
@@ -353,8 +363,8 @@ export default function AdminDashboard() {
                         formatter={(value: number) => [value, 'Nuevos Clientes']}
                     />
                     <Legend />
-                    <Bar dataKey="Clientes" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                </BarChart>
+                    <Area type="monotone" dataKey="Clientes" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorClientes)" />
+                </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -362,5 +372,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
-    

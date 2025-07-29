@@ -60,7 +60,6 @@ const navLinks = [
   { href: '/admin/customers', label: 'Clientes', icon: Users },
   { href: '/admin/promotions', label: 'Promociones', icon: Award },
   { href: '/admin/finance', label: 'Finanzas', icon: Landmark },
-  { href: '/admin/billing', label: 'Facturación', icon: CreditCard },
 ];
 
 interface AdminData {
@@ -115,7 +114,7 @@ export default function AdminSidebar() {
 
 
   return (
-    <aside className="w-64 flex-shrink-0 border-r bg-card p-4 flex flex-col">
+    <aside className="hidden w-64 flex-shrink-0 border-r bg-card p-4 md:flex flex-col">
       <div className="flex items-center gap-2 mb-6 px-2">
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <svg
@@ -144,7 +143,7 @@ export default function AdminSidebar() {
               <CollapsibleTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-3 px-3 font-bold text-black dark:text-white"
+                  className="w-full justify-start gap-3 px-3 font-medium"
                 >
                   <link.icon className="h-4 w-4" />
                   {link.label}
@@ -158,10 +157,9 @@ export default function AdminSidebar() {
                       key={subItem.href}
                       href={subItem.href}
                       className={cn(
-                        'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-sm font-bold',
+                        'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-sm',
                         {
                           'text-primary': pathname === subItem.href,
-                          'text-black dark:text-white': pathname !== subItem.href,
                         }
                       )}
                     >
@@ -176,9 +174,9 @@ export default function AdminSidebar() {
               key={link.href}
               href={link.href}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-black dark:text-white transition-all hover:text-primary font-bold',
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary font-medium',
                 {
-                  'text-primary': pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/admin'),
+                  'bg-muted text-primary': pathname.startsWith(link.href) && (link.href !== '/admin' || pathname === '/admin'),
                 }
               )}
             >

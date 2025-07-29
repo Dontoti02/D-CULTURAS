@@ -1,13 +1,15 @@
 
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { CreditCard, Download, ExternalLink, Check } from 'lucide-react';
+import { CreditCard, Download, ExternalLink, Check, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 
 const invoiceHistory = [
@@ -29,7 +31,6 @@ const plans = [
             'Soporte por correo electrónico',
             '1 cuenta de administrador',
         ],
-        isCurrent: false,
     },
     {
         name: 'Intermedio',
@@ -42,7 +43,6 @@ const plans = [
             'Soporte prioritario por chat',
             'Hasta 3 cuentas de administrador',
         ],
-        isCurrent: false,
     },
     {
         name: 'Profesional',
@@ -55,11 +55,26 @@ const plans = [
             'Soporte dedicado 24/7',
             'Cuentas de administrador ilimitadas',
         ],
-        isCurrent: true,
     },
 ]
 
 export default function BillingPage() {
+    const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+    const [isLoadingPlan, setIsLoadingPlan] = useState<string | null>(null);
+    const { toast } = useToast();
+
+    const handleSelectPlan = (planName: string) => {
+        setIsLoadingPlan(planName);
+        setTimeout(() => {
+            setCurrentPlan(planName);
+            setIsLoadingPlan(null);
+            toast({
+                title: '¡Plan Activado!',
+                description: `Has seleccionado el plan ${planName}.`,
+            });
+        }, 1500); // Simula una llamada a la API de pagos
+    };
+
     return (
         <div className="space-y-8">
             <h1 className="text-3xl font-bold">Facturación y Suscripción</h1>
@@ -70,35 +85,48 @@ export default function BillingPage() {
                     <CardDescription>Elige el plan que mejor se adapte a las necesidades de tu negocio.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {plans.map((plan) => (
-                        <Card key={plan.name} className={cn("flex flex-col", plan.isCurrent && "border-primary ring-2 ring-primary")}>
-                            <CardHeader>
-                                <CardTitle>{plan.name}</CardTitle>
-                                <p className="text-4xl font-bold">
-                                    S/ {plan.price}
-                                    <span className="text-sm font-normal text-muted-foreground">/mes</span>
-                                </p>
-                                <CardDescription>{plan.description}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex-grow space-y-4">
-                                <ul className="space-y-2 text-sm">
-                                    {plan.features.map((feature, i) => (
-                                        <li key={i} className="flex items-center gap-2">
-                                            <Check className="h-4 w-4 text-primary" />
-                                            <span className="text-muted-foreground">{feature}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </CardContent>
-                            <CardFooter>
-                                {plan.isCurrent ? (
-                                    <Button disabled className="w-full">Plan Actual</Button>
-                                ) : (
-                                    <Button variant="outline" className="w-full">Cambiar de Plan</Button>
-                                )}
-                            </CardFooter>
-                        </Card>
-                    ))}
+                    {plans.map((plan) => {
+                        const isCurrent = currentPlan === plan.name;
+                        const isLoading = isLoadingPlan === plan.name;
+                        return (
+                             <Card key={plan.name} className={cn("flex flex-col", isCurrent && "border-primary ring-2 ring-primary")}>
+                                <CardHeader>
+                                    <CardTitle>{plan.name}</CardTitle>
+                                    <p className="text-4xl font-bold">
+                                        S/ {plan.price}
+                                        <span className="text-sm font-normal text-muted-foreground">/mes</span>
+                                    </p>
+                                    <CardDescription>{plan.description}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-grow space-y-4">
+                                    <ul className="space-y-2 text-sm">
+                                        {plan.features.map((feature, i) => (
+                                            <li key={i} className="flex items-center gap-2">
+                                                <Check className="h-4 w-4 text-primary" />
+                                                <span className="text-muted-foreground">{feature}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </CardContent>
+                                <CardFooter>
+                                    {isCurrent ? (
+                                        <Button disabled className="w-full">Plan Actual</Button>
+                                    ) : (
+                                        <Button 
+                                            variant={currentPlan && !isCurrent ? 'outline' : 'default'} 
+                                            className="w-full"
+                                            onClick={() => handleSelectPlan(plan.name)}
+                                            disabled={!!isLoadingPlan}
+                                        >
+                                            {isLoading ? (
+                                                <Loader2 className="animate-spin" />
+                                            ) : 'Seleccionar Plan'}
+                                        </Button>
+                                    )}
+                                </CardFooter>
+                            </Card>
+                        )
+                    })}
                 </CardContent>
             </Card>
 
@@ -172,3 +200,5 @@ export default function BillingPage() {
         </div>
     );
 }
+
+    

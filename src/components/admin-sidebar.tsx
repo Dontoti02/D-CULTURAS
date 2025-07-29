@@ -60,6 +60,7 @@ const navLinks = [
   { href: '/admin/customers', label: 'Clientes', icon: Users },
   { href: '/admin/promotions', label: 'Promociones', icon: Award },
   { href: '/admin/finance', label: 'Finanzas', icon: Landmark },
+  { href: '/admin/billing', label: 'Facturación', icon: CreditCard },
 ];
 
 interface AdminData {
@@ -245,9 +246,11 @@ export default function AdminSidebar() {
                 <span>Ajustes</span>
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <CreditCard className="mr-2 h-4 w-4" />
-              <span>Facturación</span>
+            <DropdownMenuItem asChild>
+              <Link href="/admin/billing">
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Facturación</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut}>

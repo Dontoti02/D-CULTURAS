@@ -183,7 +183,11 @@ export default function FinancePage() {
         });
     });
 
-    return Object.entries(data).map(([name, values]) => ({ name, ...values }));
+    return Object.entries(data).map(([name, values]) => ({ 
+        name, 
+        Ingresos: values.revenue, 
+        Ganancias: values.profit 
+    }));
   }, [deliveredOrders]);
 
   const paginatedTransactions = useMemo(() => {
@@ -410,5 +414,3 @@ export default function FinancePage() {
     </div>
   );
 }
-
-    

@@ -109,7 +109,7 @@ export default function OrdersPage() {
         orders.forEach(order => {
             const orderData = [
                 `#${order.id.substring(0, 7)}...`,
-                order.customerName,
+                `${order.customerDetails?.firstName || ''} ${order.customerDetails?.lastName || ''}`,
                 order.createdAt ? format(order.createdAt.toDate(), 'dd/MM/yyyy') : 'N/A',
                 order.total.toFixed(2),
                 order.status
@@ -129,7 +129,7 @@ export default function OrdersPage() {
     const handleExportExcel = () => {
         const worksheet = XLSX.utils.json_to_sheet(orders.map(order => ({
             "ID Pedido": order.id,
-            "Cliente": order.customerName,
+            "Cliente": `${order.customerDetails?.firstName || ''} ${order.customerDetails?.lastName || ''}`,
             "Email Cliente": order.customerDetails?.email,
             "Fecha": order.createdAt ? format(order.createdAt.toDate(), 'dd/MM/yyyy') : 'N/A',
             "Total (S/)": order.total.toFixed(2),
@@ -205,7 +205,7 @@ export default function OrdersPage() {
                                             </AvatarFallback>
                                         </Avatar>
                                         <div className="grid gap-0.5">
-                                            <p className="font-medium">{order.customerName}</p>
+                                            <p className="font-medium">{`${order.customerDetails?.firstName || ''} ${order.customerDetails?.lastName || ''}`.trim()}</p>
                                             <p className="text-xs text-muted-foreground">{order.customerDetails?.email}</p>
                                         </div>
                                     </div>

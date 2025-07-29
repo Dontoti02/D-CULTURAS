@@ -16,7 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bell, PackageWarning } from 'lucide-react';
+import { Bell, TriangleAlert } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 
 export default function AdminHeader() {
@@ -56,7 +56,7 @@ export default function AdminHeader() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80">
                 <DropdownMenuLabel className="flex items-center gap-2">
-                    <PackageWarning className="h-5 w-5 text-destructive" />
+                    <TriangleAlert className="h-5 w-5 text-destructive" />
                     <span>Notificaciones de Stock Bajo</span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

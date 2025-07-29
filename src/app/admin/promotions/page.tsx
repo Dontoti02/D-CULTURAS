@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Table,
   TableBody,
@@ -13,8 +14,8 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { MoreHorizontal, PlusCircle, Loader2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { MoreHorizontal, PlusCircle, Loader2, Clock } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +41,7 @@ import { Promotion } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
+import CountdownTimer from '@/components/countdown-timer';
 
 export default function PromotionsPage() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -84,6 +86,7 @@ export default function PromotionsPage() {
     }
   };
 
+  const now = new Date();
 
   if (loading) {
     return (
@@ -108,67 +111,74 @@ export default function PromotionsPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Todas las Promociones</CardTitle>
-          <CardDescription>
-            Aquí puedes ver todas las campañas promocionales que has creado.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Código</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Vigencia</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>
-                  <span className="sr-only">Acciones</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {promotions.map((promo) => (
-                <TableRow key={promo.id}>
-                  <TableCell className="font-medium">{promo.name}</TableCell>
-                   <TableCell>
-                    <Badge variant="secondary">{promo.code}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {promo.type === 'percentage' ? `${promo.value}%` : `S/ ${promo.value.toFixed(2)}`}
-                  </TableCell>
-                  <TableCell>{format(promo.startDate.toDate(), 'P', { locale: es })} - {format(promo.endDate.toDate(), 'P', { locale: es })}</TableCell>
-                  <TableCell>
-                    <Badge variant={promo.status === 'active' ? 'default' : 'outline'} className="capitalize">{promo.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Menú</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => router.push(`/admin/promotions/edit/${promo.id}`)}>
-                            Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setPromotionToDelete(promo)} className="text-destructive">
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {promotions.map((promo) => {
+             const isActive = promo.status === 'active' && promo.startDate.toDate() <= now && promo.endDate.toDate() >= now;
+             return (
+              <Card key={promo.id} className="overflow-hidden flex flex-col">
+                <CardHeader className="p-0 relative">
+                  <div className="relative aspect-video w-full">
+                     <Image
+                        src={promo.imageUrl || 'https://placehold.co/600x400.png'}
+                        alt={promo.name}
+                        fill
+                        className="object-cover"
+                     />
+                     <div className="absolute top-2 right-2">
+                        <Badge variant={isActive ? 'default' : 'outline'} className="capitalize backdrop-blur-sm bg-background/50">
+                          {promo.status}
+                        </Badge>
+                     </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 flex-grow">
+                    <div className="flex justify-between items-start">
+                        <CardTitle className="text-lg mb-2">{promo.name}</CardTitle>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Menú</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => router.push(`/admin/promotions/edit/${promo.id}`)}>
+                                Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => setPromotionToDelete(promo)} className="text-destructive">
+                              Eliminar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {promo.type === 'percentage' ? `${promo.value}% de descuento` : `S/ ${promo.value.toFixed(2)} de descuento`}
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <p className="text-sm">Código:</p>
+                        <Badge variant="secondary">{promo.code}</Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Vigencia: {format(promo.startDate.toDate(), 'P', { locale: es })} - {format(promo.endDate.toDate(), 'P', { locale: es })}
+                    </p>
+                </CardContent>
+                {isActive && (
+                    <CardFooter className="bg-muted/50 p-4">
+                        <div className="w-full">
+                           <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                                <Clock className="w-4 h-4" />
+                                <span>Tiempo restante:</span>
+                           </div>
+                           <CountdownTimer endDate={promo.endDate.toDate()} />
+                        </div>
+                    </CardFooter>
+                )}
+              </Card>
+          )})}
+      </div>
+
 
       <AlertDialog open={!!promotionToDelete} onOpenChange={(open) => !open && setPromotionToDelete(null)}>
         <AlertDialogContent>
@@ -189,3 +199,4 @@ export default function PromotionsPage() {
     </>
   );
 }
+

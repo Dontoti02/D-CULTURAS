@@ -9,7 +9,7 @@ interface CountdownTimerProps {
 
 const calculateTimeLeft = (endDate: Date) => {
   const difference = +endDate - +new Date();
-  let timeLeft = {};
+  let timeLeft: { [key: string]: number } = {};
 
   if (difference > 0) {
     timeLeft = {
@@ -37,15 +37,15 @@ export default function CountdownTimer({ endDate }: CountdownTimerProps) {
   const timerComponents = Object.entries(timeLeft);
 
   if (!timerComponents.length) {
-    return <p className="font-semibold text-destructive">¡La oferta ha terminado!</p>;
+    return <p className="font-semibold text-destructive text-center">¡La oferta ha terminado!</p>;
   }
 
   return (
-    <div className="flex items-center justify-center gap-2 text-center">
+    <div className="flex items-center justify-center gap-2 text-center w-full">
       {timerComponents.map(([interval, value]) => (
-        <div key={interval} className="flex flex-col items-center justify-center bg-background border rounded-md p-2 min-w-[60px]">
-          <span className="text-2xl font-bold text-primary">{String(value).padStart(2, '0')}</span>
-          <span className="text-xs capitalize text-muted-foreground">{interval}</span>
+        <div key={interval} className="flex flex-col items-center justify-center bg-background border rounded-md p-2 w-full">
+          <span className="text-xl font-bold text-primary">{String(value).padStart(2, '0')}</span>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{interval}</span>
         </div>
       ))}
     </div>

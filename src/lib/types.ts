@@ -24,19 +24,21 @@ export interface Customer {
     createdAt: Timestamp;
 }
 
+export interface OrderItem {
+    productId: string;
+    name: string;
+    image: string;
+    price: number;
+    quantity: number;
+    size: string;
+    color: string;
+}
+
 export interface Order {
     id:string;
     customerId: string;
     customerName: string;
-    items: {
-        productId: string;
-        name: string;
-        image: string;
-        price: number;
-        quantity: number;
-        size: string;
-        color: string;
-    }[];
+    items: OrderItem[];
     total: number;
     subtotal: number;
     couponDiscount: number;
@@ -50,6 +52,10 @@ export interface Order {
         zip: string;
     },
     createdAt: Timestamp;
+    returnedItems?: {
+        items: OrderItem[];
+        requestedAt: Timestamp;
+    }
 }
 
 export interface Promotion {

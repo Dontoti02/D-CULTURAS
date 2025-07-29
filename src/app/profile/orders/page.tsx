@@ -6,12 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
-import { Order } from '@/lib/types';
+import { Order, OrderItem } from '@/lib/types';
 import { format } from 'date-fns';
-import { Loader2, RotateCcw } from 'lucide-react';
+import { Loader2, RotateCcw, Minus, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
   AlertDialog,
@@ -25,16 +25,33 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
-import { Separator } from '@/components/ui/separator';
 
 export default function ProfileOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [orderToReturn, setOrderToReturn] = useState<Order | null>(null);
+  const [returnQuantities, setReturnQuantities] = useState<{[key: string]: number}>({});
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  
+  const fetchOrders = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const ordersRef = collection(db, 'orders');
+      const q = query(ordersRef, where('customerId', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+      const userOrders = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+      setOrders(userOrders.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis()));
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   useEffect(() => {
     if (authLoading) return;
@@ -42,41 +59,66 @@ export default function ProfileOrdersPage() {
         router.push('/login');
         return;
     }
-
-    const fetchOrders = async () => {
-      setLoading(true);
-      try {
-        const ordersRef = collection(db, 'orders');
-        const q = query(ordersRef, where('customerId', '==', user.uid));
-        const querySnapshot = await getDocs(q);
-        const userOrders = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
-        setOrders(userOrders.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis()));
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchOrders();
   }, [user, authLoading, router]);
 
+  const openReturnDialog = (order: Order) => {
+    setOrderToReturn(order);
+    const initialQuantities = order.items.reduce((acc, item) => {
+        const uniqueKey = `${item.productId}-${item.size}-${item.color}`;
+        acc[uniqueKey] = 0;
+        return acc;
+    }, {} as {[key: string]: number});
+    setReturnQuantities(initialQuantities);
+  };
+
+  const handleQuantityChange = (item: OrderItem, delta: number) => {
+    const uniqueKey = `${item.productId}-${item.size}-${item.color}`;
+    const currentQty = returnQuantities[uniqueKey] || 0;
+    const newQty = Math.max(0, Math.min(item.quantity, currentQty + delta));
+    setReturnQuantities(prev => ({ ...prev, [uniqueKey]: newQty }));
+  };
+
+
   const handleReturnRequest = async () => {
     if (!orderToReturn) return;
+
+    const itemsToReturn = orderToReturn.items
+        .map(item => {
+            const uniqueKey = `${item.productId}-${item.size}-${item.color}`;
+            const quantity = returnQuantities[uniqueKey];
+            return quantity > 0 ? { ...item, quantity } : null;
+        })
+        .filter((item): item is OrderItem => item !== null);
+
+    if (itemsToReturn.length === 0) {
+        toast({
+            title: "No se seleccionaron productos",
+            description: "Debes seleccionar la cantidad de al menos un producto para devolver.",
+            variant: "destructive"
+        });
+        return;
+    }
+    
     setIsUpdating(true);
     try {
         const orderRef = doc(db, "orders", orderToReturn.id);
-        await updateDoc(orderRef, { status: "Reportado" });
+        await updateDoc(orderRef, { 
+            status: "Reportado",
+            returnedItems: {
+                items: itemsToReturn,
+                requestedAt: Timestamp.now()
+            }
+        });
         
-        // Update local state to reflect the change immediately
-        setOrders(prevOrders => 
-            prevOrders.map(o => o.id === orderToReturn.id ? { ...o, status: "Reportado" } : o)
-        );
-
         toast({
             title: "Solicitud Recibida",
             description: "Tu solicitud de devolución ha sido enviada. Nos pondremos en contacto contigo pronto.",
         });
+
+        // Refetch orders to update the UI
+        await fetchOrders();
+
     } catch (error) {
         console.error("Error updating order status:", error);
         toast({ title: "Error", description: "No se pudo procesar tu solicitud. Inténtalo de nuevo.", variant: "destructive" });
@@ -153,7 +195,7 @@ export default function ProfileOrdersPage() {
                             <Button 
                                 variant="outline" 
                                 size="sm" 
-                                onClick={() => setOrderToReturn(order)}
+                                onClick={() => openReturnDialog(order)}
                                 disabled={isUpdating}
                             >
                                 <RotateCcw className="mr-2 h-4 w-4" />
@@ -161,7 +203,7 @@ export default function ProfileOrdersPage() {
                             </Button>
                         )}
                          {order.status === 'Reportado' && (
-                           <span className="text-xs text-muted-foreground italic">En proceso</span>
+                           <span className="text-xs text-muted-foreground italic">Devolución en proceso</span>
                         )}
                     </TableCell>
                     </TableRow>
@@ -173,18 +215,43 @@ export default function ProfileOrdersPage() {
         </Card>
 
         <AlertDialog open={!!orderToReturn} onOpenChange={(open) => !open && setOrderToReturn(null)}>
-            <AlertDialogContent>
+            <AlertDialogContent className="max-w-2xl">
                 <AlertDialogHeader>
-                    <AlertDialogTitle>¿Confirmas la solicitud de devolución?</AlertDialogTitle>
+                    <AlertDialogTitle>Solicitar Devolución</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Esto iniciará el proceso de devolución para el pedido <span className="font-semibold">#{orderToReturn?.id.slice(0,7)}</span>. 
-                        Nuestro equipo de soporte se pondrá en contacto contigo para coordinar los siguientes pasos.
+                       Selecciona los productos y la cantidad que deseas devolver del pedido <span className="font-semibold">#{orderToReturn?.id.slice(0,7)}</span>.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
+                <div className="max-h-[60vh] overflow-y-auto pr-4 space-y-4">
+                    {orderToReturn?.items.map(item => {
+                        const uniqueKey = `${item.productId}-${item.size}-${item.color}`;
+                        const quantityToReturn = returnQuantities[uniqueKey] || 0;
+                        return (
+                            <div key={uniqueKey} className="flex items-center justify-between gap-4 border-b pb-4">
+                               <div className="flex items-center gap-3">
+                                    <Image src={item.image} alt={item.name} width={48} height={64} className="rounded-md object-cover" />
+                                    <div className='text-sm'>
+                                        <p className="font-medium">{item.name}</p>
+                                        <p className="text-muted-foreground">Talla: {item.size} / Cant. Pedida: {item.quantity}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 border rounded-md">
+                                    <Button variant="ghost" size="icon" onClick={() => handleQuantityChange(item, -1)} disabled={quantityToReturn <= 0}>
+                                        <Minus className="h-4 w-4" />
+                                    </Button>
+                                    <span className="w-8 text-center font-semibold">{quantityToReturn}</span>
+                                    <Button variant="ghost" size="icon" onClick={() => handleQuantityChange(item, 1)} disabled={quantityToReturn >= item.quantity}>
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
                 <AlertDialogFooter>
                     <AlertDialogCancel disabled={isUpdating}>Cancelar</AlertDialogCancel>
                     <AlertDialogAction onClick={handleReturnRequest} disabled={isUpdating}>
-                        {isUpdating ? <Loader2 className="animate-spin" /> : "Sí, solicitar devolución"}
+                        {isUpdating ? <Loader2 className="animate-spin" /> : "Enviar Solicitud"}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

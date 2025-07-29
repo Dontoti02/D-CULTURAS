@@ -5,8 +5,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { CreditCard, Download, ExternalLink } from 'lucide-react';
+import { CreditCard, Download, ExternalLink, Check } from 'lucide-react';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
+
 
 const invoiceHistory = [
     { id: 'INV-2024-005', date: '1 de Julio, 2024', amount: 49.99, status: 'Pagado' },
@@ -16,27 +18,92 @@ const invoiceHistory = [
     { id: 'INV-2024-001', date: '1 de Marzo, 2024', amount: 29.99, status: 'Pagado' },
 ];
 
+const plans = [
+    {
+        name: 'Básico',
+        price: '29.99',
+        description: 'Ideal para empezar y para tiendas pequeñas.',
+        features: [
+            'Gestión de hasta 50 productos',
+            'Análisis básico de ventas',
+            'Soporte por correo electrónico',
+            '1 cuenta de administrador',
+        ],
+        isCurrent: false,
+    },
+    {
+        name: 'Intermedio',
+        price: '79.99',
+        description: 'Perfecto para negocios en crecimiento.',
+        features: [
+            'Gestión de hasta 500 productos',
+            'Análisis de ventas y clientes',
+            'Herramientas de marketing (cupones)',
+            'Soporte prioritario por chat',
+            'Hasta 3 cuentas de administrador',
+        ],
+        isCurrent: false,
+    },
+    {
+        name: 'Profesional',
+        price: '149.99',
+        description: 'La solución completa para escalar tu negocio.',
+        features: [
+            'Gestión de productos ilimitados',
+            'Análisis avanzado y reportes financieros',
+            'API de integración para sistemas externos',
+            'Soporte dedicado 24/7',
+            'Cuentas de administrador ilimitadas',
+        ],
+        isCurrent: true,
+    },
+]
+
 export default function BillingPage() {
     return (
         <div className="space-y-8">
             <h1 className="text-3xl font-bold">Facturación y Suscripción</h1>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle>Planes de Suscripción</CardTitle>
+                    <CardDescription>Elige el plan que mejor se adapte a las necesidades de tu negocio.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {plans.map((plan) => (
+                        <Card key={plan.name} className={cn("flex flex-col", plan.isCurrent && "border-primary ring-2 ring-primary")}>
+                            <CardHeader>
+                                <CardTitle>{plan.name}</CardTitle>
+                                <p className="text-4xl font-bold">
+                                    S/ {plan.price}
+                                    <span className="text-sm font-normal text-muted-foreground">/mes</span>
+                                </p>
+                                <CardDescription>{plan.description}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow space-y-4">
+                                <ul className="space-y-2 text-sm">
+                                    {plan.features.map((feature, i) => (
+                                        <li key={i} className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-primary" />
+                                            <span className="text-muted-foreground">{feature}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </CardContent>
+                            <CardFooter>
+                                {plan.isCurrent ? (
+                                    <Button disabled className="w-full">Plan Actual</Button>
+                                ) : (
+                                    <Button variant="outline" className="w-full">Cambiar de Plan</Button>
+                                )}
+                            </CardFooter>
+                        </Card>
+                    ))}
+                </CardContent>
+            </Card>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-2 space-y-8">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Plan Actual</CardTitle>
-                            <CardDescription>Estás en el plan Profesional. Aquí puedes gestionar tu suscripción.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between p-6 rounded-lg bg-muted/50 gap-4">
-                           <div className="space-y-1">
-                                <h3 className="text-2xl font-semibold">Plan Profesional</h3>
-                                <p className="text-muted-foreground">S/ 49.99 por mes</p>
-                                <p className="text-sm">Tu plan se renueva el 1 de Agosto, 2024.</p>
-                           </div>
-                           <Button variant="outline">Cambiar de Plan</Button>
-                        </CardContent>
-                    </Card>
-
                      <Card>
                         <CardHeader>
                             <CardTitle>Historial de Facturación</CardTitle>

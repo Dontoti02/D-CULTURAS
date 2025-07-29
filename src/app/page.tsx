@@ -67,10 +67,10 @@ export default function Home() {
       <section className="bg-card py-20 md:py-32">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-primary">
-            Siente el Estilo del Verano
+            Vive con Estilo: Elegancia y Comodidad en Cada Paso
           </h1>
           <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
-            Descubre nuestra nueva colección de ropa que combina comodidad y elegancia para la persona moderna.
+            Descubre nuestra nueva colección, diseñada para quienes buscan sofisticación sin sacrificar la frescura. Piezas únicas que se adaptan a tu ritmo de vida, con diseños modernos y tejidos que respiran.
           </p>
           <div className="mt-8 flex justify-center gap-4">
             <Button size="lg" onClick={() => setCategory('Caballeros')}>Comprar Hombres</Button>

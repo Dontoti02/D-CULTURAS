@@ -19,6 +19,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { useRouter } from 'next/navigation';
 import ImagePreviewModal from './image-preview-modal';
+import { Card, CardContent } from './ui/card';
 
 interface ProductClientPageProps {
   product: Product;
@@ -427,5 +428,7 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
     </>
   );
 }
+
+    
 
     

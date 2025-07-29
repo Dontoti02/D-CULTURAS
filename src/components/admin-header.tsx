@@ -16,10 +16,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bell, TriangleAlert } from 'lucide-react';
+import { Bell, TriangleAlert, PanelLeft } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 
-export default function AdminHeader() {
+interface AdminHeaderProps {
+  onMenuClick: () => void;
+}
+
+
+export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
   const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,7 +45,16 @@ export default function AdminHeader() {
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-       <div className="relative ml-auto flex-1 md:grow-0">
+       <Button
+          size="icon"
+          variant="outline"
+          className="md:hidden"
+          onClick={onMenuClick}
+        >
+          <PanelLeft className="h-5 w-5" />
+          <span className="sr-only">Toggle Menu</span>
+        </Button>
+       <div className="relative ml-auto flex items-center gap-2 md:grow-0">
          <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon" className="relative">

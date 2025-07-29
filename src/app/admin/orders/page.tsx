@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Customer, Order } from '@/lib/types';
+import { Customer, Order, OrderItem } from '@/lib/types';
 import { format } from 'date-fns';
 import { Loader2, FileDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -23,6 +23,7 @@ import { useRouter } from 'next/navigation';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import Image from 'next/image';
 
 interface EnrichedOrder extends Order {
   customerDetails?: Pick<Customer, 'firstName' | 'lastName' | 'photoURL'>;
@@ -169,17 +170,29 @@ export default function OrdersPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>ID Pedido</TableHead>
+                            <TableHead className="w-[40%]">Productos</TableHead>
                             <TableHead>Cliente</TableHead>
-                            <TableHead className="hidden md:table-cell">Fecha</TableHead>
-                            <TableHead className="hidden md:table-cell">Total</TableHead>
+                            <TableHead>Fecha y Pedido</TableHead>
+                            <TableHead>Total</TableHead>
                             <TableHead>Estado</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {currentOrders.map((order) => (
                             <TableRow key={order.id} onClick={() => handleRowClick(order.id)} className="cursor-pointer">
-                                <TableCell className="font-mono text-xs">#{order.id.substring(0, 7)}...</TableCell>
+                                <TableCell>
+                                    <div className="flex flex-col gap-2">
+                                    {order.items.map((item: OrderItem, index: number) => (
+                                        <div key={index} className="flex items-center gap-3">
+                                            <Image src={item.image} alt={item.name} width={48} height={64} className="rounded-md object-cover bg-muted" />
+                                            <div className='text-sm'>
+                                                <p className="font-medium">{item.name}</p>
+                                                <p className="text-muted-foreground">Cant: {item.quantity}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    </div>
+                                </TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-9 w-9">
@@ -194,10 +207,11 @@ export default function OrdersPage() {
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell className="hidden md:table-cell">
-                                    {order.createdAt ? format(order.createdAt.toDate(), 'dd/MM/yyyy') : 'N/A'}
+                                <TableCell>
+                                    <p>{order.createdAt ? format(order.createdAt.toDate(), 'dd/MM/yyyy') : 'N/A'}</p>
+                                    <p className="font-mono text-xs text-muted-foreground">#{order.id.slice(0, 7)}</p>
                                 </TableCell>
-                                <TableCell className="hidden md:table-cell font-semibold">S/ {order.total.toFixed(2)}</TableCell>
+                                <TableCell className="font-semibold">S/ {order.total.toFixed(2)}</TableCell>
                                 <TableCell>
                                     <Badge variant={
                                         order.status === 'Enviado' ? 'secondary' : 

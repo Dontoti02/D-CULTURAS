@@ -14,8 +14,12 @@ import { useAuth } from '@/hooks/use-auth';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect, useRef } from 'react';
+import { Product } from '@/lib/types';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import Image from 'next/image';
 
 const navLinks = [
   { href: '/?category=all', label: 'Novedades' },
@@ -30,6 +34,48 @@ export default function SiteHeader() {
   const { user, loading } = useAuth();
   const { toast } = useToast();
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const productsRef = collection(db, 'products');
+      const q = query(productsRef, orderBy('name'));
+      const querySnapshot = await getDocs(q);
+      const productsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+      setAllProducts(productsData);
+    };
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    if (searchQuery.length > 1) {
+      const results = allProducts.filter(product =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase())
+      ).slice(0, 5); // Limitar a 5 sugerencias
+      setSearchResults(results);
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchQuery, allProducts]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [searchRef]);
+
+
   const handleSignOut = async () => {
     try {
       await signOut(auth);
@@ -40,6 +86,13 @@ export default function SiteHeader() {
       toast({ title: "Error", description: "No se pudo cerrar la sesión.", variant: "destructive" });
     }
   };
+
+  const handleSuggestionClick = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setIsSearchFocused(false);
+  };
+
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
@@ -65,9 +118,33 @@ export default function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-4">
-          <div className="relative hidden md:block">
+          <div className="relative hidden md:block" ref={searchRef}>
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input type="search" placeholder="Buscar productos..." className="pl-8 sm:w-[300px]" />
+            <Input 
+              type="search" 
+              placeholder="Buscar productos..." 
+              className="pl-8 sm:w-[300px]"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
+            />
+            {isSearchFocused && searchResults.length > 0 && (
+                <div className="absolute top-full mt-2 w-full bg-card border rounded-md shadow-lg z-10">
+                    <ul>
+                        {searchResults.map(product => (
+                            <li key={product.id}>
+                                <Link href={`/product/${product.id}`} className="flex items-center gap-4 p-2 hover:bg-muted" onClick={handleSuggestionClick}>
+                                    <Image src={product.images[0]} alt={product.name} width={40} height={50} className="object-cover rounded-md" />
+                                    <div className="flex-1">
+                                        <p className="font-semibold text-sm">{product.name}</p>
+                                        <p className="text-xs text-primary">S/ {product.price.toFixed(2)}</p>
+                                    </div>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
           </div>
 
           {user && (
@@ -158,4 +235,3 @@ export default function SiteHeader() {
     </header>
   );
 }
-

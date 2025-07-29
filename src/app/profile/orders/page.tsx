@@ -10,7 +10,7 @@ import { collection, getDocs, query, where, doc, updateDoc, Timestamp } from 'fi
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { Order, OrderItem } from '@/lib/types';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { Loader2, RotateCcw, Minus, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
@@ -128,6 +128,11 @@ export default function ProfileOrdersPage() {
     }
   };
 
+  const isReturnPeriodExpired = (order: Order): boolean => {
+    if (!order.deliveredAt) return true; // Cannot return if not delivered
+    return differenceInDays(new Date(), order.deliveredAt.toDate()) > 3;
+  }
+
 
   if (loading || authLoading) {
     return (
@@ -191,7 +196,7 @@ export default function ProfileOrdersPage() {
                         </Badge>
                     </TableCell>
                     <TableCell>
-                        {order.status === 'Entregado' && (
+                        {order.status === 'Entregado' && !isReturnPeriodExpired(order) && (
                             <Button 
                                 variant="outline" 
                                 size="sm" 
@@ -201,6 +206,9 @@ export default function ProfileOrdersPage() {
                                 <RotateCcw className="mr-2 h-4 w-4" />
                                 Devolver
                             </Button>
+                        )}
+                        {order.status === 'Entregado' && isReturnPeriodExpired(order) && (
+                           <span className="text-xs text-muted-foreground italic">Plazo de devolución expirado.</span>
                         )}
                          {order.status === 'Reportado' && (
                            <span className="text-xs text-muted-foreground italic">Devolución en proceso</span>
@@ -219,7 +227,7 @@ export default function ProfileOrdersPage() {
                 <AlertDialogHeader>
                     <AlertDialogTitle>Solicitar Devolución</AlertDialogTitle>
                     <AlertDialogDescription>
-                       Selecciona los productos y la cantidad que deseas devolver del pedido <span className="font-semibold">#{orderToReturn?.id.slice(0,7)}</span>.
+                       Selecciona los productos y la cantidad que deseas devolver. Tienes 3 días después de la entrega para solicitar una devolución.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="max-h-[60vh] overflow-y-auto pr-4 space-y-4">

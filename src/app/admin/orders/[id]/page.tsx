@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Order, Customer } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -72,7 +72,14 @@ export default function OrderDetailPage() {
     setIsUpdating(true);
     try {
       const orderRef = doc(db, 'orders', id as string);
-      await updateDoc(orderRef, { status: selectedStatus });
+      const updateData: { status: OrderStatus; deliveredAt?: any } = { status: selectedStatus };
+
+      if (selectedStatus === 'Entregado') {
+        updateData.deliveredAt = serverTimestamp();
+      }
+      
+      await updateDoc(orderRef, updateData);
+
       setOrder(prev => prev ? { ...prev, status: selectedStatus as OrderStatus } : null);
       toast({
         title: "Estado Actualizado",

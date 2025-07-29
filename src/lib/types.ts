@@ -52,6 +52,7 @@ export interface Order {
         zip: string;
     },
     createdAt: Timestamp;
+    deliveredAt?: Timestamp;
     returnedItems?: {
         items: OrderItem[];
         requestedAt: Timestamp;

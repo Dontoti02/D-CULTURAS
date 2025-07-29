@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { collection, getDocs, query, where, Timestamp, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { DollarSign, Percent, TrendingUp, Landmark, ChevronLeft, ChevronRight } from 'lucide-react';
+import { DollarSign, Percent, TrendingUp, Landmark, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Order, Product, OrderItem } from '@/lib/types';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -20,9 +20,9 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  PieChart,
-  Pie,
-  Cell
+  FunnelChart,
+  Funnel,
+  LabelList,
 } from 'recharts';
 import { format, startOfWeek, startOfMonth, subDays, subMonths } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -47,6 +47,7 @@ interface EnrichedOrder extends Order {
 export default function FinancePage() {
   const [stats, setStats] = useState<FinanceStats | null>(null);
   const [deliveredOrders, setDeliveredOrders] = useState<EnrichedOrder[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'monthly' | 'weekly' | 'daily'>('monthly');
   const [transactionsCurrentPage, setTransactionsCurrentPage] = useState(1);
@@ -57,9 +58,12 @@ export default function FinancePage() {
       setLoading(true);
       try {
         const productSnapshot = await getDocs(collection(db, 'products'));
+        const productsData = productSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+        setAllProducts(productsData);
+        
         const productsMap = new Map<string, Product>();
-        productSnapshot.forEach(doc => {
-            productsMap.set(doc.id, { id: doc.id, ...doc.data() } as Product);
+        productsData.forEach(product => {
+            productsMap.set(product.id, product);
         });
 
         const ordersQuery = query(collection(db, 'orders'), where('status', '==', 'Entregado'), orderBy('createdAt', 'desc'));
@@ -103,6 +107,30 @@ export default function FinancePage() {
 
     fetchFinanceData();
   }, []);
+
+  const opportunityFunnelData = useMemo(() => {
+    if (!allProducts.length) return [];
+
+    const categories = Array.from(new Set(allProducts.map(p => p.category)));
+    const funnelColors = ['#8884d8', '#83a6ed', '#8dd1e1', '#82ca9d', '#a4de6c'];
+
+    return categories.map((cat, index) => {
+        const categoryProducts = allProducts.filter(p => p.category === cat);
+        const getAvgRating = (p: Product) => p.ratingCount > 0 ? p.ratingSum / p.ratingCount : 0;
+
+        return {
+            name: cat,
+            value: categoryProducts.filter(p => getAvgRating(p) >= 3.0).length,
+            fill: funnelColors[index % funnelColors.length],
+            stages: [
+                 { name: 'Exploración (3.0+)', value: categoryProducts.filter(p => getAvgRating(p) >= 3.0).length },
+                 { name: 'Consideración (4.0+)', value: categoryProducts.filter(p => getAvgRating(p) >= 4.0).length },
+                 { name: 'Oportunidad (4.5+)', value: categoryProducts.filter(p => getAvgRating(p) >= 4.5).length },
+            ]
+        };
+    }).sort((a, b) => b.value - a.value);
+
+  }, [allProducts]);
 
   const chartData = useMemo(() => {
     if (!deliveredOrders.length) return [];
@@ -419,8 +447,35 @@ export default function FinancePage() {
                     </Button>
                 </div>
             </CardFooter>
-        </Card>
+           </Card>
         </div>
+        <Card>
+            <CardHeader>
+              <CardTitle>Embudo de Oportunidad por Calificación</CardTitle>
+              <CardDescription>Visualiza los productos con mejor calificación por categoría para identificar oportunidades de venta.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid md:grid-cols-2 gap-6">
+                {opportunityFunnelData?.map((categoryData) => (
+                    <div key={categoryData.name}>
+                         <h3 className="font-semibold text-center mb-2">{categoryData.name} ({categoryData.value} productos)</h3>
+                         <ResponsiveContainer width="100%" height={250}>
+                             <FunnelChart>
+                                <Tooltip 
+                                  contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+                                />
+                                <Funnel 
+                                    dataKey="value" 
+                                    data={categoryData.stages}
+                                    nameKey="name"
+                                >
+                                  <LabelList position="right" fill="#000" stroke="none" dataKey="name" />
+                                </Funnel>
+                             </FunnelChart>
+                         </ResponsiveContainer>
+                    </div>
+                ))}
+            </CardContent>
+        </Card>
     </div>
   );
 }

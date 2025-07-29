@@ -11,7 +11,7 @@ import { Star, Minus, Plus, ShoppingCart, Loader2 } from 'lucide-react';
 import ProductCard from './product-card';
 import { Separator } from './ui/separator';
 import { cn } from '@/lib/utils';
-import { collection, getDocs, limit, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, limit, query, where, orderBy, doc, runTransaction, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
@@ -26,7 +26,8 @@ interface ProductClientPageProps {
 
 const SOL_TO_USD_RATE = 3.85;
 
-export default function ProductClientPage({ product }: ProductClientPageProps) {
+export default function ProductClientPage({ product: initialProduct }: ProductClientPageProps) {
+  const [product, setProduct] = useState(initialProduct);
   const [selectedImage, setSelectedImage] = useState(product.images[0]);
   const [selectedColor, setSelectedColor] = useState(product.colors[0]?.name);
   const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
@@ -35,12 +36,57 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
   const [loadingRecommendations, setLoadingRecommendations] = useState(true);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
-
+  
+  // Rating state
+  const [hoverRating, setHoverRating] = useState(0);
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [hasPurchased, setHasPurchased] = useState(false);
+  const [hasRated, setHasRated] = useState(false);
+  const [loadingPurchaseStatus, setLoadingPurchaseStatus] = useState(true);
 
   const { addToCart, cartItems } = useCart();
   const { toast } = useToast();
   const { user } = useAuth();
   const router = useRouter();
+
+  const avgRating = product.ratingCount > 0 ? (product.ratingSum / product.ratingCount) : 0;
+
+  useEffect(() => {
+    // Check if the user has purchased this product
+    const checkPurchaseStatus = async () => {
+        if (!user) {
+            setLoadingPurchaseStatus(false);
+            return;
+        }
+        
+        // 1. Check if user has rated this product
+        const ratingDocRef = doc(db, `products/${product.id}/ratings`, user.uid);
+        const ratingDocSnap = await getDocs(collection(db, `products/${product.id}/ratings`));
+        const userRatingDoc = ratingDocSnap.docs.find(doc => doc.id === user.uid);
+        if (userRatingDoc) {
+            setHasRated(true);
+            setLoadingPurchaseStatus(false);
+            return;
+        }
+
+        // 2. Check if user has purchased this product
+        const ordersRef = collection(db, 'orders');
+        const q = query(
+            ordersRef,
+            where('customerId', '==', user.uid),
+            where('status', '==', 'Entregado')
+        );
+        const querySnapshot = await getDocs(q);
+        const purchased = querySnapshot.docs.some(doc => 
+            doc.data().items.some((item: any) => item.productId === product.id)
+        );
+        
+        setHasPurchased(purchased);
+        setLoadingPurchaseStatus(false);
+    };
+
+    checkPurchaseStatus();
+  }, [user, product.id]);
 
    useEffect(() => {
     const fetchRecommendations = async () => {
@@ -70,13 +116,68 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
     fetchRecommendations();
   }, [product.id, product.category]);
 
+  const handleRatingSubmit = async (rating: number) => {
+    if (!user || isSubmittingRating || hasRated || !hasPurchased) return;
+    
+    setIsSubmittingRating(true);
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const productRef = doc(db, 'products', product.id);
+            const ratingRef = doc(db, `products/${product.id}/ratings`, user.uid);
+
+            const productDoc = await transaction.get(productRef);
+            if (!productDoc.exists()) {
+                throw new Error("El producto no existe.");
+            }
+
+            const currentProductData = productDoc.data();
+            const newRatingCount = (currentProductData.ratingCount || 0) + 1;
+            const newRatingSum = (currentProductData.ratingSum || 0) + rating;
+
+            transaction.update(productRef, {
+                ratingSum: newRatingSum,
+                ratingCount: newRatingCount
+            });
+            
+            transaction.set(ratingRef, {
+                rating,
+                createdAt: new Date(),
+            });
+
+             // Optimistically update local state
+            setProduct(prev => ({
+                ...prev,
+                ratingSum: newRatingSum,
+                ratingCount: newRatingCount,
+            }));
+            setHasRated(true);
+
+        });
+
+        toast({
+            title: '¡Gracias por tu opinión!',
+            description: `Has calificado este producto con ${rating} estrellas.`,
+        });
+
+    } catch (error) {
+        console.error("Error al enviar la calificación:", error);
+        toast({
+            title: 'Error',
+            description: 'No se pudo guardar tu calificación. Inténtalo de nuevo.',
+            variant: 'destructive',
+        });
+    } finally {
+        setIsSubmittingRating(false);
+    }
+};
+
   const handleAddToCart = () => {
     if (!user) {
         setShowAuthDialog(true);
         return;
     }
 
-    // Check against stock
     const itemInCart = cartItems.find(
       (item) => item.id === product.id && item.size === selectedSize && item.color === selectedColor
     );
@@ -161,10 +262,10 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
               <div className="flex items-center gap-4 mt-2">
                   <div className="flex items-center gap-1">
                       {Array.from({ length: 5 }).map((_, i) => (
-                          <Star key={i} className={cn('w-5 h-5', i < Math.floor(product.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/50')} />
+                          <Star key={i} className={cn('w-5 h-5', i < avgRating ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/50')} />
                       ))}
                   </div>
-                  <p className="text-sm text-muted-foreground">{product.rating} estrellas</p>
+                  <p className="text-sm text-muted-foreground">{avgRating.toFixed(1)} ({product.ratingCount} opiniones)</p>
                   <Separator orientation="vertical" className="h-4" />
                    {isOutOfStock ? (
                       <span className="text-sm font-semibold text-destructive">Agotado</span>
@@ -176,6 +277,48 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
               </div>
             </div>
             <p className="text-muted-foreground">{product.description}</p>
+
+             {/* Rating Section */}
+            <Card>
+                <CardContent className="p-4">
+                    {loadingPurchaseStatus ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Verificando tu compra...</span>
+                        </div>
+                    ) : hasRated ? (
+                         <div className="text-center">
+                            <h4 className="font-semibold">¡Gracias por tu opinión!</h4>
+                            <p className="text-sm text-muted-foreground">Ya has calificado este producto.</p>
+                        </div>
+                    ) : hasPurchased ? (
+                        <div className="text-center space-y-2">
+                           <h4 className="font-semibold">¿Te gustó el producto? ¡Califícalo!</h4>
+                           <div 
+                                className="flex justify-center gap-1"
+                                onMouseLeave={() => setHoverRating(0)}
+                           >
+                               {[1, 2, 3, 4, 5].map((star) => (
+                                   <button 
+                                       key={star}
+                                       onClick={() => handleRatingSubmit(star)}
+                                       onMouseEnter={() => setHoverRating(star)}
+                                       disabled={isSubmittingRating}
+                                   >
+                                       <Star className={cn('w-7 h-7 transition-colors', (hoverRating || Math.floor(avgRating)) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/50')} />
+                                   </button>
+                               ))}
+                           </div>
+                        </div>
+                    ) : (
+                        <p className="text-center text-sm text-muted-foreground">
+                            Debes haber comprado este producto para poder calificarlo.
+                        </p>
+                    )}
+                </CardContent>
+            </Card>
+
+
             <div>
               <p className="text-4xl font-bold text-primary">S/ {product.price.toFixed(2)}</p>
               <p className="text-sm text-muted-foreground">Precio referencial: ${priceInUsd} USD</p>
@@ -284,3 +427,5 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
     </>
   );
 }
+
+    

@@ -17,6 +17,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const priceInUsd = (product.price / SOL_TO_USD_RATE).toFixed(2);
   const isOutOfStock = product.stock === 0;
   const isLowStock = product.stock > 0 && product.stock <= 5;
+  const avgRating = product.ratingCount > 0 ? (product.ratingSum / product.ratingCount) : 0;
 
 
   return (
@@ -48,7 +49,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               <h3 className="font-semibold text-lg truncate">{product.name}</h3>
               <div className="flex items-center gap-1">
                 <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                <span className="text-sm text-muted-foreground">{product.rating}</span>
+                <span className="text-sm text-muted-foreground">{avgRating.toFixed(1)}</span>
               </div>
             </div>
             <div className="flex items-center justify-between mt-2">
@@ -64,3 +65,5 @@ export default function ProductCard({ product }: ProductCardProps) {
     </Link>
   );
 }
+
+    

@@ -132,7 +132,8 @@ export default function NewProductPage() {
         images: imageUrls.filter((url): url is string => url !== null),
         sizes: ['S', 'M', 'L', 'XL'],
         colors: selectedColors,
-        rating: 0,
+        ratingSum: 0,
+        ratingCount: 0,
         createdAt: serverTimestamp(),
       });
       toast({
@@ -318,3 +319,5 @@ export default function NewProductPage() {
     </form>
   );
 }
+
+    

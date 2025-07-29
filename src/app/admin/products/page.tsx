@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Product } from '@/lib/types';
 import Image from 'next/image';
-import { MoreHorizontal, PlusCircle, Loader2, Upload } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Loader2, Upload, Star } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
+import { cn } from '@/lib/utils';
 
 export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
@@ -111,7 +112,7 @@ export default function ProductsPage() {
                         return; // Omitir filas sin datos esenciales
                     }
                     const newProductRef = doc(collection(db, 'products'));
-                    const newProduct: Omit<Product, 'id'> = {
+                    const newProduct: Omit<Product, 'id' | 'rating' | 'ratingSum' | 'ratingCount'> = {
                         name: row.name,
                         description: row.description || '',
                         price: parseFloat(row.price),
@@ -124,8 +125,9 @@ export default function ProductsPage() {
                             const [name, hex] = c.split(':');
                             return { name: name.trim(), hex: hex.trim() };
                         }) : [],
-                        rating: 0,
                         createdAt: serverTimestamp() as any,
+                        ratingSum: 0,
+                        ratingCount: 0,
                     };
                     batch.set(newProductRef, newProduct);
                     productsAdded++;
@@ -195,13 +197,16 @@ export default function ProductsPage() {
                                 <TableHead className="hidden md:table-cell">Precio</TableHead>
                                 <TableHead className="hidden md:table-cell">Costo</TableHead>
                                 <TableHead className="hidden md:table-cell">Stock</TableHead>
+                                <TableHead className="hidden md:table-cell">Calificación</TableHead>
                                 <TableHead>
                                     <span className="sr-only">Acciones</span>
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {products.map((product) => (
+                            {products.map((product) => {
+                                const avgRating = product.ratingCount > 0 ? (product.ratingSum / product.ratingCount) : 0;
+                                return (
                                 <TableRow key={product.id}>
                                     <TableCell className="hidden sm:table-cell">
                                         {product.images && product.images.length > 0 ? (
@@ -226,6 +231,13 @@ export default function ProductsPage() {
                                     <TableCell className="hidden md:table-cell">S/ {product.price.toFixed(2)}</TableCell>
                                     <TableCell className="hidden md:table-cell">S/ {product.cost?.toFixed(2) ?? 'N/A'}</TableCell>
                                     <TableCell className="hidden md:table-cell">{product.stock}</TableCell>
+                                     <TableCell className="hidden md:table-cell">
+                                        <div className="flex items-center gap-1">
+                                            <Star className={cn("w-4 h-4", avgRating > 0 ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground")} />
+                                            <span className="font-semibold">{avgRating.toFixed(1)}</span>
+                                            <span className="text-xs text-muted-foreground">({product.ratingCount})</span>
+                                        </div>
+                                    </TableCell>
                                     <TableCell>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -247,7 +259,7 @@ export default function ProductsPage() {
                                         </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            )})}
                         </TableBody>
                     </Table>
                 </CardContent>
@@ -273,3 +285,5 @@ export default function ProductsPage() {
         </>
     )
 }
+
+    

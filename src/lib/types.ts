@@ -11,7 +11,8 @@ export type Product = {
   category: 'Caballeros' | 'Damas' | 'Novedades Caballeros' | 'Novedades Damas';
   sizes: ('XS' | 'S' | 'M' | 'L' | 'XL')[];
   colors: { name: string, hex: string }[];
-  rating: number;
+  ratingSum: number; // Suma de todas las calificaciones
+  ratingCount: number; // Cantidad de calificaciones
   stock: number;
   createdAt?: Timestamp;
 };
@@ -75,3 +76,5 @@ export interface Promotion {
   createdAt: Timestamp;
   usedCount?: number;
 }
+
+    

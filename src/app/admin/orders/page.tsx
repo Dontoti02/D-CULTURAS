@@ -84,11 +84,12 @@ export default function OrdersPage() {
         fetchOrdersAndCustomers();
     }, []);
 
+    const indexOfLastOrder = currentPage * ordersPerPage;
+    const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+
     const currentOrders = useMemo(() => {
-        const indexOfLastOrder = currentPage * ordersPerPage;
-        const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
         return orders.slice(indexOfFirstOrder, indexOfLastOrder);
-    }, [orders, currentPage, ordersPerPage]);
+    }, [orders, indexOfFirstOrder, indexOfLastOrder]);
 
     const totalPages = Math.ceil(orders.length / ordersPerPage);
 
@@ -242,4 +243,3 @@ export default function OrdersPage() {
         </Card>
     );
 }
-

@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -15,7 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { MoreHorizontal, PlusCircle, Loader2, Clock } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Loader2, Clock, GanttChartSquare } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,10 +38,11 @@ import { useToast } from '@/hooks/use-toast';
 import { collection, getDocs, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Promotion } from '@/lib/types';
-import { format } from 'date-fns';
+import { format, differenceInDays, eachDayOfInterval, startOfMonth, endOfMonth, addMonths, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
 import CountdownTimer from '@/components/countdown-timer';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function PromotionsPage() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -85,6 +86,53 @@ export default function PromotionsPage() {
         setIsDeleting(false);
     }
   };
+
+  const ganttChartData = useMemo(() => {
+    if (promotions.length === 0) return null;
+
+    const allDates = promotions.flatMap(p => [p.startDate.toDate(), p.endDate.toDate()]);
+    const chartStartDate = startOfMonth(new Date(Math.min(...allDates.map(d => d.getTime()))));
+    let chartEndDate = endOfMonth(new Date(Math.max(...allDates.map(d => d.getTime()))));
+
+    // Ensure chart shows at least 3 months for context
+    if (differenceInDays(chartEndDate, chartStartDate) < 90) {
+        chartEndDate = endOfMonth(addMonths(chartStartDate, 2));
+    }
+
+    const totalDays = differenceInDays(chartEndDate, chartStartDate) + 1;
+    
+    const months = [];
+    let currentMonth = chartStartDate;
+    while (currentMonth <= chartEndDate) {
+        const daysInMonth = differenceInDays(endOfMonth(currentMonth), startOfMonth(currentMonth)) + 1;
+        months.push({
+            name: format(currentMonth, 'MMMM yyyy', { locale: es }),
+            days: daysInMonth,
+        });
+        currentMonth = addMonths(currentMonth, 1);
+    }
+    
+    const colors = ['#3b82f6', '#10b981', '#ef4444', '#eab308', '#8b5cf6', '#f97316'];
+
+    const items = promotions.map((promo, index) => {
+        const startDate = startOfDay(promo.startDate.toDate());
+        const endDate = startOfDay(promo.endDate.toDate());
+        const startOffset = differenceInDays(startDate, chartStartDate);
+        const duration = differenceInDays(endDate, startDate) + 1;
+        
+        return {
+            ...promo,
+            gantt: {
+                start: (startOffset / totalDays) * 100,
+                width: (duration / totalDays) * 100,
+                color: colors[index % colors.length],
+            }
+        };
+    });
+
+    return { chartStartDate, chartEndDate, totalDays, months, items };
+  }, [promotions]);
+
 
   const now = new Date();
 
@@ -167,7 +215,7 @@ export default function PromotionsPage() {
                 {isActive && (
                     <CardFooter className="bg-muted/50 p-4">
                         <div className="w-full">
-                           <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                           <div className="flex items-center gap-2 text-sm font-medium mb-2 text-primary">
                                 <Clock className="w-4 h-4" />
                                 <span>Tiempo restante:</span>
                            </div>
@@ -178,7 +226,64 @@ export default function PromotionsPage() {
               </Card>
           )})}
       </div>
-
+      
+       {ganttChartData && (
+            <Card className="mt-8">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <GanttChartSquare />
+                        Cronograma de Promociones
+                    </CardTitle>
+                    <CardDescription>Visualización de la duración y superposición de las campañas.</CardDescription>
+                </CardHeader>
+                <CardContent className="pr-10">
+                    <TooltipProvider>
+                    <div className="space-y-4">
+                        {/* Header */}
+                        <div className="flex text-xs text-muted-foreground">
+                            <div className="w-48 pr-4 border-r"></div>
+                            <div className="flex-1 flex">
+                                {ganttChartData.months.map(month => (
+                                    <div key={month.name} style={{ width: `${(month.days / ganttChartData.totalDays) * 100}%`}} className="text-center border-l capitalize">
+                                        {month.name}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        {/* Rows */}
+                        <div className="relative">
+                            {ganttChartData.items.map((item, index) => (
+                                <div key={item.id} className="flex items-center h-10">
+                                    <div className="w-48 pr-4 border-r text-sm font-medium truncate">{item.name}</div>
+                                    <div className="flex-1 pl-2 h-full">
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div 
+                                                    className="h-6 rounded-md my-2 cursor-pointer hover:opacity-80"
+                                                    style={{ 
+                                                        marginLeft: `${item.gantt.start}%`, 
+                                                        width: `${item.gantt.width}%`,
+                                                        backgroundColor: item.gantt.color
+                                                    }}
+                                                />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p className="font-bold">{item.name}</p>
+                                                <p className="text-sm">
+                                                    {format(item.startDate.toDate(), 'dd MMM yyyy', { locale: es })} - {format(item.endDate.toDate(), 'dd MMM yyyy', { locale: es })}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">{differenceInDays(item.endDate.toDate(), item.startDate.toDate()) + 1} días</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    </TooltipProvider>
+                </CardContent>
+            </Card>
+        )}
 
       <AlertDialog open={!!promotionToDelete} onOpenChange={(open) => !open && setPromotionToDelete(null)}>
         <AlertDialogContent>
@@ -199,4 +304,3 @@ export default function PromotionsPage() {
     </>
   );
 }
-

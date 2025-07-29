@@ -37,13 +37,13 @@ export default function CountdownTimer({ endDate }: CountdownTimerProps) {
   const timerComponents = Object.entries(timeLeft);
 
   if (!timerComponents.length) {
-    return <p className="font-semibold text-destructive text-center">¡La oferta ha terminado!</p>;
+    return <p className="font-semibold text-destructive text-center w-full">¡La oferta ha terminado!</p>;
   }
 
   return (
-    <div className="flex items-center justify-center gap-2 text-center w-full">
+    <div className="flex items-center justify-between gap-2 text-center w-full">
       {timerComponents.map(([interval, value]) => (
-        <div key={interval} className="flex flex-col items-center justify-center bg-background border rounded-md p-2 w-full">
+        <div key={interval} className="flex flex-col items-center justify-center bg-background/50 border rounded-md p-2 w-full">
           <span className="text-xl font-bold text-primary">{String(value).padStart(2, '0')}</span>
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{interval}</span>
         </div>

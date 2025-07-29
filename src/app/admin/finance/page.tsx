@@ -10,8 +10,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Order, Product, OrderItem } from '@/lib/types';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   BarChart,
   Bar,
   XAxis,
@@ -305,10 +305,20 @@ export default function FinancePage() {
           </CardHeader>
           <CardContent className="h-[350px] w-full pt-4">
               <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
+                  <AreaChart
                       data={chartData}
                       margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
                   >
+                     <defs>
+                          <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                          </linearGradient>
+                           <linearGradient id="colorGanancias" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="hsl(var(--primary) / 0.5)" stopOpacity={0.8}/>
+                              <stop offset="95%" stopColor="hsl(var(--primary) / 0.5)" stopOpacity={0}/>
+                          </linearGradient>
+                      </defs>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" fontSize={12} />
                       <YAxis tickFormatter={(value) => `S/${value}`} fontSize={12} />
@@ -317,9 +327,9 @@ export default function FinancePage() {
                           formatter={(value: number, name: string) => [`S/ ${value.toFixed(2)}`, name]}
                       />
                       <Legend />
-                      <Line type="monotone" dataKey="Ingresos" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} dot={false} />
-                      <Line type="monotone" dataKey="Ganancias" stroke="hsl(var(--primary) / 0.5)" strokeWidth={2} activeDot={{ r: 8 }} dot={false} />
-                  </LineChart>
+                      <Area type="monotone" dataKey="Ingresos" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorIngresos)" strokeWidth={2} activeDot={{ r: 8 }} dot={false} />
+                      <Area type="monotone" dataKey="Ganancias" stroke="hsl(var(--primary) / 0.5)" fillOpacity={1} fill="url(#colorGanancias)" strokeWidth={2} activeDot={{ r: 8 }} dot={false} />
+                  </AreaChart>
               </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -414,3 +424,5 @@ export default function FinancePage() {
     </div>
   );
 }
+
+    

@@ -328,17 +328,17 @@ export default function FinancePage() {
             </CardHeader>
             <CardContent className="h-[400px] w-full pt-4">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={categoryPerformance} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                <BarChart data={categoryPerformance} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" tickFormatter={(value) => `S/${value}`} fontSize={12} />
-                    <YAxis dataKey="name" type="category" width={100} fontSize={12} />
+                    <XAxis dataKey="name" fontSize={12} />
+                    <YAxis tickFormatter={(value) => `S/${value}`} fontSize={12}/>
                     <Tooltip
                         contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
                         formatter={(value: number, name: string) => [`S/ ${value.toFixed(2)}`, name]}
                     />
                     <Legend />
-                    <Bar dataKey="Ingresos" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                    <Bar dataKey="Ganancias" fill="hsl(var(--primary) / 0.5)" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="Ingresos" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Ganancias" fill="hsl(var(--primary) / 0.5)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

@@ -26,7 +26,7 @@ import * as XLSX from 'xlsx';
 import Image from 'next/image';
 
 interface EnrichedOrder extends Order {
-  customerDetails?: Pick<Customer, 'firstName' | 'lastName' | 'photoURL'>;
+  customerDetails?: Pick<Customer, 'firstName' | 'lastName' | 'photoURL' | 'email'>;
 }
 
 // Extend jsPDF interface for autoTable plugin
@@ -69,7 +69,8 @@ export default function OrdersPage() {
                         customerDetails: customerDetails ? {
                             firstName: customerDetails.firstName,
                             lastName: customerDetails.lastName,
-                            photoURL: customerDetails.photoURL
+                            photoURL: customerDetails.photoURL,
+                            email: customerDetails.email
                         } : undefined
                     };
                 });
@@ -129,6 +130,7 @@ export default function OrdersPage() {
         const worksheet = XLSX.utils.json_to_sheet(orders.map(order => ({
             "ID Pedido": order.id,
             "Cliente": order.customerName,
+            "Email Cliente": order.customerDetails?.email,
             "Fecha": order.createdAt ? format(order.createdAt.toDate(), 'dd/MM/yyyy') : 'N/A',
             "Total (S/)": order.total.toFixed(2),
             "Estado": order.status,
@@ -204,6 +206,7 @@ export default function OrdersPage() {
                                         </Avatar>
                                         <div className="grid gap-0.5">
                                             <p className="font-medium">{order.customerName}</p>
+                                            <p className="text-xs text-muted-foreground">{order.customerDetails?.email}</p>
                                         </div>
                                     </div>
                                 </TableCell>

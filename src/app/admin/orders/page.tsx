@@ -11,13 +11,13 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Customer, Order } from '@/lib/types';
 import { format } from 'date-fns';
-import { Loader2, FileDown } from 'lucide-react';
+import { Loader2, FileDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useRouter } from 'next/navigation';
 import jsPDF from 'jspdf';
@@ -39,6 +39,8 @@ declare module 'jspdf' {
 export default function OrdersPage() {
     const [orders, setOrders] = useState<EnrichedOrder[]>([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ordersPerPage = 7;
     const router = useRouter();
 
     useEffect(() => {
@@ -81,6 +83,14 @@ export default function OrdersPage() {
 
         fetchOrdersAndCustomers();
     }, []);
+
+    const currentOrders = useMemo(() => {
+        const indexOfLastOrder = currentPage * ordersPerPage;
+        const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+        return orders.slice(indexOfFirstOrder, indexOfLastOrder);
+    }, [orders, currentPage, ordersPerPage]);
+
+    const totalPages = Math.ceil(orders.length / ordersPerPage);
 
     const handleRowClick = (orderId: string) => {
         router.push(`/admin/orders/${orderId}`);
@@ -166,7 +176,7 @@ export default function OrdersPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {orders.map((order) => (
+                        {currentOrders.map((order) => (
                             <TableRow key={order.id} onClick={() => handleRowClick(order.id)} className="cursor-pointer">
                                 <TableCell className="font-mono text-xs">#{order.id.substring(0, 7)}...</TableCell>
                                 <TableCell>
@@ -201,6 +211,35 @@ export default function OrdersPage() {
                     </TableBody>
                 </Table>
             </CardContent>
+             <CardFooter>
+                <div className="text-xs text-muted-foreground">
+                    Mostrando <strong>{Math.min(indexOfFirstOrder + 1, orders.length)}-{Math.min(indexOfLastOrder, orders.length)}</strong> de <strong>{orders.length}</strong> pedidos
+                </div>
+                <div className="ml-auto flex items-center gap-2">
+                    <span className="text-sm">
+                        Página {currentPage} de {totalPages}
+                    </span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                        Anterior
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                    >
+                        Siguiente
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                </div>
+            </CardFooter>
         </Card>
     );
 }
+

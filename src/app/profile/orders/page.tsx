@@ -24,6 +24,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import Image from 'next/image';
+import { Separator } from '@/components/ui/separator';
 
 export default function ProfileOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -109,7 +111,7 @@ export default function ProfileOrdersPage() {
             <Table>
                 <TableHeader>
                 <TableRow>
-                    <TableHead>ID Pedido</TableHead>
+                    <TableHead className="w-[40%]">Productos</TableHead>
                     <TableHead>Fecha</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Estado</TableHead>
@@ -119,8 +121,23 @@ export default function ProfileOrdersPage() {
                 <TableBody>
                 {orders.map((order) => (
                     <TableRow key={order.id}>
-                    <TableCell className="font-mono text-sm">#{order.id.slice(0, 7)}...</TableCell>
-                    <TableCell>{format(order.createdAt.toDate(), 'dd/MM/yyyy')}</TableCell>
+                    <TableCell>
+                        <div className="flex flex-col gap-2">
+                           {order.items.map((item, index) => (
+                                <div key={index} className="flex items-center gap-3">
+                                    <Image src={item.image} alt={item.name} width={48} height={64} className="rounded-md object-cover" />
+                                    <div className='text-sm'>
+                                        <p className="font-medium">{item.name}</p>
+                                        <p className="text-muted-foreground">Cant: {item.quantity}</p>
+                                    </div>
+                                </div>
+                           ))}
+                        </div>
+                    </TableCell>
+                    <TableCell>
+                        <p>{format(order.createdAt.toDate(), 'dd/MM/yyyy')}</p>
+                        <p className="text-xs text-muted-foreground font-mono">#{order.id.slice(0, 7)}</p>
+                    </TableCell>
                     <TableCell className="font-semibold">S/ {order.total.toFixed(2)}</TableCell>
                     <TableCell>
                         <Badge variant={
@@ -140,11 +157,11 @@ export default function ProfileOrdersPage() {
                                 disabled={isUpdating}
                             >
                                 <RotateCcw className="mr-2 h-4 w-4" />
-                                Solicitar Devolución
+                                Devolver
                             </Button>
                         )}
                          {order.status === 'Reportado' && (
-                           <span className="text-xs text-muted-foreground italic">Devolución en proceso</span>
+                           <span className="text-xs text-muted-foreground italic">En proceso</span>
                         )}
                     </TableCell>
                     </TableRow>

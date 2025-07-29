@@ -100,7 +100,7 @@ export default function BillingPage() {
         const last4 = newCard.number.slice(-4);
         const [expiryMonth, expiryYear] = newCard.expiry.split('/');
         
-        if (!/^\d{16}$/.test(newCard.number) || !/^\d{2}\/\d{2}$/.test(newCard.expiry) || !/^\d{3}$/.test(newCard.cvc)) {
+        if (!/^\d{16}$/.test(newCard.number) || !/^\d{2}\/\d{2}$/.test(newCard.expiry) || !/^\d{3,4}$/.test(newCard.cvc)) {
             toast({ title: 'Datos de tarjeta inválidos', description: 'Por favor, revisa los datos de la tarjeta.', variant: 'destructive'});
             return;
         }
@@ -128,6 +128,13 @@ export default function BillingPage() {
     const removeMethod = (id: string) => {
         setPaymentMethods(paymentMethods.filter(pm => pm.id !== id));
         toast({ title: 'Método de pago eliminado'});
+    };
+
+    const handleDownloadInvoice = (invoiceId: string) => {
+        toast({
+            title: `Descargando Factura ${invoiceId}`,
+            description: "Tu descarga ha comenzado.",
+        });
     };
 
 
@@ -212,7 +219,7 @@ export default function BillingPage() {
                                             <TableCell>S/ {invoice.amount.toFixed(2)}</TableCell>
                                             <TableCell><Badge variant="outline">{invoice.status}</Badge></TableCell>
                                             <TableCell className="text-right">
-                                                <Button variant="ghost" size="icon">
+                                                <Button variant="ghost" size="icon" onClick={() => handleDownloadInvoice(invoice.id)}>
                                                     <Download className="h-4 w-4" />
                                                 </Button>
                                             </TableCell>
@@ -226,7 +233,7 @@ export default function BillingPage() {
                 <div className="md:col-span-1">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Método de Pago</CardTitle>
+                            <CardTitle>Métodos de Pago</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {paymentMethods.map((pm) => (
@@ -302,7 +309,7 @@ export default function BillingPage() {
                                                 </div>
                                                 <div className="grid gap-2">
                                                     <Label htmlFor="card-cvc">CVC</Label>
-                                                    <Input id="card-cvc" placeholder="123" value={newCard.cvc} onChange={(e) => setNewCard({...newCard, cvc: e.target.value})} maxLength={3}/>
+                                                    <Input id="card-cvc" placeholder="123" value={newCard.cvc} onChange={(e) => setNewCard({...newCard, cvc: e.target.value})} maxLength={4}/>
                                                 </div>
                                             </div>
                                         </div>
@@ -324,5 +331,4 @@ export default function BillingPage() {
             </div>
         </div>
     );
-
-    
+}

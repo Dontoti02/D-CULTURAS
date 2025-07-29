@@ -2,10 +2,10 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { DollarSign, Percent, TrendingUp, Landmark } from 'lucide-react';
+import { DollarSign, Percent, TrendingUp, Landmark, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Order, Product } from '@/lib/types';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -26,6 +26,7 @@ import {
 } from 'recharts';
 import { format, startOfWeek, startOfMonth, subDays, subMonths } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 
 interface FinanceStats {
   totalRevenue: number;
@@ -47,6 +48,8 @@ export default function FinancePage() {
   const [deliveredOrders, setDeliveredOrders] = useState<EnrichedOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'monthly' | 'weekly' | 'daily'>('monthly');
+  const [transactionsCurrentPage, setTransactionsCurrentPage] = useState(1);
+  const transactionsPerPage = 5;
 
   useEffect(() => {
     const fetchFinanceData = async () => {
@@ -58,7 +61,7 @@ export default function FinancePage() {
             productsMap.set(doc.id, { id: doc.id, ...doc.data() } as Product);
         });
 
-        const ordersQuery = query(collection(db, 'orders'), where('status', '==', 'Entregado'));
+        const ordersQuery = query(collection(db, 'orders'), where('status', '==', 'Entregado'), orderBy('createdAt', 'desc'));
         const ordersSnapshot = await getDocs(ordersQuery);
         
         const ordersData = ordersSnapshot.docs.map(doc => {
@@ -181,6 +184,13 @@ export default function FinancePage() {
 
     return Object.entries(data).map(([name, values]) => ({ name, ...values }));
   }, [deliveredOrders]);
+
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (transactionsCurrentPage - 1) * transactionsPerPage;
+    return deliveredOrders.slice(startIndex, startIndex + transactionsPerPage);
+  }, [deliveredOrders, transactionsCurrentPage, transactionsPerPage]);
+
+  const totalTransactionPages = Math.ceil(deliveredOrders.length / transactionsPerPage);
 
 
   if (loading) {
@@ -332,12 +342,12 @@ export default function FinancePage() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
-           <Card>
+           <Card className="flex flex-col">
             <CardHeader>
                 <CardTitle>Transacciones Recientes</CardTitle>
-                <CardDescription>Últimos 10 pedidos que han sido entregados.</CardDescription>
+                <CardDescription>Últimos pedidos que han sido entregados.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-grow">
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -349,7 +359,7 @@ export default function FinancePage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {deliveredOrders.slice(0, 10).map((order) => {
+                        {paginatedTransactions.map((order) => {
                             const orderCost = order.items.reduce((acc, item) => acc + (item.cost || 0) * item.quantity, 0);
                             const orderProfit = order.total - orderCost;
                             const profitMargin = order.total > 0 ? (orderProfit / order.total) * 100 : 0;
@@ -369,6 +379,31 @@ export default function FinancePage() {
                     </TableBody>
                 </Table>
             </CardContent>
+            <CardFooter>
+                 <div className="text-xs text-muted-foreground">
+                    Página <strong>{transactionsCurrentPage}</strong> de <strong>{totalTransactionPages}</strong>
+                </div>
+                <div className="ml-auto flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTransactionsCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={transactionsCurrentPage === 1}
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                        Anterior
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTransactionsCurrentPage(prev => Math.min(prev + 1, totalTransactionPages))}
+                        disabled={transactionsCurrentPage === totalTransactionPages}
+                    >
+                        Siguiente
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                </div>
+            </CardFooter>
         </Card>
         </div>
     </div>

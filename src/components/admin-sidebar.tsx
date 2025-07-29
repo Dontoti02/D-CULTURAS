@@ -16,6 +16,7 @@ import {
   LogOut,
   Award,
   Warehouse,
+  Landmark,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -58,6 +59,7 @@ const navLinks = [
   { href: '/admin/orders', label: 'Pedidos', icon: ShoppingCart },
   { href: '/admin/customers', label: 'Clientes', icon: Users },
   { href: '/admin/promotions', label: 'Promociones', icon: Award },
+  { href: '/admin/finance', label: 'Finanzas', icon: Landmark },
 ];
 
 interface AdminData {
@@ -174,7 +176,7 @@ export default function AdminSidebar() {
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
                 {
-                  'bg-primary/10 text-primary': pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/admin'),
+                  'text-primary': pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/admin'),
                 }
               )}
             >

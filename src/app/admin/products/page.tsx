@@ -106,7 +106,7 @@ export default function ProductsPage() {
                 let productsAdded = 0;
 
                 json.forEach((row: any) => {
-                    if (!row.name || !row.price || !row.stock || !row.category) {
+                    if (!row.name || !row.price || !row.cost || !row.stock || !row.category) {
                         console.warn("Fila omitida por datos faltantes:", row);
                         return; // Omitir filas sin datos esenciales
                     }
@@ -115,6 +115,7 @@ export default function ProductsPage() {
                         name: row.name,
                         description: row.description || '',
                         price: parseFloat(row.price),
+                        cost: parseFloat(row.cost),
                         stock: parseInt(row.stock, 10),
                         category: row.category,
                         images: [], // Las imágenes se suben después
@@ -192,8 +193,8 @@ export default function ProductsPage() {
                                 <TableHead>Nombre</TableHead>
                                 <TableHead>Categoría</TableHead>
                                 <TableHead className="hidden md:table-cell">Precio</TableHead>
+                                <TableHead className="hidden md:table-cell">Costo</TableHead>
                                 <TableHead className="hidden md:table-cell">Stock</TableHead>
-                                <TableHead className="hidden md:table-cell">Calificación</TableHead>
                                 <TableHead>
                                     <span className="sr-only">Acciones</span>
                                 </TableHead>
@@ -223,8 +224,8 @@ export default function ProductsPage() {
                                         <Badge variant="outline">{product.category}</Badge>
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell">S/ {product.price.toFixed(2)}</TableCell>
+                                    <TableCell className="hidden md:table-cell">S/ {product.cost?.toFixed(2) ?? 'N/A'}</TableCell>
                                     <TableCell className="hidden md:table-cell">{product.stock}</TableCell>
-                                    <TableCell className="hidden md:table-cell">{product.rating}</TableCell>
                                     <TableCell>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -272,5 +273,3 @@ export default function ProductsPage() {
         </>
     )
 }
-
-      

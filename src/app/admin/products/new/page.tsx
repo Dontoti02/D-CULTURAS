@@ -25,6 +25,7 @@ export default function NewProductPage() {
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<'Caballeros' | 'Damas' | 'Novedades Caballeros' | 'Novedades Damas' | ''>('');
   const [price, setPrice] = useState('');
+  const [cost, setCost] = useState('');
   const [stock, setStock] = useState('');
   const [imageUrls, setImageUrls] = useState<(string | null)[]>(Array(4).fill(null));
   const [selectedColors, setSelectedColors] = useState<{ name: string; hex: string }[]>([]);
@@ -110,7 +111,7 @@ export default function NewProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !description || !category || !price || !stock || imageUrls.every(url => url === null) || selectedColors.length === 0) {
+    if (!name || !description || !category || !price || !cost || !stock || imageUrls.every(url => url === null) || selectedColors.length === 0) {
         toast({
             title: 'Campos Incompletos',
             description: 'Por favor, rellena todos los campos, sube al menos una imagen y selecciona al menos un color.',
@@ -126,6 +127,7 @@ export default function NewProductPage() {
         description,
         category,
         price: parseFloat(price),
+        cost: parseFloat(cost),
         stock: parseInt(stock, 10),
         images: imageUrls.filter((url): url is string => url !== null),
         sizes: ['S', 'M', 'L', 'XL'],
@@ -270,7 +272,7 @@ export default function NewProductPage() {
             <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
               <Card>
                 <CardHeader>
-                  <CardTitle>Categoría y Precio</CardTitle>
+                  <CardTitle>Categoría y Precios</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-6">
                   <div className="grid gap-3">
@@ -287,10 +289,16 @@ export default function NewProductPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                   <div className="grid gap-3">
-                    <Label htmlFor="price">Precio</Label>
-                    <Input id="price" type="number" placeholder="99.99" required value={price} onChange={(e) => setPrice(e.target.value)} />
-                  </div>
+                   <div className="grid md:grid-cols-2 gap-4">
+                        <div className="grid gap-3">
+                            <Label htmlFor="price">Precio (S/)</Label>
+                            <Input id="price" type="number" placeholder="99.99" required value={price} onChange={(e) => setPrice(e.target.value)} />
+                        </div>
+                         <div className="grid gap-3">
+                            <Label htmlFor="cost">Costo (S/)</Label>
+                            <Input id="cost" type="number" placeholder="49.99" required value={cost} onChange={(e) => setCost(e.target.value)} />
+                        </div>
+                   </div>
                    <div className="grid gap-3">
                     <Label htmlFor="stock">Stock</Label>
                     <Input id="stock" type="number" placeholder="100" required value={stock} onChange={(e) => setStock(e.target.value)} />
@@ -310,4 +318,3 @@ export default function NewProductPage() {
     </form>
   );
 }
-

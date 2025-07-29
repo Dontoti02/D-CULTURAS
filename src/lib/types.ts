@@ -6,6 +6,7 @@ export type Product = {
   name: string;
   description: string;
   price: number;
+  cost?: number; // Costo del producto para calcular la ganancia
   images: string[];
   category: 'Caballeros' | 'Damas' | 'Novedades Caballeros' | 'Novedades Damas';
   sizes: ('XS' | 'S' | 'M' | 'L' | 'XL')[];
@@ -29,6 +30,7 @@ export interface OrderItem {
     name: string;
     image: string;
     price: number;
+    cost?: number;
     quantity: number;
     size: string;
     color: string;

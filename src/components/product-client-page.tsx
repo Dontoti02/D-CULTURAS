@@ -37,7 +37,7 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
   const [showImagePreview, setShowImagePreview] = useState(false);
 
 
-  const { addToCart } = useCart();
+  const { addToCart, cartItems } = useCart();
   const { toast } = useToast();
   const { user } = useAuth();
   const router = useRouter();
@@ -75,6 +75,22 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
         setShowAuthDialog(true);
         return;
     }
+
+    // Check against stock
+    const itemInCart = cartItems.find(
+      (item) => item.id === product.id && item.size === selectedSize && item.color === selectedColor
+    );
+    const currentQuantityInCart = itemInCart ? itemInCart.quantity : 0;
+    
+    if (currentQuantityInCart + quantity > product.stock) {
+      toast({
+        title: 'Stock Insuficiente',
+        description: `No puedes añadir más unidades de "${product.name}". Solo quedan ${product.stock} disponibles y ya tienes ${currentQuantityInCart} en tu carrito.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     addToCart({
         id: product.id,
         name: product.name,
@@ -91,6 +107,7 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
   }
 
   const priceInUsd = (product.price / SOL_TO_USD_RATE).toFixed(2);
+  const isOutOfStock = product.stock <= 0;
 
   return (
     <>
@@ -146,6 +163,12 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
                       ))}
                   </div>
                   <p className="text-sm text-muted-foreground">{product.rating} estrellas</p>
+                  <Separator orientation="vertical" className="h-4" />
+                  {isOutOfStock ? (
+                      <span className="text-sm font-semibold text-destructive">Agotado</span>
+                  ) : (
+                      <span className="text-sm text-primary">En Stock ({product.stock} disponibles)</span>
+                  )}
               </div>
             </div>
             <p className="text-muted-foreground">{product.description}</p>
@@ -169,6 +192,7 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
                         )}
                         style={{ backgroundColor: color.hex }}
                         aria-label={`Seleccionar color ${color.name}`}
+                        disabled={isOutOfStock}
                       />
                     ))}
                   </div>
@@ -184,9 +208,10 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
                             htmlFor={`size-${size}`}
                             className={cn("border rounded-md px-4 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground", {
                                 "bg-primary text-primary-foreground": selectedSize === size,
+                                "opacity-50 cursor-not-allowed": isOutOfStock,
                             })}
                         >
-                            <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" />
+                            <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" disabled={isOutOfStock} />
                             {size}
                         </Label>
                     ))}
@@ -197,17 +222,17 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
 
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 border rounded-md">
-                  <Button variant="ghost" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))}>
+                  <Button variant="ghost" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))} disabled={isOutOfStock}>
                       <Minus className="h-4 w-4" />
                   </Button>
                   <span className="w-8 text-center font-semibold">{quantity}</span>
-                  <Button variant="ghost" size="icon" onClick={() => setQuantity(quantity + 1)}>
+                  <Button variant="ghost" size="icon" onClick={() => setQuantity(quantity + 1)} disabled={quantity >= product.stock || isOutOfStock}>
                       <Plus className="h-4 w-4" />
                   </Button>
               </div>
-              <Button size="lg" className="flex-1" onClick={handleAddToCart}>
+              <Button size="lg" className="flex-1" onClick={handleAddToCart} disabled={isOutOfStock}>
                   <ShoppingCart className="mr-2 h-5 w-5" />
-                  Añadir al Carrito
+                  {isOutOfStock ? 'Agotado' : 'Añadir al Carrito'}
               </Button>
             </div>
           </div>

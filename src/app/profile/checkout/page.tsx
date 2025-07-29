@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/cart-context';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp, doc, runTransaction, increment } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, doc, runTransaction, increment, getDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,41 +45,84 @@ export default function CheckoutPage() {
 
     setIsSubmitting(true);
     try {
-        const orderData = {
-            customerId: user.uid,
-            customerName: user.displayName || user.email,
-            items: cartItems.map(item => ({
-                productId: item.id,
-                name: item.name,
-                image: item.image,
-                price: item.price,
-                quantity: item.quantity,
-                size: item.size,
-                color: item.color,
-            })),
-            subtotal,
-            couponCode: appliedCoupon?.code || null,
-            couponId: appliedCoupon?.id || null,
-            couponDiscount: couponDiscount,
-            total,
-            status: 'Procesando',
-            shippingAddress: { address, city, department, zip },
-            createdAt: serverTimestamp(),
-        };
-        
-        // Use a transaction to create the order and update the coupon usage
+        // Use a transaction to ensure atomicity
         const orderRef = await runTransaction(db, async (transaction) => {
+            const outOfStockItems: {name: string, requested: number, available: number}[] = [];
+
+            // 1. Check stock for all items
+            for (const item of cartItems) {
+                const productRef = doc(db, 'products', item.id);
+                const productDoc = await transaction.get(productRef);
+                if (!productDoc.exists()) {
+                    throw new Error(`El producto ${item.name} ya no existe.`);
+                }
+                const currentStock = productDoc.data().stock;
+                if (currentStock < item.quantity) {
+                    outOfStockItems.push({ name: item.name, requested: item.quantity, available: currentStock });
+                }
+            }
+
+            // If any item is out of stock, abort the transaction
+            if (outOfStockItems.length > 0) {
+                const errorMessages = outOfStockItems.map(item => 
+                    `"${item.name}" (disponible: ${item.available}, pedido: ${item.requested})`
+                ).join(', ');
+                throw new Error(`Stock insuficiente para: ${errorMessages}. Por favor, ajusta tu carrito.`);
+            }
+
+            // 2. If all items are in stock, create the order
+            const orderData = {
+                customerId: user.uid,
+                customerName: user.displayName || user.email,
+                items: cartItems.map(item => ({
+                    productId: item.id,
+                    name: item.name,
+                    image: item.image,
+                    price: item.price,
+                    quantity: item.quantity,
+                    size: item.size,
+                    color: item.color,
+                })),
+                subtotal,
+                couponCode: appliedCoupon?.code || null,
+                couponId: appliedCoupon?.id || null,
+                couponDiscount: couponDiscount,
+                total,
+                status: 'Procesando',
+                shippingAddress: { address, city, department, zip },
+                createdAt: serverTimestamp(),
+            };
+            
             const newOrderRef = doc(collection(db, "orders"));
             transaction.set(newOrderRef, orderData);
 
+            // 3. Update stock for each product
+            for (const item of cartItems) {
+                const productRef = doc(db, 'products', item.id);
+                transaction.update(productRef, {
+                    stock: increment(-item.quantity)
+                });
+                 // Check for low stock notification
+                const productDoc = await getDoc(productRef); // get the latest state
+                if (productDoc.exists()) {
+                    const newStock = productDoc.data().stock - item.quantity;
+                    if (newStock <= 5 && newStock > 0) {
+                       toast({
+                           title: "Alerta de Stock Bajo",
+                           description: `El stock para "${item.name}" es ahora de ${newStock}.`,
+                           variant: "destructive"
+                       });
+                    }
+                }
+            }
+
+            // 4. Update coupon usage
             if (appliedCoupon) {
                 const usedCouponRef = doc(db, `customers/${user.uid}/usedCoupons`, appliedCoupon.id);
                 const usedCouponDoc = await transaction.get(usedCouponRef);
                 
                 if (usedCouponDoc.exists()) {
-                    transaction.update(usedCouponRef, {
-                        useCount: increment(1)
-                    });
+                    transaction.update(usedCouponRef, { useCount: increment(1) });
                 } else {
                     transaction.set(usedCouponRef, {
                         code: appliedCoupon.code,
@@ -88,6 +131,7 @@ export default function CheckoutPage() {
                     });
                 }
             }
+            
             return newOrderRef;
         });
 
@@ -99,12 +143,13 @@ export default function CheckoutPage() {
         clearCart();
         router.push(`/profile/checkout/success?orderId=${orderRef.id}`);
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error al crear el pedido: ", error);
         toast({
             title: "Error en el Pedido",
-            description: "No se pudo procesar tu pedido. Inténtalo de nuevo.",
+            description: error.message || "No se pudo procesar tu pedido. Inténtalo de nuevo.",
             variant: "destructive",
+            duration: 7000
         });
     } finally {
         setIsSubmitting(false);

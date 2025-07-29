@@ -40,12 +40,31 @@ export default function InventoryPage() {
     const [adjustment, setAdjustment] = useState(0);
     const { toast } = useToast();
 
+    const getStockStatus = (stock: number): { text: string; variant: 'default' | 'secondary' | 'destructive'; priority: number } => {
+        if (stock <= 0) {
+            return { text: 'Sin Stock', variant: 'destructive', priority: 1 };
+        }
+        if (stock <= 5) {
+            return { text: 'Stock Bajo', variant: 'secondary', priority: 2 };
+        }
+        return { text: 'En Stock', variant: 'default', priority: 3 };
+    };
+
     const fetchProducts = async () => {
       setLoading(true);
       try {
         const querySnapshot = await getDocs(collection(db, "products"));
         const productsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-        setProducts(productsData.sort((a,b) => a.stock - b.stock));
+        // Sort by stock status priority, then by stock quantity
+        productsData.sort((a, b) => {
+            const statusA = getStockStatus(a.stock);
+            const statusB = getStockStatus(b.stock);
+            if (statusA.priority !== statusB.priority) {
+                return statusA.priority - statusB.priority;
+            }
+            return a.stock - b.stock;
+        });
+        setProducts(productsData);
       } catch (error) {
         console.error("Error fetching products: ", error);
         toast({ title: "Error", description: "No se pudieron cargar los productos.", variant: "destructive" });
@@ -69,6 +88,13 @@ export default function InventoryPage() {
         setIsUpdating(true);
         try {
             const productRef = doc(db, "products", selectedProduct.id);
+            const newStock = selectedProduct.stock + adjustment;
+
+            if (newStock < 0) {
+                toast({ title: "Error", description: "El stock no puede ser negativo.", variant: "destructive" });
+                return;
+            }
+            
             await updateDoc(productRef, {
                 stock: increment(adjustment)
             });
@@ -87,17 +113,6 @@ export default function InventoryPage() {
             setIsUpdating(false);
         }
     };
-
-    const getStockStatus = (stock: number): { text: string; variant: 'default' | 'secondary' | 'destructive' } => {
-        if (stock <= 0) {
-            return { text: 'Sin Stock', variant: 'destructive' };
-        }
-        if (stock < 10) {
-            return { text: 'Stock Bajo', variant: 'secondary' };
-        }
-        return { text: 'En Stock', variant: 'default' };
-    };
-
 
     if (loading) {
       return (
@@ -118,6 +133,7 @@ export default function InventoryPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Resumen de Stock</CardTitle>
+                    <CardDescription>Los productos con bajo stock o sin stock se muestran primero.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -139,7 +155,7 @@ export default function InventoryPage() {
                             {products.map((product) => {
                                 const status = getStockStatus(product.stock);
                                 return (
-                                <TableRow key={product.id}>
+                                <TableRow key={product.id} className={status.variant === 'destructive' ? 'bg-destructive/10' : status.variant === 'secondary' ? 'bg-yellow-400/10' : ''}>
                                     <TableCell className="hidden sm:table-cell">
                                         <Image
                                             alt={product.name}

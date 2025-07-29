@@ -143,7 +143,7 @@ export default function AdminSidebar() {
               <CollapsibleTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-3 px-3 text-muted-foreground"
+                  className="w-full justify-start gap-3 px-3 font-bold text-black dark:text-white"
                 >
                   <link.icon className="h-4 w-4" />
                   {link.label}
@@ -157,9 +157,10 @@ export default function AdminSidebar() {
                       key={subItem.href}
                       href={subItem.href}
                       className={cn(
-                        'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-sm',
+                        'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-sm font-bold',
                         {
                           'text-primary': pathname === subItem.href,
+                          'text-black dark:text-white': pathname !== subItem.href,
                         }
                       )}
                     >
@@ -174,7 +175,7 @@ export default function AdminSidebar() {
               key={link.href}
               href={link.href}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-black dark:text-white transition-all hover:text-primary font-bold',
                 {
                   'text-primary': pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/admin'),
                 }

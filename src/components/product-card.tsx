@@ -15,6 +15,9 @@ const SOL_TO_USD_RATE = 3.85;
 export default function ProductCard({ product }: ProductCardProps) {
   const isNew = product.createdAt && differenceInDays(new Date(), product.createdAt.toDate()) <= 7;
   const priceInUsd = (product.price / SOL_TO_USD_RATE).toFixed(2);
+  const isOutOfStock = product.stock === 0;
+  const isLowStock = product.stock > 0 && product.stock <= 5;
+
 
   return (
     <Link href={`/product/${product.id}`}>
@@ -28,9 +31,17 @@ export default function ProductCard({ product }: ProductCardProps) {
               className="object-cover transition-transform duration-300 group-hover:scale-105"
               data-ai-hint="product image"
             />
-            {isNew && (
-                <Badge className="absolute top-3 right-3 bg-primary text-primary-foreground">Nuevo</Badge>
-            )}
+            <div className="absolute top-3 flex gap-2 w-full px-3">
+                 {isOutOfStock && (
+                    <Badge variant="destructive" className="bg-destructive/80">Agotado</Badge>
+                )}
+                {isLowStock && (
+                    <Badge variant="secondary" className="bg-yellow-400/80 text-yellow-900">Bajo Stock</Badge>
+                )}
+                 {isNew && (
+                    <Badge className="bg-primary/80 text-primary-foreground ml-auto">Nuevo</Badge>
+                )}
+            </div>
           </div>
           <div className="p-4">
             <div className="flex items-center justify-between">

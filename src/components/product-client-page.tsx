@@ -107,7 +107,9 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
   }
 
   const priceInUsd = (product.price / SOL_TO_USD_RATE).toFixed(2);
-  const isOutOfStock = product.stock <= 0;
+  const isOutOfStock = product.stock === 0;
+  const isLowStock = product.stock > 0 && product.stock <= 5;
+
 
   return (
     <>
@@ -164,10 +166,12 @@ export default function ProductClientPage({ product }: ProductClientPageProps) {
                   </div>
                   <p className="text-sm text-muted-foreground">{product.rating} estrellas</p>
                   <Separator orientation="vertical" className="h-4" />
-                  {isOutOfStock ? (
+                   {isOutOfStock ? (
                       <span className="text-sm font-semibold text-destructive">Agotado</span>
+                  ) : isLowStock ? (
+                      <span className="text-sm font-semibold text-yellow-600">Bajo Stock ({product.stock} disponibles)</span>
                   ) : (
-                      <span className="text-sm text-primary">En Stock ({product.stock} disponibles)</span>
+                      <span className="text-sm text-primary">En Stock</span>
                   )}
               </div>
             </div>

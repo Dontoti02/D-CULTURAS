@@ -7,7 +7,7 @@ import { collection, getDocs, query, where, Timestamp, orderBy } from 'firebase/
 import { db } from '@/lib/firebase';
 import { DollarSign, Percent, TrendingUp, Landmark, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Order, Product } from '@/lib/types';
+import { Order, Product, OrderItem } from '@/lib/types';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   LineChart,
@@ -37,6 +37,7 @@ interface FinanceStats {
 
 interface EnrichedOrderItem extends OrderItem {
   cost?: number;
+  category?: string;
 }
 interface EnrichedOrder extends Order {
   items: EnrichedOrderItem[];
@@ -68,7 +69,7 @@ export default function FinancePage() {
             const order = { id: doc.id, ...doc.data() } as Order;
             const enrichedItems = order.items.map(item => {
                 const product = productsMap.get(item.productId);
-                return { ...item, cost: product?.cost || 0 };
+                return { ...item, cost: product?.cost || 0, category: product?.category || 'Sin Categoría' };
             });
             return { ...order, items: enrichedItems };
         }) as EnrichedOrder[];
@@ -171,7 +172,7 @@ export default function FinancePage() {
 
     deliveredOrders.forEach(order => {
         order.items.forEach(item => {
-            const productCategory = (item as any).category || 'Sin Categoría';
+            const productCategory = item.category || 'Sin Categoría';
              if (!data[productCategory]) {
                 data[productCategory] = { revenue: 0, profit: 0 };
             }
@@ -188,7 +189,7 @@ export default function FinancePage() {
   const paginatedTransactions = useMemo(() => {
     const startIndex = (transactionsCurrentPage - 1) * transactionsPerPage;
     return deliveredOrders.slice(startIndex, startIndex + transactionsPerPage);
-  }, [deliveredOrders, transactionsCurrentPage, transactionsPerPage]);
+  }, [deliveredOrders, transactionsCurrentPage]);
 
   const totalTransactionPages = Math.ceil(deliveredOrders.length / transactionsPerPage);
 

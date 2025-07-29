@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -20,9 +21,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  FunnelChart,
-  Funnel,
-  LabelList,
+  PieChart,
+  Pie,
   Cell,
 } from 'recharts';
 import { format, startOfWeek, startOfMonth, subDays, subMonths } from 'date-fns';
@@ -109,7 +109,7 @@ export default function FinancePage() {
     fetchFinanceData();
   }, []);
 
-  const opportunityFunnelData = useMemo(() => {
+  const opportunityData = useMemo(() => {
     if (!allProducts.length) return [];
 
     const categories = Array.from(new Set(allProducts.map(p => p.category)));
@@ -118,21 +118,16 @@ export default function FinancePage() {
     return categories.map((cat, index) => {
         const categoryProducts = allProducts.filter(p => p.category === cat);
         const getAvgRating = (p: Product) => p.ratingCount > 0 ? p.ratingSum / p.ratingCount : 0;
-
-        const stages = [
-            { name: 'Oportunidad (4.5+)', value: categoryProducts.filter(p => getAvgRating(p) >= 4.5).length },
-            { name: 'Consideración (4.0+)', value: categoryProducts.filter(p => getAvgRating(p) >= 4.0).length },
-            { name: 'Exploración (3.0+)', value: categoryProducts.filter(p => getAvgRating(p) >= 3.0).length },
-        ].map(stage => ({...stage, fill: funnelColors[index % funnelColors.length]}));
-
+        
+        // Contamos solo productos con buena calificación (ej. 4.0+) como "oportunidades"
+        const opportunityCount = categoryProducts.filter(p => getAvgRating(p) >= 4.0).length;
 
         return {
             name: cat,
-            value: categoryProducts.filter(p => getAvgRating(p) >= 3.0).length,
+            value: opportunityCount,
             fill: funnelColors[index % funnelColors.length],
-            stages: stages
         };
-    }).sort((a, b) => b.value - a.value);
+    }).filter(cat => cat.value > 0).sort((a, b) => b.value - a.value);
 
   }, [allProducts]);
 
@@ -455,37 +450,37 @@ export default function FinancePage() {
         </div>
         <Card>
             <CardHeader>
-              <CardTitle>Embudo de Oportunidad por Calificación</CardTitle>
-              <CardDescription>Visualiza los productos con mejor calificación por categoría para identificar oportunidades de venta.</CardDescription>
+              <CardTitle>Oportunidad por Calificación de Productos</CardTitle>
+              <CardDescription>Distribución de productos con calificación 4.0+ por categoría.</CardDescription>
             </CardHeader>
-            <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
-                {opportunityFunnelData?.map((categoryData) => (
-                    <div key={categoryData.name}>
-                         <h3 className="font-semibold text-center mb-2">{categoryData.name} ({categoryData.value} productos)</h3>
-                         <ResponsiveContainer width="100%" height={250}>
-                             <FunnelChart>
-                                <Tooltip 
-                                  contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
-                                />
-                                <Funnel 
-                                    dataKey="value" 
-                                    data={categoryData.stages.reverse()}
-                                    nameKey="name"
-                                    isAnimationActive={true}
-                                >
-                                  <LabelList position="right" fill="hsl(var(--foreground))" stroke="none" dataKey="name" className="text-xs"/>
-                                  {
-                                    categoryData.stages.map((entry, index) => (
-                                      <Cell key={`cell-${index}`} fill={categoryData.fill} />
-                                    ))
-                                  }
-                                </Funnel>
-                             </FunnelChart>
-                         </ResponsiveContainer>
-                    </div>
-                ))}
+            <CardContent className="h-[400px] w-full pt-4">
+               <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Pie
+                            data={opportunityData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                            outerRadius={150}
+                            fill="#8884d8"
+                            dataKey="value"
+                            nameKey="name"
+                        >
+                            {opportunityData?.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
+                        </Pie>
+                        <Tooltip 
+                            contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+                            formatter={(value: number, name: string) => [`${value} productos`, name]}
+                        />
+                        <Legend />
+                    </PieChart>
+                </ResponsiveContainer>
             </CardContent>
         </Card>
     </div>
   );
 }
+

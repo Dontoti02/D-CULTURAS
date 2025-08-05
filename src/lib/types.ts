@@ -1,4 +1,5 @@
 
+
 import { Timestamp } from "firebase/firestore";
 
 export type Product = {
@@ -77,4 +78,12 @@ export interface Promotion {
   usedCount?: number;
 }
 
+export interface Comment {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerPhotoURL?: string;
+  comment: string;
+  createdAt: Timestamp;
+}
     

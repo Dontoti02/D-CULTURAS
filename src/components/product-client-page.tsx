@@ -1,17 +1,18 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { type Product } from '@/lib/types';
+import { type Product, type Comment } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Star, Minus, Plus, ShoppingCart, Loader2 } from 'lucide-react';
+import { Star, Minus, Plus, ShoppingCart, Loader2, MessageSquare } from 'lucide-react';
 import ProductCard from './product-card';
 import { Separator } from './ui/separator';
 import { cn } from '@/lib/utils';
-import { collection, getDocs, limit, query, where, orderBy, doc, runTransaction, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, limit, query, where, orderBy, doc, runTransaction, writeBatch, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +21,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useRouter } from 'next/navigation';
 import ImagePreviewModal from './image-preview-modal';
 import { Card, CardContent } from './ui/card';
+import { Textarea } from './ui/textarea';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface ProductClientPageProps {
   product: Product;
@@ -45,12 +50,37 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
   const [hasRated, setHasRated] = useState(false);
   const [loadingPurchaseStatus, setLoadingPurchaseStatus] = useState(true);
 
+  // Comments state
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loadingComments, setLoadingComments] = useState(true);
+  const [newComment, setNewComment] = useState('');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
   const { addToCart, cartItems } = useCart();
   const { toast } = useToast();
   const { user } = useAuth();
   const router = useRouter();
 
   const avgRating = product.ratingCount > 0 ? (product.ratingSum / product.ratingCount) : 0;
+
+  const fetchComments = async () => {
+    setLoadingComments(true);
+    try {
+        const commentsRef = collection(db, `products/${product.id}/comments`);
+        const q = query(commentsRef, orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const commentsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Comment));
+        setComments(commentsData);
+    } catch (error) {
+        console.error("Error fetching comments: ", error);
+    } finally {
+        setLoadingComments(false);
+    }
+  };
+  
+  useEffect(() => {
+    fetchComments();
+  }, [product.id]);
 
   useEffect(() => {
     // Check if the user has purchased this product
@@ -66,8 +96,6 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
         const userRatingDoc = ratingDocSnap.docs.find(doc => doc.id === user.uid);
         if (userRatingDoc) {
             setHasRated(true);
-            setLoadingPurchaseStatus(false);
-            return;
         }
 
         // 2. Check if user has purchased this product
@@ -172,6 +200,37 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
         setIsSubmittingRating(false);
     }
 };
+
+ const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !newComment.trim()) return;
+
+    setIsSubmittingComment(true);
+    try {
+        const commentsRef = collection(db, `products/${product.id}/comments`);
+        await addDoc(commentsRef, {
+            customerId: user.uid,
+            customerName: `${user.firstName} ${user.lastName}`,
+            customerPhotoURL: user.photoURL || '',
+            comment: newComment,
+            createdAt: serverTimestamp(),
+        });
+        
+        toast({
+            title: 'Comentario Publicado',
+            description: 'Gracias por compartir tu opinión.',
+        });
+        setNewComment('');
+        await fetchComments(); // Refresh comments list
+
+    } catch (error) {
+        console.error("Error al publicar comentario:", error);
+        toast({ title: "Error", description: "No se pudo publicar tu comentario.", variant: "destructive" });
+    } finally {
+        setIsSubmittingComment(false);
+    }
+ };
+
 
   const handleAddToCart = () => {
     if (!user) {
@@ -386,6 +445,72 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
           </div>
         </div>
         
+        {/* Comments Section */}
+        <div className="mt-16 pt-8">
+             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                <MessageSquare />
+                Opiniones de Clientes ({comments.length})
+            </h2>
+            <Separator className="mb-8" />
+            <div className="grid md:grid-cols-2 gap-8">
+                {/* Comment Form */}
+                <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">Deja tu comentario</h3>
+                    {hasPurchased ? (
+                        <form onSubmit={handleCommentSubmit} className="space-y-4">
+                            <Textarea 
+                                placeholder="Comparte tu experiencia con este producto..."
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                disabled={isSubmittingComment}
+                                rows={4}
+                            />
+                            <Button type="submit" disabled={isSubmittingComment || !newComment.trim()}>
+                                {isSubmittingComment && <Loader2 className="mr-2 animate-spin" />}
+                                Publicar Comentario
+                            </Button>
+                        </form>
+                    ) : (
+                         <p className="text-sm text-muted-foreground">
+                            Debes haber comprado este producto para poder dejar un comentario.
+                        </p>
+                    )}
+                </div>
+                {/* Comments List */}
+                 <div className="space-y-6">
+                    {loadingComments ? (
+                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Cargando comentarios...</span>
+                        </div>
+                    ) : comments.length > 0 ? (
+                        comments.map(comment => (
+                            <div key={comment.id} className="flex gap-4">
+                                <Avatar>
+                                    <AvatarImage src={comment.customerPhotoURL} />
+                                    <AvatarFallback>
+                                        {comment.customerName.split(' ').map(n => n[0]).join('')}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1">
+                                    <div className="flex items-center justify-between">
+                                        <p className="font-semibold">{comment.customerName}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {format(comment.createdAt.toDate(), 'dd MMM, yyyy', { locale: es })}
+                                        </p>
+                                    </div>
+                                    <p className="text-muted-foreground mt-1">{comment.comment}</p>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-sm text-muted-foreground">Sé el primero en dejar un comentario para este producto.</p>
+                    )}
+                 </div>
+            </div>
+        </div>
+
+
         {/* Recomendaciones */}
         <div className="mt-16 pt-8">
           <h2 className="text-2xl font-bold mb-6">También te podría gustar</h2>

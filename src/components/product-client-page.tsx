@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -132,8 +131,8 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
         const querySnapshot = await getDocs(q);
         const recs = querySnapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() } as Product))
-            .filter(p => p.id !== product.id)
-            .slice(0, 4);
+            .filter(p => p.id !== product.id) // Excluir el producto actual
+            .slice(0, 4); // Tomar los primeros 4 después de filtrar
         setRecommendedProducts(recs);
       } catch (error) {
         console.error("Error fetching recommendations: ", error);
@@ -553,7 +552,3 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
     </>
   );
 }
-
-    
-
-    

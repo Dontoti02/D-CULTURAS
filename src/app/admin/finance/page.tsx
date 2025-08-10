@@ -6,7 +6,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { collection, getDocs, query, where, Timestamp, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { DollarSign, Percent, TrendingUp, Landmark, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+import { DollarSign, Percent, TrendingUp, Landmark, ChevronLeft, ChevronRight, FileDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Order, Product, OrderItem } from '@/lib/types';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -28,6 +28,16 @@ import {
 import { format, startOfWeek, startOfMonth, subDays, subMonths } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+
+// Extend jsPDF interface for autoTable plugin
+declare module 'jspdf' {
+    interface jsPDF {
+        autoTable: (options: any) => jsPDF;
+    }
+}
 
 interface FinanceStats {
   totalRevenue: number;
@@ -224,6 +234,60 @@ export default function FinancePage() {
 
   const totalTransactionPages = Math.ceil(deliveredOrders.length / transactionsPerPage);
 
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Reporte de Transacciones Financieras", 14, 16);
+    
+    const tableColumn = ["ID Pedido", "Fecha", "Total (S/)", "Costo (S/)", "Ganancia (S/)", "Margen (%)"];
+    const tableRows: any[][] = [];
+
+    deliveredOrders.forEach(order => {
+        const orderCost = order.items.reduce((acc, item) => acc + (item.cost || 0) * item.quantity, 0);
+        const orderProfit = order.total - orderCost;
+        const profitMargin = order.total > 0 ? (orderProfit / order.total) * 100 : 0;
+        const orderData = [
+            `#${order.id.substring(0, 7)}`,
+            order.createdAt ? format(order.createdAt.toDate(), 'dd/MM/yyyy') : 'N/A',
+            order.total.toFixed(2),
+            orderCost.toFixed(2),
+            orderProfit.toFixed(2),
+            profitMargin.toFixed(1)
+        ];
+        tableRows.push(orderData);
+    });
+
+    doc.autoTable({
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20,
+    });
+
+    doc.save("reporte_transacciones.pdf");
+};
+
+const handleExportExcel = () => {
+    const flatData = deliveredOrders.flatMap(order => {
+        const orderCost = order.items.reduce((acc, item) => acc + (item.cost || 0) * item.quantity, 0);
+        const orderProfit = order.total - orderCost;
+        const profitMargin = order.total > 0 ? (orderProfit / order.total) * 100 : 0;
+        return {
+            "ID Pedido": order.id,
+            "Fecha": order.createdAt ? format(order.createdAt.toDate(), 'dd/MM/yyyy') : 'N/A',
+            "Cliente": order.customerName,
+            "Total (S/)": order.total.toFixed(2),
+            "Costo Total (S/)": orderCost.toFixed(2),
+            "Ganancia (S/)": orderProfit.toFixed(2),
+            "Margen (%)": profitMargin.toFixed(1),
+            "Cupón": order.couponCode || "N/A"
+        }
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(flatData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Transacciones");
+    XLSX.writeFile(workbook, "reporte_transacciones.xlsx");
+};
+
 
   if (loading) {
     return (
@@ -385,9 +449,21 @@ export default function FinancePage() {
             </CardContent>
           </Card>
            <Card className="flex flex-col">
-            <CardHeader>
-                <CardTitle>Transacciones Recientes</CardTitle>
-                <CardDescription>Últimos pedidos que han sido entregados.</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Transacciones Recientes</CardTitle>
+                    <CardDescription>Últimos pedidos que han sido entregados.</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={deliveredOrders.length === 0}>
+                        <FileDown className="mr-2 h-4 w-4" />
+                        PDF
+                    </Button>
+                     <Button variant="outline" size="sm" onClick={handleExportExcel} disabled={deliveredOrders.length === 0}>
+                        <FileDown className="mr-2 h-4 w-4" />
+                        Excel
+                    </Button>
+                </div>
             </CardHeader>
             <CardContent className="flex-grow">
                 <Table>
@@ -483,4 +559,5 @@ export default function FinancePage() {
     </div>
   );
 }
+
 

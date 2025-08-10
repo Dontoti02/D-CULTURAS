@@ -52,8 +52,11 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <span className="text-sm text-muted-foreground">{avgRating.toFixed(1)}</span>
               </div>
             </div>
-            <div className="flex items-center justify-between mt-2">
-                <Badge variant="outline">{product.category}</Badge>
+            <div className="flex items-start justify-between mt-2 gap-2">
+                <div className="flex flex-col items-start">
+                    <Badge variant="outline">{product.gender}</Badge>
+                    <Badge variant="secondary" className="mt-1">{product.category}</Badge>
+                </div>
                 <div className="text-right">
                   <p className="font-semibold text-primary">S/ {product.price.toFixed(2)}</p>
                   <p className="text-xs text-muted-foreground">aprox. ${priceInUsd} USD</p>
@@ -65,5 +68,3 @@ export default function ProductCard({ product }: ProductCardProps) {
     </Link>
   );
 }
-
-    

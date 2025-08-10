@@ -22,9 +22,9 @@ import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import Image from 'next/image';
 
 const navLinks = [
-  { href: '/?category=all', label: 'Novedades' },
-  { href: '/?category=Caballeros', label: 'Hombres' },
-  { href: '/?category=Damas', label: 'Mujeres' },
+  { href: '/?gender=all', label: 'Novedades' },
+  { href: '/?gender=Caballeros', label: 'Hombres' },
+  { href: '/?gender=Damas', label: 'Mujeres' },
 ];
 
 export default function SiteHeader() {
@@ -221,12 +221,12 @@ export default function SiteHeader() {
             </SheetTrigger>
             <SheetContent side="left">
               <SheetHeader>
-                <SheetTitle className="sr-only">Menú Principal</SheetTitle>
+                <SheetTitle>StylesUP!</SheetTitle>
               </SheetHeader>
               <nav className="grid gap-6 text-lg font-medium">
                 <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-primary"><path d="M12 2l-7 5 7 5 7-5-7-5zM2 12l7 5 7-5M2 17l7 5 7-5" /></svg>
-                  <span>StylesUP!</span>
+                  <span className="sr-only">StylesUP!</span>
                 </Link>
                 {navLinks.map((link) => (
                   <Link

@@ -10,18 +10,29 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, Loader2, Plus, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Product } from '@/lib/types';
+
+const categoriesByGender = {
+  'Damas': ['Conjuntos', 'Vestidos', 'Faldas', 'Blusas'],
+  'Caballeros': ['Ternos', 'Camisas', 'Pantalones', 'Corbatas'],
+};
+
+type Gender = 'Damas' | 'Caballeros' | '';
+type Category = 'Conjuntos' | 'Vestidos' | 'Faldas' | 'Blusas' | 'Ternos' | 'Camisas' | 'Pantalones' | 'Corbatas' | '';
+
 
 export default function NewProductPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<'Caballeros' | 'Damas' | 'Novedades Caballeros' | 'Novedades Damas' | ''>('');
+  const [gender, setGender] = useState<Gender>('');
+  const [category, setCategory] = useState<Category>('');
   const [price, setPrice] = useState('');
   const [cost, setCost] = useState('');
   const [stock, setStock] = useState('');
@@ -29,14 +40,24 @@ export default function NewProductPage() {
   const [isUploading, setIsUploading] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const availableCategories = useMemo(() => {
+    if (!gender) return [];
+    return categoriesByGender[gender as 'Damas' | 'Caballeros'];
+  }, [gender]);
+
+  const handleGenderChange = (value: Gender) => {
+      setGender(value);
+      setCategory(''); // Reset category when gender changes
+  };
+
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!category) {
+    if (!gender || !category) {
       toast({
-        title: 'Selecciona una categoría primero',
-        description: 'Debes elegir una categoría para el producto antes de subir imágenes.',
+        title: 'Selecciona género y categoría primero',
+        description: 'Debes elegir un género y categoría para el producto antes de subir imágenes.',
         variant: 'destructive',
       });
       event.target.value = ''; // Reset file input
@@ -48,7 +69,7 @@ export default function NewProductPage() {
     formData.append('file', file);
     formData.append('upload_preset', 'save_prendas');
     formData.append('cloud_name', 'dd7fku9br');
-    formData.append('folder', category.toLowerCase());
+    formData.append('folder', `${gender.toLowerCase()}/${category.toLowerCase()}`);
 
     try {
       const response = await fetch('https://api.cloudinary.com/v1_1/dd7fku9br/image/upload', {
@@ -82,7 +103,7 @@ export default function NewProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !description || !category || !price || !cost || !stock || imageUrls.every(url => url === null)) {
+    if (!name || !description || !gender || !category || !price || !cost || !stock || imageUrls.every(url => url === null)) {
         toast({
             title: 'Campos Incompletos',
             description: 'Por favor, rellena todos los campos y sube al menos una imagen.',
@@ -96,6 +117,7 @@ export default function NewProductPage() {
       await addDoc(collection(db, 'products'), {
         name,
         description,
+        gender,
         category,
         price: parseFloat(price),
         cost: parseFloat(cost),
@@ -105,7 +127,7 @@ export default function NewProductPage() {
         ratingSum: 0,
         ratingCount: 0,
         createdAt: serverTimestamp(),
-      });
+      } as Omit<Product, 'id'>);
       toast({
         title: 'Producto Agregado',
         description: 'El nuevo producto se ha guardado correctamente en Firebase.',
@@ -178,13 +200,13 @@ export default function NewProductPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Imágenes del Producto</CardTitle>
-                  <CardDescription>Sube hasta 4 imágenes para tu producto. Debes seleccionar una categoría primero.</CardDescription>
+                  <CardDescription>Sube hasta 4 imágenes para tu producto. Debes seleccionar un género y categoría primero.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {imageUrls.map((url, index) => (
                              <div key={index} className="flex items-center justify-center w-full">
-                                <Label htmlFor={`picture-${index}`} className={cn("relative flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted", { "overflow-hidden": url, "cursor-not-allowed opacity-50": !category })}>
+                                <Label htmlFor={`picture-${index}`} className={cn("relative flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted", { "overflow-hidden": url, "cursor-not-allowed opacity-50": !gender || !category })}>
                                     {isUploading === index ? (
                                         <div className="flex flex-col items-center justify-center">
                                             <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
@@ -197,7 +219,7 @@ export default function NewProductPage() {
                                             <p className="text-xs text-muted-foreground">Subir Imagen {index + 1}</p>
                                         </div>
                                     )}
-                                    <Input id={`picture-${index}`} type="file" className="hidden" onChange={(e) => handleImageUpload(e, index)} accept="image/*" disabled={!category || isUploading !== null || isSubmitting} />
+                                    <Input id={`picture-${index}`} type="file" className="hidden" onChange={(e) => handleImageUpload(e, index)} accept="image/*" disabled={!gender || !category || isUploading !== null || isSubmitting} />
                                 </Label>
                             </div>
                         ))}
@@ -208,20 +230,31 @@ export default function NewProductPage() {
             <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
               <Card>
                 <CardHeader>
-                  <CardTitle>Categoría y Precios</CardTitle>
+                  <CardTitle>Categorización y Precios</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-6">
                   <div className="grid gap-3">
+                    <Label htmlFor="gender">Género</Label>
+                    <Select required onValueChange={handleGenderChange} value={gender}>
+                      <SelectTrigger id="gender" aria-label="Seleccionar género">
+                        <SelectValue placeholder="Seleccionar género" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Damas">Damas</SelectItem>
+                        <SelectItem value="Caballeros">Caballeros</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-3">
                     <Label htmlFor="category">Categoría</Label>
-                    <Select required onValueChange={(value: 'Caballeros' | 'Damas' | 'Novedades Caballeros' | 'Novedades Damas') => setCategory(value)} value={category}>
+                    <Select required onValueChange={(value: Category) => setCategory(value)} value={category} disabled={!gender}>
                       <SelectTrigger id="category" aria-label="Seleccionar categoría">
                         <SelectValue placeholder="Seleccionar categoría" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Caballeros">Caballeros</SelectItem>
-                        <SelectItem value="Damas">Damas</SelectItem>
-                        <SelectItem value="Novedades Caballeros">Novedades Caballeros</SelectItem>
-                        <SelectItem value="Novedades Damas">Novedades Damas</SelectItem>
+                        {availableCategories.map(cat => (
+                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>

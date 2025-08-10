@@ -9,7 +9,8 @@ export type Product = {
   price: number;
   cost?: number; // Costo del producto para calcular la ganancia
   images: string[];
-  category: 'Caballeros' | 'Damas' | 'Novedades Caballeros' | 'Novedades Damas';
+  gender: 'Damas' | 'Caballeros';
+  category: 'Conjuntos' | 'Vestidos' | 'Faldas' | 'Blusas' | 'Ternos' | 'Camisas' | 'Pantalones' | 'Corbatas';
   sizes: ('XS' | 'S' | 'M' | 'L' | 'XL')[];
   ratingSum: number; // Suma de todas las calificaciones
   ratingCount: number; // Cantidad de calificaciones

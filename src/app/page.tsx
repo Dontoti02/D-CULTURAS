@@ -12,14 +12,16 @@ import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import PromotionsBanner from '@/components/promotions-banner';
 
-type Category = 'all' | 'Caballeros' | 'Damas' | 'Novedades Caballeros' | 'Novedades Damas';
+type Gender = 'all' | 'Caballeros' | 'Damas';
+type Category = 'Conjuntos' | 'Vestidos' | 'Faldas' | 'Blusas' | 'Ternos' | 'Camisas' | 'Pantalones' | 'Corbatas';
 
 export default function Home() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   
   // State for filters
-  const [category, setCategory] = useState<Category>('all');
+  const [gender, setGender] = useState<Gender>('all');
+  const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
   const [priceRange, setPriceRange] = useState<[number]>([500]);
 
   useEffect(() => {
@@ -43,23 +45,27 @@ export default function Home() {
 
     fetchProducts();
   }, []);
+  
+  const handleGenderChange = (newGender: Gender) => {
+    setGender(newGender);
+    setSelectedCategories([]); // Reset categories when gender changes
+  };
+
+  const handleCategoryChange = (category: Category, checked: boolean) => {
+      setSelectedCategories(prev => 
+          checked ? [...prev, category] : prev.filter(c => c !== category)
+      );
+  };
 
   const filteredProducts = useMemo(() => {
     return allProducts.filter(product => {
-        const categoryMatch = category === 'all' || product.category === category || (category === 'Novedades Caballeros' && product.category.startsWith('Novedades')) || (category === 'Novedades Damas' && product.category.startsWith('Novedades'));
-        if (category === 'all') {
-             return product.price <= priceRange[0];
-        }
-        if (category === 'Novedades Caballeros') {
-            return (product.category === 'Novedades Caballeros' || product.category === 'Caballeros') && product.price <= priceRange[0]
-        }
-        if (category === 'Novedades Damas') {
-            return (product.category === 'Novedades Damas' || product.category === 'Damas') && product.price <= priceRange[0]
-        }
+        const genderMatch = gender === 'all' || product.gender === gender;
+        const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(product.category);
         const priceMatch = product.price <= priceRange[0];
-        return categoryMatch && priceMatch;
+
+        return genderMatch && categoryMatch && priceMatch;
     });
-  }, [allProducts, category, priceRange]);
+  }, [allProducts, gender, selectedCategories, priceRange]);
 
 
   return (
@@ -73,8 +79,8 @@ export default function Home() {
             Descubre nuestra nueva colección, diseñada para quienes buscan sofisticación sin sacrificar la frescura. Piezas únicas que se adaptan a tu ritmo de vida, con diseños modernos y tejidos que respiran.
           </p>
           <div className="mt-8 flex justify-center gap-4">
-            <Button size="lg" onClick={() => setCategory('Caballeros')}>Comprar Hombres</Button>
-            <Button size="lg" variant="outline" onClick={() => setCategory('Damas')}>Comprar Mujeres</Button>
+            <Button size="lg" onClick={() => setGender('Caballeros')}>Comprar Hombres</Button>
+            <Button size="lg" variant="outline" onClick={() => setGender('Damas')}>Comprar Mujeres</Button>
           </div>
         </div>
       </section>
@@ -85,8 +91,10 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <aside className="md:col-span-1">
             <ProductFilters 
-              category={category}
-              onCategoryChange={setCategory}
+              gender={gender}
+              onGenderChange={handleGenderChange}
+              categories={selectedCategories}
+              onCategoryChange={handleCategoryChange}
               priceRange={priceRange}
               onPriceChange={setPriceRange}
             />

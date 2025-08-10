@@ -17,10 +17,10 @@ export default function SiteFooter() {
           </div>
           <div className="grid gap-2">
             <h3 className="font-semibold">Tienda</h3>
-            <Link href="/?category=Caballeros" className="text-sm text-muted-foreground hover:text-primary">
+            <Link href="/?gender=Caballeros" className="text-sm text-muted-foreground hover:text-primary">
               Hombres
             </Link>
-            <Link href="/?category=Damas" className="text-sm text-muted-foreground hover:text-primary">
+            <Link href="/?gender=Damas" className="text-sm text-muted-foreground hover:text-primary">
               Mujeres
             </Link>
             <Link href="/" className="text-sm text-muted-foreground hover:text-primary">

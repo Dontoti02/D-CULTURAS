@@ -6,12 +6,22 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from './ui/checkbox';
 
-type Category = 'all' | 'Caballeros' | 'Damas' | 'Novedades Caballeros' | 'Novedades Damas';
+type Gender = 'all' | 'Caballeros' | 'Damas';
+type Category = 'Conjuntos' | 'Vestidos' | 'Faldas' | 'Blusas' | 'Ternos' | 'Camisas' | 'Pantalones' | 'Corbatas';
+
+const categoriesByGender = {
+  'Damas': ['Conjuntos', 'Vestidos', 'Faldas', 'Blusas'],
+  'Caballeros': ['Ternos', 'Camisas', 'Pantalones', 'Corbatas'],
+};
+
 
 interface ProductFiltersProps {
-  category: Category;
-  onCategoryChange: (value: Category) => void;
+  gender: Gender;
+  onGenderChange: (value: Gender) => void;
+  categories: Category[];
+  onCategoryChange: (category: Category, checked: boolean) => void;
   priceRange: [number];
   onPriceChange: (value: [number]) => void;
 }
@@ -19,11 +29,17 @@ interface ProductFiltersProps {
 const sizes = ['XS', 'S', 'M', 'L', 'XL'];
 
 export default function ProductFilters({ 
-    category, 
+    gender, 
+    onGenderChange,
+    categories,
     onCategoryChange,
     priceRange,
     onPriceChange
 }: ProductFiltersProps) {
+  const availableCategories = gender === 'all' 
+    ? [...categoriesByGender.Damas, ...categoriesByGender.Caballeros] 
+    : categoriesByGender[gender as 'Damas' | 'Caballeros'];
+
   return (
     <Card>
       <CardHeader>
@@ -31,38 +47,43 @@ export default function ProductFilters({
       </CardHeader>
       <CardContent className="grid gap-6">
         <div className="grid gap-2">
-          <Label className="font-semibold">Categoría</Label>
-          <RadioGroup value={category} onValueChange={(value: Category) => onCategoryChange(value)}>
+          <Label className="font-semibold">Género</Label>
+          <RadioGroup value={gender} onValueChange={(value: Gender) => onGenderChange(value)}>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="all" id="cat-all" />
-              <Label htmlFor="cat-all">Todos</Label>
+              <RadioGroupItem value="all" id="gender-all" />
+              <Label htmlFor="gender-all">Todos</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Caballeros" id="cat-men" />
-              <Label htmlFor="cat-men">Caballeros</Label>
+              <RadioGroupItem value="Damas" id="gender-women" />
+              <Label htmlFor="gender-women">Damas</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Damas" id="cat-women" />
-              <Label htmlFor="cat-women">Damas</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Novedades Caballeros" id="cat-new-men" />
-              <Label htmlFor="cat-new-men">Novedades Caballeros</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Novedades Damas" id="cat-new-women" />
-              <Label htmlFor="cat-new-women">Novedades Damas</Label>
+              <RadioGroupItem value="Caballeros" id="gender-men" />
+              <Label htmlFor="gender-men">Caballeros</Label>
             </div>
           </RadioGroup>
         </div>
 
         <div className="grid gap-2">
-          <Label className="font-semibold">Talla</Label>
-          <div className="flex flex-wrap gap-2">
-            {sizes.map(size => (
-                <Button key={size} variant="outline" size="sm" className="w-12">{size}</Button>
-            ))}
-          </div>
+            <Label className="font-semibold">Categoría</Label>
+            <div className="space-y-2">
+                {availableCategories.map(cat => (
+                    <div key={cat} className="flex items-center space-x-2">
+                        <Checkbox
+                            id={`cat-${cat}`}
+                            checked={categories.includes(cat as Category)}
+                            onCheckedChange={(checked) => onCategoryChange(cat as Category, !!checked)}
+                            disabled={gender === 'all'}
+                        />
+                        <Label htmlFor={`cat-${cat}`} className="font-normal">
+                            {cat}
+                        </Label>
+                    </div>
+                ))}
+            </div>
+            {gender === 'all' && (
+                <p className="text-xs text-muted-foreground">Selecciona un género para filtrar por categoría.</p>
+            )}
         </div>
         
         <div className="grid gap-4">

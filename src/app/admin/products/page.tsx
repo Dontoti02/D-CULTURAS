@@ -107,7 +107,7 @@ export default function ProductsPage() {
                 let productsAdded = 0;
 
                 json.forEach((row: any) => {
-                    if (!row.name || !row.price || !row.cost || !row.stock || !row.category) {
+                    if (!row.name || !row.price || !row.cost || !row.stock || !row.gender || !row.category) {
                         console.warn("Fila omitida por datos faltantes:", row);
                         return; // Omitir filas sin datos esenciales
                     }
@@ -118,6 +118,7 @@ export default function ProductsPage() {
                         price: parseFloat(row.price),
                         cost: parseFloat(row.cost),
                         stock: parseInt(row.stock, 10),
+                        gender: row.gender,
                         category: row.category,
                         images: [], // Las imágenes se suben después
                         sizes: row.sizes ? (row.sizes as string).split(',').map(s => s.trim() as any) : ['S', 'M', 'L'],
@@ -189,9 +190,9 @@ export default function ProductsPage() {
                                     <span className="sr-only">Imagen</span>
                                 </TableHead>
                                 <TableHead>Nombre</TableHead>
+                                <TableHead>Género</TableHead>
                                 <TableHead>Categoría</TableHead>
                                 <TableHead className="hidden md:table-cell">Precio</TableHead>
-                                <TableHead className="hidden md:table-cell">Costo</TableHead>
                                 <TableHead className="hidden md:table-cell">Stock</TableHead>
                                 <TableHead className="hidden md:table-cell">Calificación</TableHead>
                                 <TableHead>
@@ -222,10 +223,12 @@ export default function ProductsPage() {
                                     </TableCell>
                                     <TableCell className="font-medium">{product.name}</TableCell>
                                     <TableCell>
-                                        <Badge variant="outline">{product.category}</Badge>
+                                        <Badge variant="outline">{product.gender}</Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant="secondary">{product.category}</Badge>
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell">S/ {product.price.toFixed(2)}</TableCell>
-                                    <TableCell className="hidden md:table-cell">S/ {product.cost?.toFixed(2) ?? 'N/A'}</TableCell>
                                     <TableCell className="hidden md:table-cell">{product.stock}</TableCell>
                                      <TableCell className="hidden md:table-cell">
                                         <div className="flex items-center gap-1">

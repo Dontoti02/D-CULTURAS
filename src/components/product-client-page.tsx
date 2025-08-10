@@ -126,6 +126,7 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
         const q = query(
             productsRef,
             where('category', '==', product.category),
+            where('gender', '==', product.gender),
             orderBy('createdAt', 'desc'),
             limit(5)
         );
@@ -143,7 +144,7 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
     };
 
     fetchRecommendations();
-  }, [product.id, product.category]);
+  }, [product.id, product.category, product.gender]);
 
   const handleRatingSubmit = async (rating: number) => {
     if (!user || isSubmittingRating || hasRated || !hasPurchased) return;

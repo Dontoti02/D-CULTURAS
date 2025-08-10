@@ -94,13 +94,16 @@ export default function PromotionsBanner() {
                               <p className="text-muted-foreground">{promo.description}</p>
                           </div>
                           <CountdownTimer endDate={promo.endDate.toDate()} />
-                          <div className="flex items-center gap-2">
-                                <p className="font-mono text-lg border-2 border-dashed border-primary/50 bg-background rounded-md px-4 py-2">
-                                    {promo.code}
-                                </p>
-                                <Button onClick={() => handleCopyCode(promo.code)}>
-                                    Copiar
-                                </Button>
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="flex items-center gap-2">
+                                  <p className="font-mono text-lg border-2 border-dashed border-primary/50 bg-background rounded-md px-4 py-2">
+                                      {promo.code}
+                                  </p>
+                                  <Button onClick={() => handleCopyCode(promo.code)}>
+                                      Copiar
+                                  </Button>
+                            </div>
+                            <p className="text-xs text-muted-foreground">Copia el cupón en tus compras para obtener un descuento</p>
                           </div>
                         </CardContent>
                     </div>

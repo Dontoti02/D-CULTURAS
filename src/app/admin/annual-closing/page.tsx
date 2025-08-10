@@ -24,8 +24,10 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { AlertTriangle, Archive, BookOpen, Loader2 } from 'lucide-react';
+import { AlertTriangle, Archive, BookOpen, Loader2, RotateCcw } from 'lucide-react';
 import { performAnnualClosing, AnnualClosingInput } from '@/ai/flows/annual-closing-flow';
+import { revertAnnualClosing } from '@/ai/flows/revert-annual-closing-flow';
+import { getRevertCount, decrementRevertCount } from '@/ai/flows/revert-counter-flow';
 import {
   Select,
   SelectContent,
@@ -50,15 +52,29 @@ interface ArchivedYear {
 export default function AnnualClosingPage() {
   const { toast } = useToast();
   const [isClosing, setIsClosing] = useState(false);
+  const [isReverting, setIsReverting] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [confirmationText, setConfirmationText] = useState('');
+  const [revertConfirmationText, setRevertConfirmationText] = useState('');
+  const [yearToRevert, setYearToRevert] = useState<string | null>(null);
   const [archivedYears, setArchivedYears] = useState<ArchivedYear[]>([]);
   const [loadingArchives, setLoadingArchives] = useState(true);
+  const [revertCount, setRevertCount] = useState(0);
 
   const availableYears = Array.from(
     { length: 5 },
     (_, i) => new Date().getFullYear() - i
   ).map(String);
+  
+  const fetchRevertCount = async () => {
+    try {
+        const count = await getRevertCount();
+        setRevertCount(count);
+    } catch (error) {
+        console.error("Error fetching revert count:", error);
+        toast({ title: "Error", description: "No se pudo obtener el contador de reversiones.", variant: "destructive" });
+    }
+  };
 
   const fetchArchivedYears = async () => {
     setLoadingArchives(true);
@@ -86,6 +102,7 @@ export default function AnnualClosingPage() {
 
   useEffect(() => {
     fetchArchivedYears();
+    fetchRevertCount();
   }, []);
 
   const handleAnnualClosing = async () => {
@@ -109,7 +126,6 @@ export default function AnnualClosingPage() {
         duration: 7000,
       });
 
-      // Reset form and refetch archives
       setConfirmationText('');
       await fetchArchivedYears();
 
@@ -125,6 +141,46 @@ export default function AnnualClosingPage() {
       setIsClosing(false);
     }
   };
+
+  const handleRevert = async () => {
+    if (!yearToRevert || revertConfirmationText !== 'REVERTIR') {
+        toast({
+            title: 'Confirmación incorrecta',
+            description: 'Debes escribir "REVERTIR" para confirmar.',
+            variant: 'destructive',
+        });
+        return;
+    }
+    
+    setIsReverting(true);
+    try {
+        await revertAnnualClosing({ year: parseInt(yearToRevert, 10) });
+        await decrementRevertCount();
+
+        toast({
+            title: '¡Reversión Exitosa!',
+            description: `Los datos del año ${yearToRevert} han sido restaurados.`,
+            duration: 7000,
+        });
+
+        setYearToRevert(null);
+        setRevertConfirmationText('');
+        await fetchArchivedYears();
+        await fetchRevertCount();
+
+    } catch (error: any) {
+        console.error('Error durante la reversión:', error);
+        toast({
+            title: 'Error en la Reversión',
+            description: error.message || 'Ocurrió un error inesperado.',
+            variant: 'destructive',
+            duration: 7000,
+        });
+    } finally {
+        setIsReverting(false);
+    }
+  };
+
 
   return (
     <div className="space-y-8">
@@ -209,9 +265,15 @@ export default function AnnualClosingPage() {
       </Card>
       
       <Card>
-        <CardHeader>
-            <CardTitle>Historial de Cierres</CardTitle>
-            <CardDescription>Consulta los datos de cierres anuales realizados anteriormente.</CardDescription>
+        <CardHeader className="flex flex-row justify-between items-start">
+            <div>
+                <CardTitle>Historial de Cierres</CardTitle>
+                <CardDescription>Consulta los datos de cierres anuales realizados anteriormente.</CardDescription>
+            </div>
+            <div className="text-right">
+                <p className="font-bold text-lg text-destructive">{revertCount}</p>
+                <p className="text-xs text-muted-foreground">Reversiones restantes</p>
+            </div>
         </CardHeader>
         <CardContent>
             {loadingArchives ? (
@@ -232,10 +294,16 @@ export default function AnnualClosingPage() {
                                     </p>
                                 </div>
                             </div>
-                            <div className="text-right text-sm">
-                                <p>{archive.orderCount} pedidos</p>
-                                <p>{archive.customerCount} clientes</p>
-                                <p>{archive.promotionCount} promociones</p>
+                            <div className="flex items-center gap-4">
+                                <div className="text-right text-sm">
+                                    <p>{archive.orderCount} pedidos</p>
+                                    <p>{archive.customerCount} clientes</p>
+                                    <p>{archive.promotionCount} promociones</p>
+                                </div>
+                                <Button variant="outline" size="sm" onClick={() => setYearToRevert(archive.id)} disabled={revertCount <= 0 || isReverting}>
+                                    <RotateCcw className="mr-2 h-4 w-4" />
+                                    Revertir
+                                </Button>
                             </div>
                         </div>
                     ))}
@@ -245,6 +313,35 @@ export default function AnnualClosingPage() {
             )}
         </CardContent>
       </Card>
+      
+      <AlertDialog open={!!yearToRevert} onOpenChange={(open) => !open && setYearToRevert(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Revertir Cierre de {yearToRevert}</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Esta acción restaurará TODOS los datos del año {yearToRevert} y consumirá 1 de tus {revertCount} intentos de reversión. Esta acción es irreversible. Para confirmar, escribe "REVERTIR".
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+             <div className="py-4">
+                <Label htmlFor="revert-confirmation">Escribe "REVERTIR" para confirmar</Label>
+                <Input
+                    id="revert-confirmation"
+                    value={revertConfirmationText}
+                    onChange={(e) => setRevertConfirmationText(e.target.value)}
+                    placeholder="REVERTIR"
+                    disabled={isReverting}
+                    autoFocus
+                />
+            </div>
+            <AlertDialogFooter>
+                <AlertDialogCancel disabled={isReverting}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleRevert} disabled={isReverting || revertConfirmationText !== 'REVERTIR'}>
+                     {isReverting ? <Loader2 className="animate-spin" /> : "Confirmar y Revertir"}
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }

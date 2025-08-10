@@ -143,6 +143,7 @@ export default function InventoryPage() {
                                     Imagen
                                 </TableHead>
                                 <TableHead>Producto</TableHead>
+                                <TableHead>Género</TableHead>
                                 <TableHead>Categoría</TableHead>
                                 <TableHead>Stock Actual</TableHead>
                                 <TableHead>Estado</TableHead>
@@ -168,7 +169,10 @@ export default function InventoryPage() {
                                     </TableCell>
                                     <TableCell className="font-medium">{product.name}</TableCell>
                                     <TableCell>
-                                        <Badge variant="outline">{product.category}</Badge>
+                                        <Badge variant="outline">{product.gender}</Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant="secondary">{product.category}</Badge>
                                     </TableCell>
                                     <TableCell className="font-semibold text-lg">{product.stock}</TableCell>
                                     <TableCell>

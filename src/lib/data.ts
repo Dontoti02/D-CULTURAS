@@ -17,11 +17,8 @@ export const products: Product[] = [
     ],
     category: 'Caballeros',
     sizes: ['S', 'M', 'L', 'XL'],
-    colors: [
-      { name: 'Azul Clásico', hex: '#3B82F6' },
-      { name: 'Negro', hex: '#000000' },
-    ],
-    rating: 4.5,
+    ratingSum: 45,
+    ratingCount: 10,
     stock: 100,
   },
   {
@@ -32,11 +29,8 @@ export const products: Product[] = [
     images: ['https://placehold.co/600x800.png', 'https://placehold.co/600x800.png'],
     category: 'Damas',
     sizes: ['XS', 'S', 'M', 'L'],
-    colors: [
-      { name: 'Coral Atardecer', hex: '#FF7F50' },
-      { name: 'Verde Azulado Océano', hex: '#2DD4BF' },
-    ],
-    rating: 4.8,
+    ratingSum: 48,
+    ratingCount: 10,
     stock: 75,
   },
   {
@@ -47,11 +41,8 @@ export const products: Product[] = [
     images: ['https://placehold.co/600x800.png'],
     category: 'Caballeros',
     sizes: ['S', 'M', 'L'],
-    colors: [
-      { name: 'Blanco', hex: '#FFFFFF' },
-      { name: 'Beige', hex: '#F5F5DC' },
-    ],
-    rating: 4.2,
+    ratingSum: 42,
+    ratingCount: 10,
     stock: 120,
   },
   {
@@ -62,11 +53,8 @@ export const products: Product[] = [
     images: ['https://placehold.co/600x800.png', 'https://placehold.co/600x800.png'],
     category: 'Damas',
     sizes: ['XS', 'S', 'M', 'L'],
-    colors: [
-      { name: 'Lavado Oscuro', hex: '#1E3A8A' },
-      { name: 'Lavado Claro', hex: '#93C5FD' },
-    ],
-    rating: 4.6,
+    ratingSum: 46,
+    ratingCount: 10,
     stock: 80,
   },
   {
@@ -77,11 +65,8 @@ export const products: Product[] = [
     images: ['https://placehold.co/600x800.png', 'https://placehold.co/600x800.png'],
     category: 'Caballeros',
     sizes: ['S', 'M', 'L', 'XL'],
-    colors: [
-      { name: 'Caqui', hex: '#C3B091' },
-      { name: 'Azul Marino', hex: '#000080' },
-    ],
-    rating: 4.4,
+    ratingSum: 44,
+    ratingCount: 10,
     stock: 90,
   },
   {
@@ -92,11 +77,8 @@ export const products: Product[] = [
     images: ['https://placehold.co/600x800.png', 'https://placehold.co/600x800.png'],
     category: 'Damas',
     sizes: ['S', 'M', 'L'],
-    colors: [
-      { name: 'Crema', hex: '#FFFDD0' },
-      { name: 'Gris Jaspeado', hex: '#D1D5DB' },
-    ],
-    rating: 4.9,
+    ratingSum: 49,
+    ratingCount: 10,
     stock: 60,
   },
   {
@@ -107,11 +89,8 @@ export const products: Product[] = [
     images: ['https://placehold.co/600x800.png'],
     category: 'Caballeros',
     sizes: ['S', 'M', 'L', 'XL'],
-    colors: [
-      { name: 'Blanco', hex: '#FFFFFF' },
-      { name: 'Carbón', hex: '#36454F' },
-    ],
-    rating: 4.1,
+    ratingSum: 41,
+    ratingCount: 10,
     stock: 150,
   },
   {
@@ -122,11 +101,8 @@ export const products: Product[] = [
     images: ['https://placehold.co/600x800.png', 'https://placehold.co/600x800.png'],
     category: 'Damas',
     sizes: ['XS', 'S', 'M'],
-    colors: [
-      { name: 'Champán', hex: '#F7E7CE' },
-      { name: 'Esmeralda', hex: '#50C878' },
-    ],
-    rating: 4.7,
+    ratingSum: 47,
+    ratingCount: 10,
     stock: 50,
   },
 ];

@@ -11,7 +11,6 @@ export type Product = {
   images: string[];
   category: 'Caballeros' | 'Damas' | 'Novedades Caballeros' | 'Novedades Damas';
   sizes: ('XS' | 'S' | 'M' | 'L' | 'XL')[];
-  colors: { name: string, hex: string }[];
   ratingSum: number; // Suma de todas las calificaciones
   ratingCount: number; // Cantidad de calificaciones
   stock: number;
@@ -35,7 +34,6 @@ export interface OrderItem {
     cost?: number;
     quantity: number;
     size: string;
-    color: string;
 }
 
 export interface Order {

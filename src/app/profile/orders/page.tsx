@@ -65,7 +65,7 @@ export default function ProfileOrdersPage() {
   const openReturnDialog = (order: Order) => {
     setOrderToReturn(order);
     const initialQuantities = order.items.reduce((acc, item) => {
-        const uniqueKey = `${item.productId}-${item.size}-${item.color}`;
+        const uniqueKey = `${item.productId}-${item.size}`;
         acc[uniqueKey] = 0;
         return acc;
     }, {} as {[key: string]: number});
@@ -73,7 +73,7 @@ export default function ProfileOrdersPage() {
   };
 
   const handleQuantityChange = (item: OrderItem, delta: number) => {
-    const uniqueKey = `${item.productId}-${item.size}-${item.color}`;
+    const uniqueKey = `${item.productId}-${item.size}`;
     const currentQty = returnQuantities[uniqueKey] || 0;
     const newQty = Math.max(0, Math.min(item.quantity, currentQty + delta));
     setReturnQuantities(prev => ({ ...prev, [uniqueKey]: newQty }));
@@ -85,7 +85,7 @@ export default function ProfileOrdersPage() {
 
     const itemsToReturn = orderToReturn.items
         .map(item => {
-            const uniqueKey = `${item.productId}-${item.size}-${item.color}`;
+            const uniqueKey = `${item.productId}-${item.size}`;
             const quantity = returnQuantities[uniqueKey];
             return quantity > 0 ? { ...item, quantity } : null;
         })
@@ -232,7 +232,7 @@ export default function ProfileOrdersPage() {
                 </AlertDialogHeader>
                 <div className="max-h-[60vh] overflow-y-auto pr-4 space-y-4">
                     {orderToReturn?.items.map(item => {
-                        const uniqueKey = `${item.productId}-${item.size}-${item.color}`;
+                        const uniqueKey = `${item.productId}-${item.size}`;
                         const quantityToReturn = returnQuantities[uniqueKey] || 0;
                         return (
                             <div key={uniqueKey} className="flex items-center justify-between gap-4 border-b pb-4">

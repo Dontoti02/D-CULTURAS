@@ -17,8 +17,6 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChromePicker, ColorResult } from 'react-color';
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -36,16 +34,9 @@ export default function EditProductPage() {
   const [cost, setCost] = useState('');
   const [stock, setStock] = useState('');
   const [imageUrls, setImageUrls] = useState<(string | null)[]>(Array(4).fill(null));
-  const [selectedColors, setSelectedColors] = useState<{ name: string; hex: string }[]>([]);
   const [isUploading, setIsUploading] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // State for the color picker
-  const [newColorHex, setNewColorHex] = useState('#000000');
-  const [newColorName, setNewColorName] = useState('');
-  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
-
-
   useEffect(() => {
     if (!id) return;
     const fetchProduct = async () => {
@@ -65,7 +56,6 @@ export default function EditProductPage() {
           setStock(productData.stock.toString());
           const images = [...productData.images, ...Array(4 - productData.images.length).fill(null)];
           setImageUrls(images);
-          setSelectedColors(productData.colors || []);
         } else {
           toast({ title: "Error", description: "Producto no encontrado.", variant: "destructive" });
           router.push('/admin/products');
@@ -79,26 +69,6 @@ export default function EditProductPage() {
     };
     fetchProduct();
   }, [id, router, toast]);
-
-  const handleAddColor = () => {
-    if (!newColorName.trim()) {
-        toast({ title: 'Error', description: 'Por favor, ingresa un nombre para el color.', variant: 'destructive' });
-        return;
-    }
-    if (selectedColors.some(c => c.name.toLowerCase() === newColorName.toLowerCase() || c.hex === newColorHex)) {
-         toast({ title: 'Error', description: 'El nombre o el valor del color ya existen.', variant: 'destructive' });
-        return;
-    }
-    setSelectedColors([...selectedColors, { name: newColorName, hex: newColorHex }]);
-    setNewColorName('');
-    setNewColorHex('#000000');
-    setIsColorPickerOpen(false);
-  };
-
-  const handleRemoveColor = (hex: string) => {
-    setSelectedColors(selectedColors.filter(c => c.hex !== hex));
-  };
-
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = event.target.files?.[0];
@@ -153,10 +123,10 @@ export default function EditProductPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !description || !category || !price || !cost || !stock || imageUrls.every(url => url === null) || selectedColors.length === 0) {
+    if (!name || !description || !category || !price || !cost || !stock || imageUrls.every(url => url === null)) {
         toast({
             title: 'Campos Incompletos',
-            description: 'Por favor, rellena todos los campos, sube al menos una imagen y selecciona al menos un color.',
+            description: 'Por favor, rellena todos los campos y sube al menos una imagen.',
             variant: 'destructive',
         });
         return;
@@ -173,7 +143,6 @@ export default function EditProductPage() {
         cost: parseFloat(cost),
         stock: parseInt(stock, 10),
         images: imageUrls.filter((url): url is string => url !== null),
-        colors: selectedColors,
       });
       toast({
         title: 'Producto Actualizado',
@@ -269,41 +238,6 @@ export default function EditProductPage() {
                       onChange={(e) => setDescription(e.target.value)}
                     />
                   </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Colores del Producto</CardTitle>
-                   <CardDescription>Añade o modifica los colores disponibles para este producto.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex flex-wrap gap-4">
-                        {selectedColors.map((color) => (
-                            <div key={color.hex} className="flex items-center gap-2 border rounded-md p-2">
-                                <div className="h-6 w-6 rounded-full border" style={{ backgroundColor: color.hex }} />
-                                <span className="text-sm font-medium">{color.name}</span>
-                                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveColor(color.hex)}>
-                                    <X className="h-4 w-4"/>
-                                </Button>
-                            </div>
-                        ))}
-                    </div>
-                    <Popover open={isColorPickerOpen} onOpenChange={setIsColorPickerOpen}>
-                        <PopoverTrigger asChild>
-                            <Button type="button" variant="outline">
-                                <Plus className="mr-2 h-4 w-4"/>
-                                Añadir Color
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-4 space-y-4">
-                            <ChromePicker color={newColorHex} onChangeComplete={(color: ColorResult) => setNewColorHex(color.hex)} />
-                            <div className="grid gap-2">
-                                <Label htmlFor="color-name">Nombre del Color</Label>
-                                <Input id="color-name" value={newColorName} onChange={(e) => setNewColorName(e.target.value)} placeholder="Ej. Azul Cielo" />
-                            </div>
-                            <Button type="button" onClick={handleAddColor} className="w-full">Confirmar Color</Button>
-                        </PopoverContent>
-                    </Popover>
                 </CardContent>
               </Card>
               <Card>

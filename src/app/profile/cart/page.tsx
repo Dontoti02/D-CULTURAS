@@ -57,26 +57,26 @@ export default function CartPage() {
                         ) : (
                             <div className="space-y-6">
                                 {cartItems.map(item => (
-                                    <div key={`${item.id}-${item.size}-${item.color}`} className="flex items-center gap-4">
+                                    <div key={`${item.id}-${item.size}`} className="flex items-center gap-4">
                                         <Image src={item.image} alt={item.name} width={80} height={100} className="rounded-md object-cover" />
                                         <div className="flex-1">
                                             <h3 className="font-semibold">{item.name}</h3>
-                                            <p className="text-sm text-muted-foreground">Talla: {item.size} / Color: {item.color}</p>
+                                            <p className="text-sm text-muted-foreground">Talla: {item.size}</p>
                                             <p className="text-sm font-semibold text-primary">S/ {item.price.toFixed(2)}</p>
                                         </div>
                                         <div className="flex items-center gap-2 border rounded-md">
-                                            <Button variant="ghost" size="icon" onClick={() => updateQuantity(`${item.id}-${item.size}-${item.color}`, item.quantity - 1)}>
+                                            <Button variant="ghost" size="icon" onClick={() => updateQuantity(`${item.id}-${item.size}`, item.quantity - 1)}>
                                                 <Minus className="h-4 w-4" />
                                             </Button>
                                             <span className="w-8 text-center font-semibold">{item.quantity}</span>
-                                            <Button variant="ghost" size="icon" onClick={() => updateQuantity(`${item.id}-${item.size}-${item.color}`, item.quantity + 1)}>
+                                            <Button variant="ghost" size="icon" onClick={() => updateQuantity(`${item.id}-${item.size}`, item.quantity + 1)}>
                                                 <Plus className="h-4 w-4" />
                                             </Button>
                                         </div>
                                         <div>
                                             <p className="font-bold">S/ {(item.price * item.quantity).toFixed(2)}</p>
                                         </div>
-                                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(`${item.id}-${item.size}-${item.color}`)}>
+                                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeFromCart(`${item.id}-${item.size}`)}>
                                             <Trash2 className="h-5 w-5" />
                                         </Button>
                                     </div>

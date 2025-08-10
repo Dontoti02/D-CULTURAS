@@ -121,10 +121,6 @@ export default function ProductsPage() {
                         category: row.category,
                         images: [], // Las imágenes se suben después
                         sizes: row.sizes ? (row.sizes as string).split(',').map(s => s.trim() as any) : ['S', 'M', 'L'],
-                        colors: row.colors ? (row.colors as string).split(',').map(c => {
-                            const [name, hex] = c.split(':');
-                            return { name: name.trim(), hex: hex.trim() };
-                        }) : [],
                         createdAt: serverTimestamp() as any,
                         ratingSum: 0,
                         ratingCount: 0,

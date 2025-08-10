@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, User, Search, Menu, LogOut, UserCircle, Settings } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, LogOut, UserCircle, Settings, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -117,7 +117,7 @@ export default function SiteHeader() {
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-4">
+        <div className="ml-auto flex items-center gap-2">
           <div className="relative hidden md:block" ref={searchRef}>
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input 
@@ -146,6 +146,13 @@ export default function SiteHeader() {
                 </div>
             )}
           </div>
+
+            <Link href="/faq" passHref>
+                <Button variant="ghost" size="icon" aria-label="Ayuda">
+                    <HelpCircle className="h-5 w-5" />
+                    <span className="sr-only">Ayuda</span>
+                </Button>
+            </Link>
 
           {user && (
             <Link href="/profile/cart" passHref>

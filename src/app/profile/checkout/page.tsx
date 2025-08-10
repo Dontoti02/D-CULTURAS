@@ -81,7 +81,6 @@ export default function CheckoutPage() {
                     price: item.price,
                     quantity: item.quantity,
                     size: item.size,
-                    color: item.color,
                 })),
                 subtotal,
                 couponCode: appliedCoupon?.code || null,
@@ -237,7 +236,7 @@ export default function CheckoutPage() {
             </CardHeader>
             <CardContent className="space-y-4">
                 {cartItems.map(item => (
-                    <div key={`${item.id}-${item.size}-${item.color}`} className="flex items-center gap-4 text-sm">
+                    <div key={`${item.id}-${item.size}`} className="flex items-center gap-4 text-sm">
                         <Image src={item.image} alt={item.name} width={48} height={64} className="rounded-md object-cover flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">{item.name}</p>

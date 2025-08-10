@@ -34,7 +34,6 @@ const SOL_TO_USD_RATE = 3.85;
 export default function ProductClientPage({ product: initialProduct }: ProductClientPageProps) {
   const [product, setProduct] = useState(initialProduct);
   const [selectedImage, setSelectedImage] = useState(product.images[0]);
-  const [selectedColor, setSelectedColor] = useState(product.colors[0]?.name);
   const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
   const [quantity, setQuantity] = useState(1);
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
@@ -238,7 +237,7 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
     }
 
     const itemInCart = cartItems.find(
-      (item) => item.id === product.id && item.size === selectedSize && item.color === selectedColor
+      (item) => item.id === product.id && item.size === selectedSize
     );
     const currentQuantityInCart = itemInCart ? itemInCart.quantity : 0;
     
@@ -258,7 +257,6 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
         image: product.images[0],
         quantity,
         size: selectedSize,
-        color: selectedColor
     });
     toast({
         title: '¡Añadido al carrito!',
@@ -384,26 +382,6 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
             </div>
 
             <div className="grid gap-4">
-              {product.colors && product.colors.length > 0 && (
-                <div>
-                  <Label className="font-semibold text-lg">Color</Label>
-                  <div className="flex items-center gap-2 mt-2">
-                    {product.colors.map((color) => (
-                      <button
-                        key={color.name}
-                        onClick={() => setSelectedColor(color.name)}
-                        className={cn(
-                          'h-8 w-8 rounded-full border-2 transition-all',
-                          selectedColor === color.name ? 'ring-2 ring-primary ring-offset-2' : ''
-                        )}
-                        style={{ backgroundColor: color.hex }}
-                        aria-label={`Seleccionar color ${color.name}`}
-                        disabled={isOutOfStock}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
               {product.sizes && product.sizes.length > 0 && (
                 <div>
                   <Label className="font-semibold text-lg">Talla</Label>

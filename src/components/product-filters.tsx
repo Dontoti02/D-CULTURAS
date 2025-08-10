@@ -16,15 +16,6 @@ interface ProductFiltersProps {
   onPriceChange: (value: [number]) => void;
 }
 
-const colors = [
-    { name: 'Azul', hex: '#3B82F6' },
-    { name: 'Negro', hex: '#000000' },
-    { name: 'Coral', hex: '#FF7F50' },
-    { name: 'Verde azulado', hex: '#2DD4BF' },
-    { name: 'Blanco', hex: '#FFFFFF' },
-    { name: 'Beige', hex: '#F5F5DC' },
-];
-
 const sizes = ['XS', 'S', 'M', 'L', 'XL'];
 
 export default function ProductFilters({ 
@@ -63,15 +54,6 @@ export default function ProductFilters({
               <Label htmlFor="cat-new-women">Novedades Damas</Label>
             </div>
           </RadioGroup>
-        </div>
-
-        <div className="grid gap-2">
-          <Label className="font-semibold">Color</Label>
-          <div className="flex flex-wrap gap-2">
-            {colors.map(color => (
-                 <button key={color.name} className="h-8 w-8 rounded-full border" style={{ backgroundColor: color.hex }} aria-label={color.name} />
-            ))}
-          </div>
         </div>
 
         <div className="grid gap-2">

@@ -151,7 +151,7 @@ export default function OrderDetailPage() {
                           <Image src={item.image} alt={item.name} width={64} height={80} className="rounded-md object-cover"/>
                           <div className="flex-1">
                               <p className="font-medium">{item.name}</p>
-                              <p className="text-sm text-muted-foreground">Talla: {item.size} / Color: {item.color}</p>
+                              <p className="text-sm text-muted-foreground">Talla: {item.size}</p>
                               <p className="text-sm text-muted-foreground">Cantidad: {item.quantity}</p>
                           </div>
                           <p className="font-semibold text-right">S/ {(item.price * item.quantity).toFixed(2)}</p>

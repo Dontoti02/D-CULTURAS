@@ -14,12 +14,11 @@ export interface CartItem {
   image: string;
   quantity: number;
   size: string;
-  color: string;
 }
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (item: CartItem) => void;
+  addToCart: (item: Omit<CartItem, 'color'>) => void;
   removeFromCart: (uniqueId: string) => void;
   updateQuantity: (uniqueId: string, quantity: number) => void;
   clearCart: () => void;
@@ -36,7 +35,7 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-const getUniqueCartItemId = (item: {id: string; size: string; color: string}) => `${item.id}-${item.size}-${item.color}`;
+const getUniqueCartItemId = (item: {id: string; size: string;}) => `${item.id}-${item.size}`;
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);

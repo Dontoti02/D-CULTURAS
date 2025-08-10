@@ -7,7 +7,7 @@ import { type Product, type Comment } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Star, Minus, Plus, ShoppingCart, Loader2, MessageSquare } from 'lucide-react';
+import { Star, Minus, Plus, ShoppingCart, Loader2, MessageSquare, Ruler } from 'lucide-react';
 import ProductCard from './product-card';
 import { Separator } from './ui/separator';
 import { cn } from '@/lib/utils';
@@ -16,7 +16,7 @@ import { db } from '@/lib/firebase';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 import { useRouter } from 'next/navigation';
 import ImagePreviewModal from './image-preview-modal';
 import { Card, CardContent } from './ui/card';
@@ -24,6 +24,8 @@ import { Textarea } from './ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import SizeGuide from './size-guide';
 
 interface ProductClientPageProps {
   product: Product;
@@ -384,7 +386,23 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
             <div className="grid gap-4">
               {product.sizes && product.sizes.length > 0 && (
                 <div>
-                  <Label className="font-semibold text-lg">Talla</Label>
+                  <div className="flex justify-between items-center mb-2">
+                    <Label className="font-semibold text-lg">Talla</Label>
+                     <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="link" className="text-sm p-0 h-auto flex items-center gap-1">
+                                <Ruler className="w-4 h-4" />
+                                Guía de Tallas
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-2xl">
+                           <DialogHeader>
+                               <DialogTitle>Guía de Tallas</DialogTitle>
+                           </DialogHeader>
+                           <SizeGuide />
+                        </DialogContent>
+                    </Dialog>
+                  </div>
                   <RadioGroup value={selectedSize} onValueChange={setSelectedSize} className="flex gap-2 mt-2">
                     {product.sizes.map((size) => (
                         <Label

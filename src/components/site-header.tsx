@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, User, Search, Menu, LogOut, UserCircle, Settings, HelpCircle } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, LogOut, UserCircle, Settings, HelpCircle, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -169,7 +169,7 @@ export default function SiteHeader() {
           {loading ? null : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Cuenta de Usuario">
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user.photoURL || undefined} alt="Foto de perfil" />
                     <AvatarFallback>
@@ -179,9 +179,23 @@ export default function SiteHeader() {
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                    <p className="font-semibold">{user.firstName ? `${user.firstName} ${user.lastName}` : (user.displayName || user.email)}</p>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel className="font-normal">
+                    <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                            <AvatarImage src={user.photoURL || undefined} alt="Foto de perfil" />
+                            <AvatarFallback>
+                                {(user.firstName || user.email)?.charAt(0).toUpperCase()}
+                                {user.lastName?.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-medium leading-none">{user.firstName ? `${user.firstName} ${user.lastName}` : (user.displayName || 'Usuario')}</p>
+                            <p className="text-xs leading-none text-muted-foreground">
+                                {user.email}
+                            </p>
+                        </div>
+                    </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
@@ -192,7 +206,7 @@ export default function SiteHeader() {
                 </DropdownMenuItem>
                  <DropdownMenuItem asChild>
                     <Link href="/profile/orders">
-                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        <ShoppingBag className="mr-2 h-4 w-4" />
                         <span>Mis Pedidos</span>
                     </Link>
                 </DropdownMenuItem>

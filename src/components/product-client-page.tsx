@@ -119,7 +119,11 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
 
    useEffect(() => {
     const fetchRecommendations = async () => {
-      if (!product.category) return;
+      // FIX: Ensure category and gender are defined before querying
+      if (!product.category || !product.gender) {
+        setLoadingRecommendations(false);
+        return;
+      }
       setLoadingRecommendations(true);
       try {
         const productsRef = collection(db, 'products');

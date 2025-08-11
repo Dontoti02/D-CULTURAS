@@ -25,6 +25,12 @@ export interface Customer {
     email: string;
     photoURL?: string;
     createdAt: Timestamp;
+    shippingAddress?: {
+        address: string;
+        city: string;
+        department: string;
+        zip: string;
+    };
 }
 
 export interface OrderItem {
@@ -85,4 +91,6 @@ export interface Comment {
   comment: string;
   createdAt: Timestamp;
 }
+    
+
     

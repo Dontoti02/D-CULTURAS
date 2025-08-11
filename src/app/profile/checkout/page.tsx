@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/cart-context';
 import { useAuth } from '@/hooks/use-auth';
@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Loader2, CreditCard, Landmark, Percent } from 'lucide-react';
 import Link from 'next/link';
+import { Product } from '@/lib/types';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -30,6 +31,25 @@ export default function CheckoutPage() {
   const [zip, setZip] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load user's shipping address from Firestore on component mount
+  useEffect(() => {
+    if (user) {
+      const fetchCustomerData = async () => {
+        const customerRef = doc(db, 'customers', user.uid);
+        const docSnap = await getDoc(customerRef);
+        if (docSnap.exists() && docSnap.data().shippingAddress) {
+          const { address, city, department, zip } = docSnap.data().shippingAddress;
+          setAddress(address || '');
+          setCity(city || '');
+          setDepartment(department || '');
+          setZip(zip || '');
+        }
+      };
+      fetchCustomerData();
+    }
+  }, [user]);
+
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,33 +67,39 @@ export default function CheckoutPage() {
     try {
         // Use a transaction to ensure atomicity
         const orderRef = await runTransaction(db, async (transaction) => {
-            const outOfStockItems: {name: string, requested: number, available: number}[] = [];
+            
+            const lowStockItemsForToast: {name: string, newStock: number}[] = [];
 
-            // 1. Check stock for all items
-            for (const item of cartItems) {
+            // 1. READ phase: Check stock and gather all necessary data
+            const productChecks = await Promise.all(cartItems.map(async (item) => {
                 const productRef = doc(db, 'products', item.id);
                 const productDoc = await transaction.get(productRef);
                 if (!productDoc.exists()) {
                     throw new Error(`El producto ${item.name} ya no existe.`);
                 }
-                const currentStock = productDoc.data().stock;
-                if (currentStock < item.quantity) {
-                    outOfStockItems.push({ name: item.name, requested: item.quantity, available: currentStock });
+                const productData = productDoc.data() as Product;
+                if (productData.stock < item.quantity) {
+                    throw new Error(`Stock insuficiente para: "${item.name}" (disponible: ${productData.stock}, pedido: ${item.quantity}). Por favor, ajusta tu carrito.`);
                 }
+                const newStock = productData.stock - item.quantity;
+                if (newStock <= 5 && newStock > 0) {
+                    lowStockItemsForToast.push({ name: productData.name, newStock });
+                }
+                return { productRef, quantityToDecrement: item.quantity };
+            }));
+
+            // Check coupon usage limit (Read)
+            if (appliedCoupon) {
+                 const usedCouponRef = doc(db, `customers/${user.uid}/usedCoupons`, appliedCoupon.id);
+                 const usedCouponDoc = await transaction.get(usedCouponRef);
+                 // We'll use this doc later in the write phase.
             }
 
-            // If any item is out of stock, abort the transaction
-            if (outOfStockItems.length > 0) {
-                const errorMessages = outOfStockItems.map(item => 
-                    `"${item.name}" (disponible: ${item.available}, pedido: ${item.requested})`
-                ).join(', ');
-                throw new Error(`Stock insuficiente para: ${errorMessages}. Por favor, ajusta tu carrito.`);
-            }
-
-            // 2. If all items are in stock, create the order
+            // 2. WRITE phase: If all checks pass, proceed with writes
+            const newOrderRef = doc(collection(db, "orders"));
             const orderData = {
                 customerId: user.uid,
-                customerName: user.displayName || user.email,
+                customerName: `${user.firstName} ${user.lastName}` || user.email,
                 items: cartItems.map(item => ({
                     productId: item.id,
                     name: item.name,
@@ -91,37 +117,26 @@ export default function CheckoutPage() {
                 shippingAddress: { address, city, department, zip },
                 createdAt: serverTimestamp(),
             };
-            
-            const newOrderRef = doc(collection(db, "orders"));
             transaction.set(newOrderRef, orderData);
+            
+            // Save shipping address for next time
+            const customerRef = doc(db, 'customers', user.uid);
+            transaction.update(customerRef, { shippingAddress: { address, city, department, zip } });
 
-            // 3. Update stock for each product
-            for (const item of cartItems) {
-                const productRef = doc(db, 'products', item.id);
+            // Update stock for each product
+            productChecks.forEach(({ productRef, quantityToDecrement }) => {
                 transaction.update(productRef, {
-                    stock: increment(-item.quantity)
+                    stock: increment(-quantityToDecrement)
                 });
-                 // Check for low stock notification
-                const productDoc = await getDoc(productRef); // get the latest state
-                if (productDoc.exists()) {
-                    const newStock = productDoc.data().stock - item.quantity;
-                    if (newStock <= 5 && newStock > 0) {
-                       toast({
-                           title: "Alerta de Stock Bajo",
-                           description: `El stock para "${item.name}" es ahora de ${newStock}.`,
-                           variant: "destructive"
-                       });
-                    }
-                }
-            }
+            });
 
-            // 4. Update coupon usage
+            // Update coupon usage
             if (appliedCoupon) {
                 const usedCouponRef = doc(db, `customers/${user.uid}/usedCoupons`, appliedCoupon.id);
-                const usedCouponDoc = await transaction.get(usedCouponRef);
-                
+                // We use the previously read doc to decide whether to set or update
+                const usedCouponDoc = await getDoc(usedCouponRef); 
                 if (usedCouponDoc.exists()) {
-                    transaction.update(usedCouponRef, { useCount: increment(1) });
+                    transaction.update(usedCouponRef, { useCount: increment(1), lastUsed: serverTimestamp() });
                 } else {
                     transaction.set(usedCouponRef, {
                         code: appliedCoupon.code,
@@ -131,6 +146,15 @@ export default function CheckoutPage() {
                 }
             }
             
+            // This is outside the transaction, but we have the data we need.
+            lowStockItemsForToast.forEach(item => {
+                toast({
+                   title: "Alerta de Stock Bajo",
+                   description: `El stock para "${item.name}" es ahora de ${item.newStock}.`,
+                   variant: "destructive"
+               });
+            });
+
             return newOrderRef;
         });
 
@@ -186,6 +210,7 @@ export default function CheckoutPage() {
         <Card>
           <CardHeader>
             <CardTitle>Dirección de Envío</CardTitle>
+             <CardDescription>Tu dirección se guardará para futuras compras.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2 space-y-2">
@@ -279,3 +304,5 @@ export default function CheckoutPage() {
     </form>
   );
 }
+
+    

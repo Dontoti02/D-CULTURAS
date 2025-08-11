@@ -127,7 +127,6 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
             productsRef,
             where('category', '==', product.category),
             where('gender', '==', product.gender),
-            orderBy('createdAt', 'desc'),
             limit(5)
         );
         const querySnapshot = await getDocs(q);

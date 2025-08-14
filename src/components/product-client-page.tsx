@@ -401,11 +401,11 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
                                 Guía de Tallas
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-2xl">
+                        <DialogContent className="sm:max-w-md">
                            <DialogHeader>
                                <DialogTitle>Guía de Tallas</DialogTitle>
                            </DialogHeader>
-                           <SizeGuide />
+                           <SizeGuide gender={product.gender} />
                         </DialogContent>
                     </Dialog>
                   </div>

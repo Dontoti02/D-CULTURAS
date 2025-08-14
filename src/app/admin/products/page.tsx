@@ -11,10 +11,10 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Product } from '@/lib/types';
 import Image from 'next/image';
-import { MoreHorizontal, PlusCircle, Loader2, Upload, Star, HelpCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Loader2, Upload, Star, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,8 +24,8 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import React, { useEffect, useState, useRef } from 'react';
-import { collection, getDocs, deleteDoc, doc, addDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { collection, getDocs, deleteDoc, doc, addDoc, serverTimestamp, writeBatch, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import {
   AlertDialog,
@@ -48,13 +48,16 @@ export default function ProductsPage() {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const productsPerPage = 10;
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const querySnapshot = await getDocs(collection(db, "products"));
+        const q = query(collection(db, "products"), orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
         const productsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
         setProducts(productsData);
       } catch (error) {
@@ -113,7 +116,7 @@ export default function ProductsPage() {
                         return; // Omitir filas sin datos esenciales
                     }
                     const newProductRef = doc(collection(db, 'products'));
-                    const newProduct: Omit<Product, 'id' | 'rating' | 'ratingSum' | 'ratingCount'> = {
+                    const newProduct: Omit<Product, 'id' | 'rating' | 'ratingSum' | 'ratingCount' | 'createdAt'> = {
                         name: row.name,
                         description: row.description || '',
                         price: parseFloat(row.price),
@@ -123,9 +126,9 @@ export default function ProductsPage() {
                         category: row.category,
                         images: [], // Las imágenes se suben después
                         sizes: row.sizes ? (row.sizes as string).split(',').map(s => s.trim() as any) : ['S', 'M', 'L'],
-                        createdAt: serverTimestamp() as any,
                         ratingSum: 0,
                         ratingCount: 0,
+                        createdAt: serverTimestamp() as any,
                     };
                     batch.set(newProductRef, newProduct);
                     productsAdded++;
@@ -181,6 +184,15 @@ export default function ProductsPage() {
         
         XLSX.writeFile(workbook, "plantilla_productos.xlsx");
     };
+
+    const indexOfLastProduct = currentPage * productsPerPage;
+    const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+
+    const currentProducts = useMemo(() => {
+        return products.slice(indexOfFirstProduct, indexOfLastProduct);
+    }, [products, indexOfFirstProduct, indexOfLastProduct]);
+
+    const totalPages = Math.ceil(products.length / productsPerPage);
 
 
     if (loading) {
@@ -248,7 +260,7 @@ export default function ProductsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {products.map((product) => {
+                            {currentProducts.map((product) => {
                                 const avgRating = product.ratingCount > 0 ? (product.ratingSum / product.ratingCount) : 0;
                                 return (
                                 <TableRow key={product.id}>
@@ -309,6 +321,34 @@ export default function ProductsPage() {
                         </TableBody>
                     </Table>
                 </CardContent>
+                <CardFooter>
+                    <div className="text-xs text-muted-foreground">
+                        Mostrando <strong>{Math.min(indexOfFirstProduct + 1, products.length)}-{Math.min(indexOfLastProduct, products.length)}</strong> de <strong>{products.length}</strong> productos
+                    </div>
+                    <div className="ml-auto flex items-center gap-2">
+                        <span className="text-sm">
+                            Página {currentPage} de {totalPages}
+                        </span>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                            Anterior
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            Siguiente
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </CardFooter>
             </Card>
             <AlertDialog open={!!productToDelete} onOpenChange={(open) => !open && setProductToDelete(null)}>
                 <AlertDialogContent>

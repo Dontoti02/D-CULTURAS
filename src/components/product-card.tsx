@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { type Product } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, Plus } from 'lucide-react';
+import { Star, ShoppingCart } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -60,7 +60,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                  <div className="flex justify-between items-center gap-2">
                     <h3 className="text-sm text-muted-foreground truncate flex-1">{product.name}</h3>
                     <Button size="icon" variant="ghost" className="shrink-0 rounded-full w-8 h-8 bg-muted hover:bg-primary hover:text-primary-foreground">
-                        <Plus className="h-5 w-5" />
+                        <ShoppingCart className="h-4 w-4" />
                         <span className="sr-only">Añadir al carrito</span>
                     </Button>
                 </div>

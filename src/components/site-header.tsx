@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { 
     ShoppingCart, User, Search, Menu, LogOut, UserCircle, Settings, HelpCircle, ShoppingBag, 
-    ChevronDown, Sparkles, TrendingUp, Star, Percent, BookOpen, Diamond, Shirt
+    ChevronDown, Sparkles, TrendingUp, Star, Percent, BookOpen, Diamond, Shirt, Briefcase
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,7 +39,7 @@ const categories = {
         { href: '/?category=Blusas', label: 'Blusas', icon: Shirt },
     ],
     caballeros: [
-        { href: '/?category=Ternos', label: 'Ternos', icon: UserCircle },
+        { href: '/?category=Ternos', label: 'Ternos', icon: Briefcase },
         { href: '/?category=Camisas', label: 'Camisas', icon: Shirt },
         { href: '/?category=Pantalones', label: 'Pantalones', icon: UserCircle },
         { href: '/?category=Corbatas', label: 'Corbatas', icon: UserCircle },
@@ -88,7 +88,7 @@ export default function SiteHeader() {
         setIsSearchFocused(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
+    document.removeEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };

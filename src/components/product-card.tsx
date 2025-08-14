@@ -43,23 +43,25 @@ export default function ProductCard({ product }: ProductCardProps) {
                     <Badge className="bg-primary/80 text-primary-foreground ml-auto">Nuevo</Badge>
                 )}
             </div>
-             <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button size="icon" className="rounded-full h-10 w-10">
+          </div>
+          <div className="p-2 mt-auto">
+            <div className="flex justify-between items-start gap-2">
+                <div className="flex-1 space-y-1">
+                    <h3 className="text-sm text-muted-foreground truncate">{product.name}</h3>
+                    <p className="font-semibold text-lg">S/ {product.price.toFixed(2)}</p>
+                    <div className="flex items-center gap-1">
+                        <div className="flex items-center">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <Star key={i} className={cn('w-4 h-4', i < filledStars ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30')} />
+                            ))}
+                        </div>
+                        <span className="text-sm text-muted-foreground ml-1">({product.ratingCount})</span>
+                    </div>
+                </div>
+                 <Button size="icon" variant="ghost" className="shrink-0">
                     <ShoppingCart className="h-5 w-5" />
                     <span className="sr-only">Añadir al carrito</span>
                 </Button>
-            </div>
-          </div>
-          <div className="p-2 space-y-1 mt-auto">
-            <h3 className="text-sm text-muted-foreground truncate">{product.name}</h3>
-            <p className="font-semibold text-lg">S/ {product.price.toFixed(2)}</p>
-            <div className="flex items-center gap-1">
-                <div className="flex items-center">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                        <Star key={i} className={cn('w-4 h-4', i < filledStars ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30')} />
-                    ))}
-                </div>
-                <span className="text-sm text-muted-foreground ml-1">({product.ratingCount})</span>
             </div>
           </div>
         </CardContent>

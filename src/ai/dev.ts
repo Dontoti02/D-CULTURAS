@@ -3,4 +3,6 @@
 import './flows/annual-closing-flow';
 import './flows/revert-annual-closing-flow';
 import './flows/revert-counter-flow';
+import './flows/send-email-flow';
+
 

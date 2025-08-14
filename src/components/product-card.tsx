@@ -1,10 +1,12 @@
 
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { type Product } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, ShoppingCart } from 'lucide-react';
+import { Star, Plus } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -45,23 +47,23 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
           </div>
           <div className="p-2 mt-auto">
-            <div className="flex justify-between items-start gap-2">
-                <div className="flex-1 space-y-1">
-                    <h3 className="text-sm text-muted-foreground truncate">{product.name}</h3>
-                    <p className="font-semibold text-lg">S/ {product.price.toFixed(2)}</p>
-                    <div className="flex items-center gap-1">
-                        <div className="flex items-center">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                                <Star key={i} className={cn('w-4 h-4', i < filledStars ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30')} />
-                            ))}
-                        </div>
-                        <span className="text-sm text-muted-foreground ml-1">({product.ratingCount})</span>
+            <div className="space-y-1">
+                <div className="flex items-center gap-1">
+                    <div className="flex items-center">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <Star key={i} className={cn('w-4 h-4', i < filledStars ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30')} />
+                        ))}
                     </div>
+                    <span className="text-xs text-muted-foreground ml-1">({product.ratingCount})</span>
                 </div>
-                 <Button size="icon" variant="ghost" className="shrink-0">
-                    <ShoppingCart className="h-5 w-5" />
-                    <span className="sr-only">Añadir al carrito</span>
-                </Button>
+                <p className="font-semibold text-lg">S/ {product.price.toFixed(2)}</p>
+                 <div className="flex justify-between items-center gap-2">
+                    <h3 className="text-sm text-muted-foreground truncate flex-1">{product.name}</h3>
+                    <Button size="icon" variant="ghost" className="shrink-0 rounded-full w-8 h-8 bg-muted hover:bg-primary hover:text-primary-foreground">
+                        <Plus className="h-5 w-5" />
+                        <span className="sr-only">Añadir al carrito</span>
+                    </Button>
+                </div>
             </div>
           </div>
         </CardContent>

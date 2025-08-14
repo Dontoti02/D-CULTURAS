@@ -4,13 +4,13 @@
 /**
  * @fileOverview Flow for sending emails.
  * - sendOrderConfirmationEmail: Sends an email to the customer after a successful order.
- * - OrderConfirmationEmailInput: The input type for the flow.
+ * - sendWelcomeEmail: Sends a welcome email to a new registered customer.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { OrderItem } from '@/lib/types';
 
+// Order Confirmation Email Schemas & Flow
 const OrderItemSchema = z.object({
   name: z.string(),
   quantity: z.number(),
@@ -40,11 +40,10 @@ const sendOrderConfirmationEmailFlow = ai.defineFlow(
     outputSchema: z.object({ success: z.boolean() }),
   },
   async (input) => {
-    console.log('--- SIMULATING SENDING EMAIL ---');
+    console.log('--- SIMULATING SENDING ORDER CONFIRMATION EMAIL ---');
     console.log(`To: ${input.to}`);
     console.log(`Subject: ¡Confirmación de tu pedido #${input.orderId.substring(0, 7)} en StylesUP!`);
     
-    // Constructing a simple text-based email body
     const emailBody = `
 Hola ${input.customerName},
 
@@ -72,14 +71,57 @@ El equipo de StylesUP!
     console.log(emailBody);
     console.log('--- END OF SIMULATION ---');
 
-    // In a real application, you would integrate with an email service like SendGrid, Mailgun, or Resend here.
-    // For example (using a hypothetical email service):
-    // await emailService.send({
-    //   to: input.to,
-    //   subject: `¡Confirmación de tu pedido #${input.orderId.substring(0, 7)} en StylesUP!`,
-    //   html: <OrderConfirmationTemplate {...input} /> // Using a React Email template
-    // });
-
     return { success: true };
   }
+);
+
+
+// Welcome Email Schemas & Flow
+const WelcomeEmailInputSchema = z.object({
+    to: z.string().email(),
+    customerName: z.string(),
+});
+export type WelcomeEmailInput = z.infer<typeof WelcomeEmailInputSchema>;
+
+export async function sendWelcomeEmail(input: WelcomeEmailInput): Promise<{ success: boolean }> {
+    return sendWelcomeEmailFlow(input);
+}
+
+const sendWelcomeEmailFlow = ai.defineFlow(
+    {
+        name: 'sendWelcomeEmailFlow',
+        inputSchema: WelcomeEmailInputSchema,
+        outputSchema: z.object({ success: z.boolean() }),
+    },
+    async (input) => {
+        console.log('--- SIMULATING SENDING WELCOME EMAIL ---');
+        console.log(`To: ${input.to}`);
+        console.log(`Subject: ¡Bienvenido/a a StylesUP, ${input.customerName}!`);
+
+        const emailBody = `
+Hola ${input.customerName},
+
+¡Te damos la más cordial bienvenida a StylesUP!
+
+Estamos muy contentos de que te unas a nuestra comunidad de amantes de la moda. Tu cuenta ha sido creada exitosamente.
+
+A partir de ahora, podrás:
+- Explorar nuestras últimas colecciones.
+- Guardar tus artículos favoritos.
+- Disfrutar de un proceso de compra rápido y seguro.
+
+¿Listo/a para empezar? Visita nuestra tienda y descubre tu próximo look favorito.
+
+¡Felices compras!
+
+Saludos,
+El equipo de StylesUP!
+        `;
+
+        console.log('Body:');
+        console.log(emailBody);
+        console.log('--- END OF SIMULATION ---');
+
+        return { success: true };
+    }
 );

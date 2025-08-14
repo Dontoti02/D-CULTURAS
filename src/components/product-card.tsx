@@ -5,24 +5,22 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Star } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface ProductCardProps {
   product: Product;
 }
 
-const SOL_TO_USD_RATE = 3.85;
-
 export default function ProductCard({ product }: ProductCardProps) {
   const isNew = product.createdAt && differenceInDays(new Date(), product.createdAt.toDate()) <= 7;
-  const priceInUsd = (product.price / SOL_TO_USD_RATE).toFixed(2);
   const isOutOfStock = product.stock === 0;
   const isLowStock = product.stock > 0 && product.stock <= 5;
   const avgRating = product.ratingCount > 0 ? (product.ratingSum / product.ratingCount) : 0;
-
+  const filledStars = Math.round(avgRating);
 
   return (
     <Link href={`/product/${product.id}`}>
-      <Card className="overflow-hidden transition-all hover:shadow-lg group">
+      <Card className="overflow-hidden transition-all hover:shadow-lg group border-none shadow-none rounded-none">
         <CardContent className="p-0">
           <div className="relative aspect-[3/4] w-full">
             <Image
@@ -44,23 +42,14 @@ export default function ProductCard({ product }: ProductCardProps) {
                 )}
             </div>
           </div>
-          <div className="p-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-lg truncate">{product.name}</h3>
-              <div className="flex items-center gap-1">
-                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                <span className="text-sm text-muted-foreground">{avgRating.toFixed(1)}</span>
-              </div>
-            </div>
-            <div className="flex items-start justify-between mt-2 gap-2">
-                <div className="flex flex-col items-start">
-                    <Badge variant="outline">{product.gender}</Badge>
-                    <Badge variant="secondary" className="mt-1">{product.category}</Badge>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-primary">S/ {product.price.toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground">aprox. ${priceInUsd} USD</p>
-                </div>
+          <div className="p-2 space-y-1">
+            <h3 className="text-sm text-muted-foreground truncate">{product.name}</h3>
+            <p className="font-semibold text-lg">S/ {product.price.toFixed(2)}</p>
+            <div className="flex items-center gap-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className={cn('w-4 h-4', i < filledStars ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30')} />
+                ))}
+                <span className="text-sm text-muted-foreground">({product.ratingCount})</span>
             </div>
           </div>
         </CardContent>

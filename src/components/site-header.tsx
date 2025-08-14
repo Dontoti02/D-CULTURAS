@@ -31,20 +31,18 @@ const navLinks = [
   { href: '/?filter=sale', label: 'Rebajas', icon: Percent },
 ];
 
-const categories = {
-    damas: [
-        { href: '/?category=Conjuntos', label: 'Conjuntos', icon: ShoppingBag },
-        { href: '/?category=Vestidos', label: 'Vestidos', icon: Diamond },
-        { href: '/?category=Faldas', label: 'Faldas', icon: BookOpen },
-        { href: '/?category=Blusas', label: 'Blusas', icon: Shirt },
-    ],
-    caballeros: [
-        { href: '/?category=Ternos', label: 'Ternos', icon: Briefcase },
-        { href: '/?category=Camisas', label: 'Camisas', icon: Shirt },
-        { href: '/?category=Pantalones', label: 'Pantalones', icon: UserCircle },
-        { href: '/?category=Corbatas', label: 'Corbatas', icon: UserCircle },
-    ]
-}
+const categoryIcons: { [key: string]: React.ElementType } = {
+    'Conjuntos': ShoppingBag,
+    'Vestidos': Diamond,
+    'Faldas': BookOpen,
+    'Blusas': Shirt,
+    'Ternos': Briefcase,
+    'Camisas': Shirt,
+    'Pantalones': UserCircle,
+    'Corbatas': UserCircle,
+    'default': ShoppingBag,
+};
+
 
 export default function SiteHeader() {
   const pathname = usePathname();
@@ -58,17 +56,40 @@ export default function SiteHeader() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  
+  const [categories, setCategories] = useState<{ damas: string[], caballeros: string[] }>({ damas: [], caballeros: [] });
+  const [loadingCategories, setLoadingCategories] = useState(true);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchProductsAndCategories = async () => {
+      setLoadingCategories(true);
       const productsRef = collection(db, 'products');
       const q = query(productsRef, orderBy('name'));
       const querySnapshot = await getDocs(q);
       const productsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+      
       setAllProducts(productsData);
+
+      const damasCategories = new Set<string>();
+      const caballerosCategories = new Set<string>();
+
+      productsData.forEach(product => {
+        if (product.gender === 'Damas') {
+          damasCategories.add(product.category);
+        } else if (product.gender === 'Caballeros') {
+          caballerosCategories.add(product.category);
+        }
+      });
+      
+      setCategories({
+          damas: Array.from(damasCategories),
+          caballeros: Array.from(caballerosCategories)
+      });
+      setLoadingCategories(false);
     };
-    fetchProducts();
+    fetchProductsAndCategories();
   }, []);
+
 
   useEffect(() => {
     if (searchQuery.length > 1) {
@@ -88,7 +109,7 @@ export default function SiteHeader() {
         setIsSearchFocused(false);
       }
     };
-    document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -146,27 +167,33 @@ export default function SiteHeader() {
                      <DropdownMenuGroup>
                         <DropdownMenuLabel>Damas</DropdownMenuLabel>
                         <DropdownMenuSeparator/>
-                        {categories.damas.map(cat => (
-                            <DropdownMenuItem key={cat.href} asChild>
-                                <Link href={cat.href}>
-                                    <cat.icon className="mr-2 h-4 w-4"/>
-                                    <span>{cat.label}</span>
-                                </Link>
-                            </DropdownMenuItem>
-                        ))}
+                        {categories.damas.map(cat => {
+                            const Icon = categoryIcons[cat] || categoryIcons.default;
+                            return (
+                                <DropdownMenuItem key={cat} asChild>
+                                    <Link href={`/?category=${cat}`}>
+                                        <Icon className="mr-2 h-4 w-4"/>
+                                        <span>{cat}</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                            )
+                        })}
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator/>
                     <DropdownMenuGroup>
                         <DropdownMenuLabel>Caballeros</DropdownMenuLabel>
                          <DropdownMenuSeparator/>
-                        {categories.caballeros.map(cat => (
-                           <DropdownMenuItem key={cat.href} asChild>
-                                <Link href={cat.href}>
-                                    <cat.icon className="mr-2 h-4 w-4"/>
-                                    <span>{cat.label}</span>
-                                </Link>
-                            </DropdownMenuItem>
-                        ))}
+                        {categories.caballeros.map(cat => {
+                           const Icon = categoryIcons[cat] || categoryIcons.default;
+                           return (
+                                <DropdownMenuItem key={cat} asChild>
+                                    <Link href={`/?category=${cat}`}>
+                                        <Icon className="mr-2 h-4 w-4"/>
+                                        <span>{cat}</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                           )
+                        })}
                     </DropdownMenuGroup>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -307,19 +334,25 @@ export default function SiteHeader() {
                     <h3 className="font-semibold px-3">Categorías</h3>
                     <div className="grid gap-2 pl-6">
                         <h4 className="font-semibold text-sm text-muted-foreground">Damas</h4>
-                        {categories.damas.map(cat => (
-                             <Link key={cat.href} href={cat.href} className="flex items-center gap-3 text-muted-foreground hover:text-foreground text-sm">
-                                <cat.icon className="h-4 w-4"/>
-                                {cat.label}
-                            </Link>
-                        ))}
+                        {categories.damas.map(cat => {
+                            const Icon = categoryIcons[cat] || categoryIcons.default;
+                            return (
+                                <Link key={cat} href={`/?category=${cat}`} className="flex items-center gap-3 text-muted-foreground hover:text-foreground text-sm">
+                                    <Icon className="h-4 w-4"/>
+                                    {cat}
+                                </Link>
+                            )
+                        })}
                          <h4 className="font-semibold text-sm text-muted-foreground mt-2">Caballeros</h4>
-                        {categories.caballeros.map(cat => (
-                            <Link key={cat.href} href={cat.href} className="flex items-center gap-3 text-muted-foreground hover:text-foreground text-sm">
-                                <cat.icon className="h-4 w-4"/>
-                                {cat.label}
-                            </Link>
-                        ))}
+                        {categories.caballeros.map(cat => {
+                           const Icon = categoryIcons[cat] || categoryIcons.default;
+                           return (
+                                <Link key={cat} href={`/?category=${cat}`} className="flex items-center gap-3 text-muted-foreground hover:text-foreground text-sm">
+                                    <Icon className="h-4 w-4"/>
+                                    {cat}
+                                </Link>
+                           )
+                        })}
                     </div>
                  </div>
               </nav>

@@ -50,20 +50,27 @@ export default function OrdersPage() {
                 const q = query(ordersRef, orderBy('createdAt', 'desc'));
                 const orderSnapshot = await getDocs(q);
 
-                // 3. Enrich orders with customer details
-                const enrichedOrdersData = orderSnapshot.docs.map(doc => {
-                    const orderData = { id: doc.id, ...doc.data() } as Order;
-                    const customerDetails = customerMap.get(orderData.customerId);
-                    return {
-                        ...orderData,
-                        customerDetails: customerDetails ? {
-                            firstName: customerDetails.firstName,
-                            lastName: customerDetails.lastName,
-                            photoURL: customerDetails.photoURL,
-                            email: customerDetails.email
-                        } : undefined
-                    };
-                });
+                // 3. Enrich orders with customer details and filter out orders from deleted customers
+                const enrichedOrdersData = orderSnapshot.docs
+                    .map(doc => {
+                        const orderData = { id: doc.id, ...doc.data() } as Order;
+                        const customerDetails = customerMap.get(orderData.customerId);
+                        // If customer exists, enrich the order data
+                        if (customerDetails) {
+                            return {
+                                ...orderData,
+                                customerDetails: {
+                                    firstName: customerDetails.firstName,
+                                    lastName: customerDetails.lastName,
+                                    photoURL: customerDetails.photoURL,
+                                    email: customerDetails.email
+                                }
+                            };
+                        }
+                        // If customer does not exist, return null to filter it out
+                        return null;
+                    })
+                    .filter((order): order is EnrichedOrder => order !== null);
 
                 setOrders(enrichedOrdersData);
             } catch (error) {
@@ -139,8 +146,8 @@ export default function OrdersPage() {
                                             </AvatarFallback>
                                         </Avatar>
                                         <div className="grid gap-0.5">
-                                            <p className="font-medium">{`${order.customerDetails?.firstName || ''} ${order.customerDetails?.lastName || ''}`.trim()}</p>
-                                            <p className="text-xs text-muted-foreground">{order.customerDetails?.email}</p>
+                                            <p className="font-medium">{`${order.customerDetails?.firstName || 'Cliente'} ${order.customerDetails?.lastName || 'Eliminado'}`.trim()}</p>
+                                            <p className="text-xs text-muted-foreground">{order.customerDetails?.email || 'N/A'}</p>
                                         </div>
                                     </div>
                                 </TableCell>

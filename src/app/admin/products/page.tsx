@@ -1,3 +1,4 @@
+
 'use client'
 
 import {
@@ -13,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Product } from '@/lib/types';
 import Image from 'next/image';
-import { MoreHorizontal, PlusCircle, Loader2, Upload, Star } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Loader2, Upload, Star, HelpCircle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +40,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
@@ -147,6 +149,39 @@ export default function ProductsPage() {
         reader.readAsArrayBuffer(file);
     };
 
+    const handleDownloadTemplate = () => {
+        const headers = ["name", "description", "price", "cost", "stock", "gender", "category", "sizes"];
+        const exampleData = [{
+            name: "Camisa de Lino Azul",
+            description: "Camisa fresca y ligera, ideal para el verano.",
+            price: 120.50,
+            cost: 45.00,
+            stock: 50,
+            gender: "Caballeros",
+            category: "Camisas",
+            sizes: "S, M, L, XL"
+        }];
+
+        const worksheet = XLSX.utils.json_to_sheet(exampleData, { header: headers });
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Productos");
+
+        // Ajustar anchos de columna
+        const colWidths = [
+            { wch: 30 }, // name
+            { wch: 50 }, // description
+            { wch: 10 }, // price
+            { wch: 10 }, // cost
+            { wch: 10 }, // stock
+            { wch: 15 }, // gender
+            { wch: 15 }, // category
+            { wch: 20 }, // sizes
+        ];
+        worksheet["!cols"] = colWidths;
+        
+        XLSX.writeFile(workbook, "plantilla_productos.xlsx");
+    };
+
 
     if (loading) {
       return (
@@ -169,6 +204,19 @@ export default function ProductsPage() {
                             className="hidden"
                             accept=".xlsx, .xls"
                         />
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button size="icon" variant="ghost" onClick={handleDownloadTemplate}>
+                                        <HelpCircle className="h-5 w-5" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Descargar plantilla de Excel</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
                         <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
                             {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                             Importar desde Excel

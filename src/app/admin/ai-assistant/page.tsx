@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bot, User, Loader2, Send } from 'lucide-react';
+import { Bot, User, Loader2, Send, Trash2 } from 'lucide-react';
 import { getAssistantResponse } from '@/ai/flows/assistant-flow';
 
 interface Message {
@@ -13,13 +13,15 @@ interface Message {
   content: string;
 }
 
+const initialMessages: Message[] = [
+  {
+    role: 'assistant',
+    content: 'Hola, soy tu asistente de IA. ¿En qué puedo ayudarte hoy? Puedes preguntarme sobre productos, ventas, clientes y más.',
+  },
+];
+
 export default function AiAssistantPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: 'Hola, soy tu asistente de IA. ¿En qué puedo ayudarte hoy? Puedes preguntarme sobre productos, ventas, clientes y más.',
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -44,11 +46,21 @@ export default function AiAssistantPage() {
     }
   };
 
+  const handleClearChat = () => {
+    setMessages(initialMessages);
+  };
+
   return (
     <div className="flex flex-col h-full max-w-3xl mx-auto">
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold">Asistente de IA</h1>
-        <p className="text-muted-foreground">Consulta información sobre tu tienda usando lenguaje natural.</p>
+      <header className="mb-6 flex justify-between items-start">
+        <div>
+            <h1 className="text-3xl font-bold">Asistente de IA</h1>
+            <p className="text-muted-foreground">Consulta información sobre tu tienda usando lenguaje natural.</p>
+        </div>
+        <Button variant="outline" size="icon" onClick={handleClearChat} disabled={isLoading}>
+            <Trash2 className="h-5 w-5" />
+            <span className="sr-only">Limpiar chat</span>
+        </Button>
       </header>
       <Card className="flex-1 flex flex-col">
         <CardContent className="flex-1 p-6 overflow-y-auto space-y-6">

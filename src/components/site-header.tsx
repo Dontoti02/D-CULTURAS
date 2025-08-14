@@ -2,7 +2,10 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, User, Search, Menu, LogOut, UserCircle, Settings, HelpCircle, ShoppingBag } from 'lucide-react';
+import { 
+    ShoppingCart, User, Search, Menu, LogOut, UserCircle, Settings, HelpCircle, ShoppingBag, 
+    ChevronDown, Sparkles, TrendingUp, Star, Percent, BookOpen, Diamond, Shirt
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -11,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { useCart } from '@/context/cart-context';
 import { Badge } from './ui/badge';
 import { useAuth } from '@/hooks/use-auth';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuGroup } from './ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
@@ -22,10 +25,26 @@ import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import Image from 'next/image';
 
 const navLinks = [
-  { href: '/?gender=all', label: 'Novedades' },
-  { href: '/?gender=Caballeros', label: 'Hombres' },
-  { href: '/?gender=Damas', label: 'Mujeres' },
+  { href: '/?filter=new', label: 'Lo nuevo', icon: Sparkles },
+  { href: '/?filter=bestsellers', label: 'Más vendidos', icon: TrendingUp },
+  { href: '/?filter=top-rated', label: '5 estrellas', icon: Star },
+  { href: '/?filter=sale', label: 'Rebajas', icon: Percent },
 ];
+
+const categories = {
+    damas: [
+        { href: '/?category=Conjuntos', label: 'Conjuntos', icon: ShoppingBag },
+        { href: '/?category=Vestidos', label: 'Vestidos', icon: Diamond },
+        { href: '/?category=Faldas', label: 'Faldas', icon: BookOpen },
+        { href: '/?category=Blusas', label: 'Blusas', icon: Shirt },
+    ],
+    caballeros: [
+        { href: '/?category=Ternos', label: 'Ternos', icon: UserCircle },
+        { href: '/?category=Camisas', label: 'Camisas', icon: Shirt },
+        { href: '/?category=Pantalones', label: 'Pantalones', icon: UserCircle },
+        { href: '/?category=Corbatas', label: 'Corbatas', icon: UserCircle },
+    ]
+}
 
 export default function SiteHeader() {
   const pathname = usePathname();
@@ -102,19 +121,55 @@ export default function SiteHeader() {
           <span className="hidden font-bold sm:inline-block">StylesUP!</span>
         </Link>
 
-        <nav className="hidden gap-6 md:flex">
+        <nav className="hidden gap-4 md:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                'text-sm font-medium transition-colors hover:text-primary',
+                'flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary',
                 pathname === link.href ? 'text-primary' : 'text-muted-foreground'
               )}
             >
+              <link.icon className="h-4 w-4" />
               {link.label}
             </Link>
           ))}
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary px-3">
+                        Categorías
+                        <ChevronDown className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-64">
+                     <DropdownMenuGroup>
+                        <DropdownMenuLabel>Damas</DropdownMenuLabel>
+                        <DropdownMenuSeparator/>
+                        {categories.damas.map(cat => (
+                            <DropdownMenuItem key={cat.href} asChild>
+                                <Link href={cat.href}>
+                                    <cat.icon className="mr-2 h-4 w-4"/>
+                                    <span>{cat.label}</span>
+                                </Link>
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator/>
+                    <DropdownMenuGroup>
+                        <DropdownMenuLabel>Caballeros</DropdownMenuLabel>
+                         <DropdownMenuSeparator/>
+                        {categories.caballeros.map(cat => (
+                           <DropdownMenuItem key={cat.href} asChild>
+                                <Link href={cat.href}>
+                                    <cat.icon className="mr-2 h-4 w-4"/>
+                                    <span>{cat.label}</span>
+                                </Link>
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
@@ -237,20 +292,36 @@ export default function SiteHeader() {
               <SheetHeader>
                 <SheetTitle>StylesUP!</SheetTitle>
               </SheetHeader>
-              <nav className="grid gap-6 text-lg font-medium">
-                <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-primary"><path d="M12 2l-7 5 7 5 7-5-7-5zM2 12l7 5 7-5M2 17l7 5 7-5" /></svg>
-                  <span className="sr-only">StylesUP!</span>
-                </Link>
+              <nav className="grid gap-4 text-base font-medium mt-4">
                 {navLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="text-muted-foreground hover:text-foreground"
+                    className="flex items-center gap-3 text-muted-foreground hover:text-foreground"
                   >
+                    <link.icon className="h-5 w-5" />
                     {link.label}
                   </Link>
                 ))}
+                 <div className="grid gap-2">
+                    <h3 className="font-semibold px-3">Categorías</h3>
+                    <div className="grid gap-2 pl-6">
+                        <h4 className="font-semibold text-sm text-muted-foreground">Damas</h4>
+                        {categories.damas.map(cat => (
+                             <Link key={cat.href} href={cat.href} className="flex items-center gap-3 text-muted-foreground hover:text-foreground text-sm">
+                                <cat.icon className="h-4 w-4"/>
+                                {cat.label}
+                            </Link>
+                        ))}
+                         <h4 className="font-semibold text-sm text-muted-foreground mt-2">Caballeros</h4>
+                        {categories.caballeros.map(cat => (
+                            <Link key={cat.href} href={cat.href} className="flex items-center gap-3 text-muted-foreground hover:text-foreground text-sm">
+                                <cat.icon className="h-4 w-4"/>
+                                {cat.label}
+                            </Link>
+                        ))}
+                    </div>
+                 </div>
               </nav>
             </SheetContent>
           </Sheet>

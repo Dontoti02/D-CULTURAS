@@ -1,11 +1,13 @@
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { type Product } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star } from 'lucide-react';
+import { Star, ShoppingCart } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Button } from './ui/button';
 
 interface ProductCardProps {
   product: Product;
@@ -19,9 +21,9 @@ export default function ProductCard({ product }: ProductCardProps) {
   const filledStars = Math.round(avgRating);
 
   return (
-    <Link href={`/product/${product.id}`}>
-      <Card className="overflow-hidden transition-all hover:shadow-lg group border-none shadow-none rounded-none">
-        <CardContent className="p-0">
+    <Link href={`/product/${product.id}`} className="group">
+      <Card className="overflow-hidden transition-all hover:shadow-lg border-none shadow-none rounded-none h-full flex flex-col">
+        <CardContent className="p-0 flex-grow flex flex-col">
           <div className="relative aspect-[3/4] w-full">
             <Image
               src={product.images[0]}
@@ -41,15 +43,23 @@ export default function ProductCard({ product }: ProductCardProps) {
                     <Badge className="bg-primary/80 text-primary-foreground ml-auto">Nuevo</Badge>
                 )}
             </div>
+             <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button size="icon" className="rounded-full h-10 w-10">
+                    <ShoppingCart className="h-5 w-5" />
+                    <span className="sr-only">Añadir al carrito</span>
+                </Button>
+            </div>
           </div>
-          <div className="p-2 space-y-1">
+          <div className="p-2 space-y-1 mt-auto">
             <h3 className="text-sm text-muted-foreground truncate">{product.name}</h3>
             <p className="font-semibold text-lg">S/ {product.price.toFixed(2)}</p>
             <div className="flex items-center gap-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className={cn('w-4 h-4', i < filledStars ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30')} />
-                ))}
-                <span className="text-sm text-muted-foreground">({product.ratingCount})</span>
+                <div className="flex items-center">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <Star key={i} className={cn('w-4 h-4', i < filledStars ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30')} />
+                    ))}
+                </div>
+                <span className="text-sm text-muted-foreground ml-1">({product.ratingCount})</span>
             </div>
           </div>
         </CardContent>

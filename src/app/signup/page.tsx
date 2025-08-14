@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -58,6 +59,7 @@ export default function SignupPage() {
         lastName,
         email,
         photoURL: '', // Initialize with an empty photo URL
+        status: 'active', // Default status for new users
         createdAt: serverTimestamp(),
       });
 

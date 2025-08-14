@@ -25,6 +25,7 @@ export interface Customer {
     email: string;
     photoURL?: string;
     createdAt: Timestamp;
+    status: 'active' | 'inactive';
     shippingAddress?: {
         address: string;
         city: string;

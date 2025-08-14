@@ -14,6 +14,8 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { sendWelcomeEmail } from '@/ai/flows/send-email-flow';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { promoteByGender } from '@/ai/flows/promote-by-gender-flow';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -23,12 +25,13 @@ export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [gender, setGender] = useState<'Damas' | 'Caballeros' | ''>('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firstName || !lastName || !email || !password || !confirmPassword) {
+    if (!firstName || !lastName || !email || !password || !confirmPassword || !gender) {
       toast({
         title: 'Campos incompletos',
         description: 'Por favor, rellena todos los campos.',
@@ -58,6 +61,7 @@ export default function SignupPage() {
         firstName,
         lastName,
         email,
+        gender,
         photoURL: '', // Initialize with an empty photo URL
         status: 'active', // Default status for new users
         createdAt: serverTimestamp(),
@@ -72,6 +76,14 @@ export default function SignupPage() {
       } catch (emailError) {
           // Log the error, but don't block the user flow
           console.error("Failed to send welcome email:", emailError);
+      }
+      
+      // 4. Trigger AI promotion flow in the background
+      try {
+        promoteByGender({ customerId: user.uid });
+      } catch (aiError) {
+          // Also log this but don't block
+          console.error("Failed to trigger gender promotion AI flow:", aiError);
       }
 
       toast({
@@ -150,6 +162,18 @@ export default function SignupPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
               />
+            </div>
+            <div className="grid gap-2">
+                <Label htmlFor="gender">Género</Label>
+                <Select required onValueChange={(value: 'Damas' | 'Caballeros') => setGender(value)} value={gender} disabled={isLoading}>
+                  <SelectTrigger id="gender" aria-label="Seleccionar género">
+                    <SelectValue placeholder="Seleccionar género" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Damas">Dama</SelectItem>
+                    <SelectItem value="Caballeros">Caballero</SelectItem>
+                  </SelectContent>
+                </Select>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Contraseña</Label>

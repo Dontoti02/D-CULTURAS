@@ -18,10 +18,12 @@ import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Customer, Order, OrderItem } from '@/lib/types';
 import { format } from 'date-fns';
-import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { Input } from '@/components/ui/input';
+
 
 interface EnrichedOrder extends Order {
   customerDetails?: Pick<Customer, 'firstName' | 'lastName' | 'photoURL' | 'email'>;
@@ -30,6 +32,7 @@ interface EnrichedOrder extends Order {
 export default function OrdersPage() {
     const [orders, setOrders] = useState<EnrichedOrder[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const ordersPerPage = 7;
     const router = useRouter();
@@ -83,14 +86,35 @@ export default function OrdersPage() {
         fetchOrdersAndCustomers();
     }, []);
 
+    const filteredOrders = useMemo(() => {
+        if (!searchQuery) return orders;
+
+        const lowercasedQuery = searchQuery.toLowerCase();
+
+        return orders.filter(order => {
+            const customerName = `${order.customerDetails?.firstName || ''} ${order.customerDetails?.lastName || ''}`.toLowerCase();
+            const customerEmail = order.customerDetails?.email?.toLowerCase() || '';
+            const orderId = order.id.toLowerCase();
+            const productNames = order.items.map(item => item.name.toLowerCase()).join(' ');
+
+            return (
+                customerName.includes(lowercasedQuery) ||
+                customerEmail.includes(lowercasedQuery) ||
+                orderId.includes(lowercasedQuery) ||
+                productNames.includes(lowercasedQuery)
+            );
+        });
+    }, [orders, searchQuery]);
+
+
     const indexOfLastOrder = currentPage * ordersPerPage;
     const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
 
     const currentOrders = useMemo(() => {
-        return orders.slice(indexOfFirstOrder, indexOfLastOrder);
-    }, [orders, indexOfFirstOrder, indexOfLastOrder]);
+        return filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder);
+    }, [filteredOrders, indexOfFirstOrder, indexOfLastOrder]);
 
-    const totalPages = Math.ceil(orders.length / ordersPerPage);
+    const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
 
     const handleRowClick = (orderId: string) => {
         router.push(`/admin/orders/${orderId}`);
@@ -108,6 +132,16 @@ export default function OrdersPage() {
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Pedidos</CardTitle>
+                 <div className="relative w-full max-w-sm">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                        type="search" 
+                        placeholder="Buscar por ID, cliente, correo o producto..." 
+                        className="pl-8"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
             </CardHeader>
             <CardContent>
                 <Table>
@@ -172,7 +206,7 @@ export default function OrdersPage() {
             </CardContent>
              <CardFooter>
                 <div className="text-xs text-muted-foreground">
-                    Mostrando <strong>{Math.min(indexOfFirstOrder + 1, orders.length)}-{Math.min(indexOfLastOrder, orders.length)}</strong> de <strong>{orders.length}</strong> pedidos
+                    Mostrando <strong>{Math.min(indexOfFirstOrder + 1, filteredOrders.length)}-{Math.min(indexOfLastOrder, filteredOrders.length)}</strong> de <strong>{filteredOrders.length}</strong> pedidos
                 </div>
                 <div className="ml-auto flex items-center gap-2">
                     <span className="text-sm">

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -10,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 
@@ -56,7 +57,7 @@ export default function NewAdminPage() {
         email,
         rol,
         photoURL: '', // Initialize with an empty photo URL
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
       });
 
       toast({
@@ -64,6 +65,8 @@ export default function NewAdminPage() {
         description: 'El nuevo administrador ha sido creado y guardado correctamente.',
       });
       resetForm(); // Reset form for next entry
+      // Opcional: Redirigir a la lista de administradores
+      router.push('/admin/admins');
     } catch (error: any) {
       console.error("Error al crear administrador: ", error);
       let description = 'Ocurrió un error inesperado. Inténtalo de nuevo.';
@@ -93,7 +96,7 @@ export default function NewAdminPage() {
                 Agregar Nuevo Administrador
             </h1>
             <div className="hidden items-center gap-2 md:ml-auto md:flex">
-                <Button variant="outline" size="sm" onClick={() => router.push('/admin/admins')} disabled={isSubmitting}>
+                <Button variant="outline" size="sm" type="button" onClick={() => router.push('/admin/admins')} disabled={isSubmitting}>
                     Ir a la Lista
                 </Button>
                 <Button size="sm" type="submit" disabled={isSubmitting}>
@@ -172,7 +175,7 @@ export default function NewAdminPage() {
         </Card>
         
         <div className="flex items-center justify-center gap-2 md:hidden mt-6">
-            <Button variant="outline" size="sm" onClick={() => router.push('/admin/admins')} disabled={isSubmitting}>Ir a la Lista</Button>
+            <Button variant="outline" size="sm" type="button" onClick={() => router.push('/admin/admins')} disabled={isSubmitting}>Ir a la Lista</Button>
             <Button size="sm" type="submit" disabled={isSubmitting}>
                 {isSubmitting ? <Loader2 className="animate-spin" /> : 'Guardar Administrador'}
             </Button>

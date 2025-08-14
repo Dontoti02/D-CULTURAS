@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -66,28 +67,42 @@ export default function LoginPage() {
       const user = userCredential.user;
 
       if (user) {
+        // Check if user is an admin
         const adminDocRef = doc(db, 'admins', user.uid);
         const adminDoc = await getDoc(adminDocRef);
 
         if (adminDoc.exists()) {
           router.push('/admin');
           toast({ title: '¡Bienvenido, Admin!', description: 'Has iniciado sesión correctamente.' });
-        } else {
-          // Check if it's a customer
-          const customerDocRef = doc(db, 'customers', user.uid);
-          const customerDoc = await getDoc(customerDocRef);
-          if (customerDoc.exists()) {
+          return;
+        }
+
+        // Check if user is a customer
+        const customerDocRef = doc(db, 'customers', user.uid);
+        const customerDoc = await getDoc(customerDocRef);
+        
+        if (customerDoc.exists()) {
+          const customerData = customerDoc.data();
+          if (customerData.status === 'inactive') {
+            await auth.signOut();
+            toast({
+              title: 'Cuenta Inhabilitada',
+              description: 'Tu cuenta ha sido inhabilitada. Por favor, contacta a soporte.',
+              variant: 'destructive',
+              duration: 7000,
+            });
+          } else {
             router.push('/');
             toast({ title: '¡Bienvenido!', description: 'Has iniciado sesión correctamente.' });
-          } else {
-             // If user exists in Auth but not in Firestore admins or customers collections
-             await auth.signOut();
-             toast({
-               title: 'Acceso Denegado',
-               description: 'Tu cuenta no está registrada como cliente o administrador.',
-               variant: 'destructive',
-             });
           }
+        } else {
+           // If user exists in Auth but not in Firestore admins or customers collections
+           await auth.signOut();
+           toast({
+             title: 'Acceso Denegado',
+             description: 'Tu cuenta no está registrada como cliente o administrador.',
+             variant: 'destructive',
+           });
         }
       }
     } catch (error: any) {

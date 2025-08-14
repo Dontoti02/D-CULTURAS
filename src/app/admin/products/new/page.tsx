@@ -8,14 +8,17 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Loader2, Plus, X } from 'lucide-react';
+import { Upload, Loader2, Plus, X, ChevronsUpDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Product } from '@/lib/types';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+
 
 const categoriesByGender = {
   'Damas': ['Conjuntos', 'Vestidos', 'Faldas', 'Blusas'],
@@ -23,7 +26,6 @@ const categoriesByGender = {
 };
 
 type Gender = 'Damas' | 'Caballeros' | '';
-type Category = 'Conjuntos' | 'Vestidos' | 'Faldas' | 'Blusas' | 'Ternos' | 'Camisas' | 'Pantalones' | 'Corbatas' | '';
 
 
 export default function NewProductPage() {
@@ -32,18 +34,54 @@ export default function NewProductPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [gender, setGender] = useState<Gender>('');
-  const [category, setCategory] = useState<Category>('');
+  const [category, setCategory] = useState('');
   const [price, setPrice] = useState('');
   const [cost, setCost] = useState('');
   const [stock, setStock] = useState('');
   const [imageUrls, setImageUrls] = useState<(string | null)[]>(Array(4).fill(null));
   const [isUploading, setIsUploading] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [allCategories, setAllCategories] = useState<string[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [openCategoryPopover, setOpenCategoryPopover] = useState(false);
+
+
+  useEffect(() => {
+    const fetchExistingCategories = async () => {
+        setLoadingCategories(true);
+        try {
+            const productSnapshot = await getDocs(collection(db, 'products'));
+            const categoriesSet = new Set<string>();
+            productSnapshot.forEach(doc => {
+                categoriesSet.add(doc.data().category);
+            });
+            // Añadir categorías predefinidas por si no existen productos
+            Object.values(categoriesByGender).flat().forEach(cat => categoriesSet.add(cat));
+            setAllCategories(Array.from(categoriesSet));
+        } catch (error) {
+            console.error("Error fetching categories:", error);
+        } finally {
+            setLoadingCategories(false);
+        }
+    };
+    fetchExistingCategories();
+  }, []);
 
   const availableCategories = useMemo(() => {
-    if (!gender) return [];
-    return categoriesByGender[gender as 'Damas' | 'Caballeros'];
-  }, [gender]);
+    if (!gender || allCategories.length === 0) return [];
+    
+    // Filtra las categorías por el género seleccionado
+    return allCategories.filter(cat => {
+        for (const key in categoriesByGender) {
+            if ((categoriesByGender[key as keyof typeof categoriesByGender]).includes(cat)) {
+                return key === gender;
+            }
+        }
+         // Incluir categorías que no están en el mapeo inicial (personalizadas)
+        return true;
+    });
+  }, [gender, allCategories]);
 
   const handleGenderChange = (value: Gender) => {
       setGender(value);
@@ -247,16 +285,46 @@ export default function NewProductPage() {
                   </div>
                   <div className="grid gap-3">
                     <Label htmlFor="category">Categoría</Label>
-                    <Select required onValueChange={(value: Category) => setCategory(value)} value={category} disabled={!gender}>
-                      <SelectTrigger id="category" aria-label="Seleccionar categoría">
-                        <SelectValue placeholder="Seleccionar categoría" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableCategories.map(cat => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={openCategoryPopover} onOpenChange={setOpenCategoryPopover}>
+                        <PopoverTrigger asChild>
+                            <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={openCategoryPopover}
+                            className="w-full justify-between"
+                            disabled={!gender || loadingCategories}
+                            >
+                            {loadingCategories ? <Loader2 className="animate-spin" /> : category || "Seleccionar o crear categoría..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput 
+                                    placeholder="Buscar o crear categoría..."
+                                    onValueChange={(currentValue) => setCategory(currentValue)}
+                                    value={category}
+                                />
+                                <CommandList>
+                                    <CommandEmpty>No se encontró la categoría. Puedes crearla.</CommandEmpty>
+                                    <CommandGroup>
+                                        {availableCategories.map((cat) => (
+                                        <CommandItem
+                                            key={cat}
+                                            value={cat}
+                                            onSelect={(currentValue) => {
+                                                setCategory(currentValue === category ? "" : currentValue);
+                                                setOpenCategoryPopover(false);
+                                            }}
+                                        >
+                                            {cat}
+                                        </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
                   </div>
                    <div className="grid md:grid-cols-2 gap-4">
                         <div className="grid gap-3">
@@ -287,3 +355,5 @@ export default function NewProductPage() {
     </form>
   );
 }
+
+    

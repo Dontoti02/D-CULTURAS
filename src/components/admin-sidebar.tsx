@@ -18,6 +18,7 @@ import {
   Warehouse,
   Landmark,
   Archive,
+  Bot,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -62,6 +63,7 @@ const navLinks = [
   { href: '/admin/promotions', label: 'Promociones', icon: Award },
   { href: '/admin/finance', label: 'Finanzas', icon: Landmark },
   { href: '/admin/annual-closing', label: 'Cierre Anual', icon: Archive },
+  { href: '/admin/ai-assistant', label: 'Asistente IA', icon: Bot },
 ];
 
 interface AdminData {

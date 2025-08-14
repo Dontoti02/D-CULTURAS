@@ -35,8 +35,8 @@ const SOL_TO_USD_RATE = 3.85;
 
 export default function ProductClientPage({ product: initialProduct }: ProductClientPageProps) {
   const [product, setProduct] = useState(initialProduct);
-  const [selectedImage, setSelectedImage] = useState(product.images[0]);
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
+  const [selectedImage, setSelectedImage] = useState(product.images?.[0] || 'https://placehold.co/600x800.png');
+  const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || '');
   const [quantity, setQuantity] = useState(1);
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(true);
@@ -62,6 +62,8 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
   const router = useRouter();
 
   const avgRating = product.ratingCount > 0 ? (product.ratingSum / product.ratingCount) : 0;
+  const imageUrls = product.images && product.images.length > 0 ? product.images : ['https://placehold.co/600x800.png'];
+
 
   const fetchComments = async () => {
     setLoadingComments(true);
@@ -260,7 +262,7 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.images[0],
+        image: selectedImage,
         quantity,
         size: selectedSize,
     });
@@ -297,7 +299,7 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
                 </div>
             </button>
             <div className="grid grid-cols-4 gap-4">
-              {product.images.map((img, index) => (
+              {imageUrls.map((img, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImage(img)}

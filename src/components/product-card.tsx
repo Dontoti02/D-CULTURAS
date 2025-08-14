@@ -29,6 +29,8 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const avgRating = product.ratingCount > 0 ? (product.ratingSum / product.ratingCount) : 0;
   const filledStars = Math.round(avgRating);
+  const imageUrl = product.images?.[0] || 'https://placehold.co/600x800.png';
+
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault(); 
@@ -44,7 +46,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             id: product.id,
             name: product.name,
             price: product.price,
-            image: product.images[0],
+            image: imageUrl,
             quantity: 1,
             size: product.sizes[0], // Añadir la primera talla disponible
         });
@@ -69,7 +71,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <CardContent className="p-0 flex-grow flex flex-col">
             <div className="relative aspect-[3/4] w-full">
               <Image
-                src={product.images[0]}
+                src={imageUrl}
                 alt={product.name}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105"

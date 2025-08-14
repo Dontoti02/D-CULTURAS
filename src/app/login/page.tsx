@@ -106,7 +106,6 @@ export default function LoginPage() {
         }
       }
     } catch (error: any) {
-      console.error("Error de inicio de sesión:", error);
       let errorMessage = 'Ocurrió un error al intentar iniciar sesión.';
       if (error.code) {
         switch (error.code) {
@@ -122,9 +121,12 @@ export default function LoginPage() {
             errorMessage = 'Error de red. Por favor, comprueba tu conexión a internet.';
             break;
           default:
+             console.error("Error de inicio de sesión inesperado:", error);
             errorMessage = `Error: ${error.message}`;
             break;
         }
+      } else {
+        console.error("Error de inicio de sesión:", error);
       }
       toast({
         title: 'Error de inicio de sesión',
@@ -221,7 +223,7 @@ export default function LoginPage() {
           </form>
           <div className="mt-4 text-center text-sm">
             ¿No tienes una cuenta?{' '}
-            <Link href="/signup" className="underline text-primary">
+            <Link href="/signup" className="text-primary">
               Regístrate
             </Link>
           </div>

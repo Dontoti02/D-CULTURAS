@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/cart-context';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp, doc, runTransaction, increment, getDoc } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, doc, runTransaction, increment, getDoc, Timestamp } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,9 @@ import Image from 'next/image';
 import { Loader2, CreditCard, Landmark, Percent } from 'lucide-react';
 import Link from 'next/link';
 import { Product } from '@/lib/types';
+import { sendOrderConfirmationEmail } from '@/ai/flows/send-email-flow';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -65,6 +68,7 @@ export default function CheckoutPage() {
 
     setIsSubmitting(true);
     try {
+        const orderTimestamp = serverTimestamp();
         // Use a transaction to ensure atomicity
         const orderRef = await runTransaction(db, async (transaction) => {
             
@@ -115,7 +119,7 @@ export default function CheckoutPage() {
                 total,
                 status: 'Procesando',
                 shippingAddress: { address, city, department, zip },
-                createdAt: serverTimestamp(),
+                createdAt: orderTimestamp,
             };
             transaction.set(newOrderRef, orderData);
             
@@ -158,9 +162,27 @@ export default function CheckoutPage() {
             return newOrderRef;
         });
 
+        // Send confirmation email (outside of transaction)
+        if (user.email) {
+            await sendOrderConfirmationEmail({
+                to: user.email,
+                customerName: `${user.firstName} ${user.lastName}`.trim(),
+                orderId: orderRef.id,
+                orderTotal: total,
+                orderDate: format(new Date(), 'dd MMMM, yyyy', { locale: es }),
+                orderItems: cartItems.map(item => ({
+                    name: item.name,
+                    quantity: item.quantity,
+                    price: item.price,
+                    size: item.size
+                })),
+            });
+        }
+
+
         toast({
             title: "¡Pedido Realizado!",
-            description: "Tu compra ha sido procesada exitosamente.",
+            description: "Tu compra ha sido procesada exitosamente. Revisa tu correo para la confirmación.",
         });
 
         clearCart();
@@ -304,5 +326,3 @@ export default function CheckoutPage() {
     </form>
   );
 }
-
-    

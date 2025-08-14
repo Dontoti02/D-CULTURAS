@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Product } from '@/lib/types';
 import Image from 'next/image';
-import { MoreHorizontal, PlusCircle, Loader2, Upload, Star, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Loader2, Upload, Star, HelpCircle, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +41,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
@@ -48,6 +49,7 @@ export default function ProductsPage() {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+    const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const productsPerPage = 10;
     const { toast } = useToast();
@@ -87,6 +89,28 @@ export default function ProductsPage() {
             setIsDeleting(false);
         }
     };
+    
+    const handleDeleteSelectedProducts = async () => {
+        setIsDeleting(true);
+        try {
+            const batch = writeBatch(db);
+            selectedProducts.forEach(id => {
+                const productRef = doc(db, 'products', id);
+                batch.delete(productRef);
+            });
+            await batch.commit();
+
+            toast({ title: "Productos Eliminados", description: `Se han eliminado ${selectedProducts.length} productos.` });
+            setSelectedProducts([]); // Clear selection
+            await fetchProducts();
+        } catch (error) {
+            console.error("Error deleting selected products: ", error);
+            toast({ title: "Error", description: "No se pudieron eliminar los productos seleccionados.", variant: "destructive" });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -194,6 +218,23 @@ export default function ProductsPage() {
 
     const totalPages = Math.ceil(products.length / productsPerPage);
 
+    const handleSelectProduct = (productId: string, isSelected: boolean) => {
+        if (isSelected) {
+            setSelectedProducts(prev => [...prev, productId]);
+        } else {
+            setSelectedProducts(prev => prev.filter(id => id !== productId));
+        }
+    };
+    
+    const handleSelectAll = (isSelected: boolean) => {
+        if (isSelected) {
+            setSelectedProducts(currentProducts.map(p => p.id));
+        } else {
+            setSelectedProducts([]);
+        }
+    };
+
+    const isAllSelected = currentProducts.length > 0 && selectedProducts.length === currentProducts.length;
 
     if (loading) {
       return (
@@ -207,7 +248,14 @@ export default function ProductsPage() {
         <>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Productos</CardTitle>
+                    <div>
+                        <CardTitle>Productos</CardTitle>
+                         {selectedProducts.length > 0 && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                                {selectedProducts.length} de {products.length} productos seleccionados.
+                            </p>
+                        )}
+                    </div>
                     <div className="flex items-center gap-2">
                          <input
                             type="file"
@@ -216,35 +264,70 @@ export default function ProductsPage() {
                             className="hidden"
                             accept=".xlsx, .xls"
                         />
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button size="icon" variant="ghost" onClick={handleDownloadTemplate}>
-                                        <HelpCircle className="h-5 w-5" />
+                        {selectedProducts.length > 0 ? (
+                             <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                     <Button size="sm" variant="destructive" disabled={isDeleting}>
+                                        <Trash2 className="mr-2 h-4 w-4"/>
+                                        Eliminar ({selectedProducts.length})
                                     </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>Descargar plantilla de Excel</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                           Esta acción no se puede deshacer. Se eliminarán permanentemente {selectedProducts.length} productos.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleDeleteSelectedProducts} className="bg-destructive hover:bg-destructive/90">
+                                            {isDeleting ? <Loader2 className="animate-spin" /> : "Confirmar Eliminación"}
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        ) : (
+                           <>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button size="icon" variant="ghost" onClick={handleDownloadTemplate}>
+                                                <HelpCircle className="h-5 w-5" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Descargar plantilla de Excel</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
 
-                        <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-                            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                            Importar desde Excel
-                        </Button>
-                        <Button asChild size="sm" className="gap-1">
-                            <Link href="/admin/products/new">
-                                <PlusCircle className="h-4 w-4" />
-                                Agregar Producto
-                            </Link>
-                        </Button>
+                                <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                                    {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                    Importar desde Excel
+                                </Button>
+                                <Button asChild size="sm" className="gap-1">
+                                    <Link href="/admin/products/new">
+                                        <PlusCircle className="h-4 w-4" />
+                                        Agregar Producto
+                                    </Link>
+                                </Button>
+                           </>
+                        )}
+
                     </div>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead className="w-12">
+                                     <Checkbox
+                                        checked={isAllSelected}
+                                        onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
+                                        aria-label="Seleccionar todo"
+                                    />
+                                </TableHead>
                                 <TableHead className="hidden w-[100px] sm:table-cell">
                                     <span className="sr-only">Imagen</span>
                                 </TableHead>
@@ -263,7 +346,14 @@ export default function ProductsPage() {
                             {currentProducts.map((product) => {
                                 const avgRating = product.ratingCount > 0 ? (product.ratingSum / product.ratingCount) : 0;
                                 return (
-                                <TableRow key={product.id}>
+                                <TableRow key={product.id} data-state={selectedProducts.includes(product.id) && "selected"}>
+                                    <TableCell>
+                                        <Checkbox
+                                            checked={selectedProducts.includes(product.id)}
+                                            onCheckedChange={(checked) => handleSelectProduct(product.id, Boolean(checked))}
+                                            aria-label={`Seleccionar ${product.name}`}
+                                        />
+                                    </TableCell>
                                     <TableCell className="hidden sm:table-cell">
                                         {product.images && product.images.length > 0 ? (
                                             <Image

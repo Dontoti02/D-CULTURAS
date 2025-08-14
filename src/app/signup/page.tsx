@@ -13,6 +13,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { sendWelcomeEmail } from '@/ai/flows/send-email-flow';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -61,6 +62,17 @@ export default function SignupPage() {
         status: 'active', // Default status for new users
         createdAt: serverTimestamp(),
       });
+      
+      // 3. Send welcome email (fire-and-forget)
+      try {
+        await sendWelcomeEmail({
+          to: email,
+          customerName: firstName,
+        });
+      } catch (emailError) {
+          // Log the error, but don't block the user flow
+          console.error("Failed to send welcome email:", emailError);
+      }
 
       toast({
         title: '¡Cuenta Creada!',

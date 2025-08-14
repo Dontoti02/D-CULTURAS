@@ -11,11 +11,11 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Product } from '@/lib/types';
 import Image from 'next/image';
-import { Loader2, PackagePlus, Minus, Plus } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { Loader2, PackagePlus, Minus, Plus, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, doc, updateDoc, writeBatch, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import {
@@ -39,6 +39,10 @@ export default function InventoryPage() {
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [adjustment, setAdjustment] = useState(0);
     const { toast } = useToast();
+    
+    const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const productsPerPage = 10;
 
     const getStockStatus = (stock: number): { text: string; variant: 'default' | 'secondary' | 'destructive'; priority: number } => {
         if (stock <= 0) {
@@ -114,6 +118,22 @@ export default function InventoryPage() {
         }
     };
 
+    const filteredProducts = useMemo(() => {
+      return products.filter(product =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }, [products, searchQuery]);
+
+    const indexOfLastProduct = currentPage * productsPerPage;
+    const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+    
+    const currentProducts = useMemo(() => {
+        return filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+    }, [filteredProducts, indexOfFirstProduct, indexOfLastProduct]);
+
+    const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+
+
     if (loading) {
       return (
         <div className="flex items-center justify-center h-full">
@@ -128,6 +148,16 @@ export default function InventoryPage() {
                 <div>
                     <h1 className="text-3xl font-bold">Gestión de Inventario</h1>
                     <p className="text-muted-foreground">Supervisa y ajusta los niveles de stock de tus productos.</p>
+                </div>
+                <div className="relative w-full max-w-sm">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                        type="search" 
+                        placeholder="Buscar por nombre..." 
+                        className="pl-8"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                 </div>
             </div>
             <Card>
@@ -153,7 +183,7 @@ export default function InventoryPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {products.map((product) => {
+                            {currentProducts.map((product) => {
                                 const status = getStockStatus(product.stock);
                                 return (
                                 <TableRow key={product.id} className={status.variant === 'destructive' ? 'bg-destructive/10' : status.variant === 'secondary' ? 'bg-yellow-400/10' : ''}>
@@ -195,6 +225,34 @@ export default function InventoryPage() {
                         </TableBody>
                     </Table>
                 </CardContent>
+                 <CardFooter>
+                    <div className="text-xs text-muted-foreground">
+                        Mostrando <strong>{Math.min(indexOfFirstProduct + 1, filteredProducts.length)}-{Math.min(indexOfLastProduct, filteredProducts.length)}</strong> de <strong>{filteredProducts.length}</strong> productos
+                    </div>
+                    <div className="ml-auto flex items-center gap-2">
+                        <span className="text-sm">
+                            Página {currentPage} de {totalPages}
+                        </span>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                            Anterior
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            Siguiente
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </CardFooter>
             </Card>
             <AlertDialog open={!!selectedProduct} onOpenChange={(open) => !open && setSelectedProduct(null)}>
                 <AlertDialogContent>
@@ -222,7 +280,6 @@ export default function InventoryPage() {
                         <div className="grid grid-cols-4 items-center gap-4">
                            <div className="col-start-2 col-span-3 flex items-center gap-2">
                                 <Button size="icon" variant="outline" onClick={() => setAdjustment(prev => prev - 1)} disabled={isUpdating}><Minus/></Button>
-                                <Button size="sm" variant="outline" onClick={() => setAdjustment(prev => prev - 10)} disabled={isUpdating}>-10</Button>
                                 <Button size="sm" variant="outline" onClick={() => setAdjustment(prev => prev + 10)} disabled={isUpdating}>+10</Button>
                                 <Button size="icon" variant="outline" onClick={() => setAdjustment(prev => prev + 1)} disabled={isUpdating}><Plus/></Button>
                            </div>
@@ -247,3 +304,5 @@ export default function InventoryPage() {
         </>
     )
 }
+
+    

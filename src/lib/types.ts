@@ -23,6 +23,7 @@ export interface Customer {
     firstName: string;
     lastName: string;
     email: string;
+    gender: 'Damas' | 'Caballeros';
     photoURL?: string;
     createdAt: Timestamp;
     status: 'active' | 'inactive';

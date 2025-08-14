@@ -150,7 +150,7 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
         </Link>
       </div>
 
-      <nav className="flex flex-col gap-1 flex-grow">
+      <nav className="flex flex-col gap-1 flex-grow overflow-y-auto pr-2 -mr-2">
         {navLinks.map((link) =>
           link.subItems ? (
             <Collapsible
@@ -205,7 +205,8 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
       </nav>
 
       <div className="mt-auto flex flex-col gap-2">
-        <Button variant="outline" className="w-full justify-start" onClick={() => handleLinkClick('/')}>
+        <Link href="/">
+          <Button variant="outline" className="w-full justify-start">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Ir a la Tienda
         </Button>

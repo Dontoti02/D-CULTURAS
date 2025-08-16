@@ -35,6 +35,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle
+} from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { auth, db } from '@/lib/firebase';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
@@ -73,7 +79,12 @@ interface AdminData {
     email: string;
 }
 
-export default function AdminSidebar() {
+interface AdminSidebarProps {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+}
+
+const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
   const pathname = usePathname();
   const router = useRouter();
   const [adminData, setAdminData] = useState<AdminData | null>(null);
@@ -94,7 +105,6 @@ export default function AdminSidebar() {
                 });
             } else {
                 setAdminData(null);
-                // If user is authenticated but not an admin, they shouldn't be here
                 router.push('/login');
             }
         } else {
@@ -116,11 +126,16 @@ export default function AdminSidebar() {
     }
   };
 
+  const handleLinkClick = (href: string) => {
+    router.push(href);
+    onLinkClick?.();
+  };
+
 
   return (
-    <aside className="hidden w-64 flex-shrink-0 border-r bg-card p-4 md:flex flex-col">
+    <div className="flex h-full flex-col p-4">
       <div className="flex items-center gap-2 mb-6 px-2">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
+        <Link href="/" className="flex items-center gap-2 font-semibold" onClick={onLinkClick}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -157,28 +172,28 @@ export default function AdminSidebar() {
               <CollapsibleContent>
                 <div className="pl-8 pt-1">
                   {link.subItems.map((subItem) => (
-                    <Link
+                    <button
                       key={subItem.href}
-                      href={subItem.href}
+                      onClick={() => handleLinkClick(subItem.href)}
                       className={cn(
-                        'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-sm',
+                        'flex w-full text-left items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-sm',
                         {
                           'text-primary': pathname === subItem.href,
                         }
                       )}
                     >
                       {subItem.label}
-                    </Link>
+                    </button>
                   ))}
                 </div>
               </CollapsibleContent>
             </Collapsible>
           ) : (
-            <Link
+            <button
               key={link.href}
-              href={link.href}
+              onClick={() => handleLinkClick(link.href)}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary font-medium',
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary font-medium text-left',
                 {
                   'bg-muted text-primary': pathname.startsWith(link.href) && (link.href !== '/admin' || pathname === '/admin'),
                 }
@@ -186,19 +201,20 @@ export default function AdminSidebar() {
             >
               <link.icon className="h-4 w-4" />
               {link.label}
-            </Link>
+            </button>
           )
         )}
       </nav>
 
+ actualv1
       <div className="mt-auto flex flex-col gap-2 pt-4 border-t">
         <Link href="/">
           <Button variant="outline" className="w-full justify-start">
+      <div className="mt-auto flex flex-col gap-2">
+        <Button variant="outline" className="w-full justify-start" onClick={() => handleLinkClick('/')}> master
             <ArrowLeft className="mr-2 h-4 w-4" />
             Ir a la Tienda
-          </Button>
-        </Link>
-
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -243,16 +259,16 @@ export default function AdminSidebar() {
             <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/admin/settings">
+              <button className="w-full" onClick={() => handleLinkClick('/admin/settings')}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Ajustes</span>
-              </Link>
+              </button>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/admin/billing">
+              <button className="w-full" onClick={() => handleLinkClick('/admin/billing')}>
                 <CreditCard className="mr-2 h-4 w-4" />
                 <span>Facturación</span>
-              </Link>
+              </button>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut}>
@@ -262,6 +278,28 @@ export default function AdminSidebar() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </aside>
+    </div>
+  )
+}
+
+
+export default function AdminSidebar({ isOpen, onOpenChange }: AdminSidebarProps) {
+  return (
+    <>
+      {/* Mobile Sidebar */}
+       <Sheet open={isOpen} onOpenChange={onOpenChange}>
+          <SheetContent side="left" className="p-0 w-64">
+             <SheetHeader className="sr-only">
+               <SheetTitle>Menú de Administración</SheetTitle>
+             </SheetHeader>
+             <SidebarContent onLinkClick={() => onOpenChange(false)} />
+          </SheetContent>
+       </Sheet>
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden w-64 flex-shrink-0 border-r bg-card md:flex flex-col">
+        <SidebarContent />
+      </aside>
+    </>
   );
 }

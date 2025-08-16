@@ -64,7 +64,6 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
   const avgRating = product.ratingCount > 0 ? (product.ratingSum / product.ratingCount) : 0;
   const imageUrls = product.images && product.images.length > 0 ? product.images : ['https://placehold.co/600x800.png'];
 
-
   const fetchComments = async () => {
     setLoadingComments(true);
     try {
@@ -291,6 +290,7 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
                 src={selectedImage}
                 alt={product.name}
                 fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
                 data-ai-hint="imagen del producto"
               />

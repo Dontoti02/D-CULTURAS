@@ -211,7 +211,12 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
         <Link href="/">
           <Button variant="outline" className="w-full justify-start">
       <div className="mt-auto flex flex-col gap-2">
+ actualv1
         <Button variant="outline" className="w-full justify-start" onClick={() => handleLinkClick('/')}> master
+
+        <Link href="/">
+          <Button variant="outline" className="w-full justify-start">
+ master
             <ArrowLeft className="mr-2 h-4 w-4" />
             Ir a la Tienda
         </Button>

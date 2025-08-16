@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/pagination';
 
 type Category = 'Conjuntos' | 'Vestidos' | 'Faldas' | 'Blusas' | 'Ternos' | 'Camisas' | 'Pantalones' | 'Corbatas';
-const PRODUCTS_PER_PAGE = 10;
+const PRODUCTS_PER_PAGE = 40;
 
 export default function Home() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);

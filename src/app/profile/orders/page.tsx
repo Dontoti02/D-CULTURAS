@@ -172,7 +172,13 @@ export default function ProfileOrdersPage() {
                         <div className="flex flex-col gap-2">
                            {order.items.map((item, index) => (
                                 <div key={index} className="flex items-center gap-3">
-                                    <Image src={item.image} alt={item.name} width={48} height={64} className="rounded-md object-cover" />
+                                    <Image 
+                                      src={item.image} 
+                                      alt={item.name} 
+                                      width={48} 
+                                      height={64} 
+                                      className="rounded-md object-cover" 
+                                      priority={true} />
                                     <div className='text-sm'>
                                         <p className="font-medium">{item.name}</p>
                                         <p className="text-muted-foreground">Cant: {item.quantity}</p>
@@ -237,7 +243,13 @@ export default function ProfileOrdersPage() {
                         return (
                             <div key={uniqueKey} className="flex items-center justify-between gap-4 border-b pb-4">
                                <div className="flex items-center gap-3">
-                                    <Image src={item.image} alt={item.name} width={48} height={64} className="rounded-md object-cover" />
+                                    <Image 
+                                      src={item.image} 
+                                      alt={item.name} 
+                                      width={48} 
+                                      height={64} 
+                                      className="rounded-md object-cover" 
+                                      priority={true} />
                                     <div className='text-sm'>
                                         <p className="font-medium">{item.name}</p>
                                         <p className="text-muted-foreground">Talla: {item.size} / Cant. Pedida: {item.quantity}</p>

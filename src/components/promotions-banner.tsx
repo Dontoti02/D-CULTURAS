@@ -75,8 +75,8 @@ export default function PromotionsBanner() {
               <CarouselItem key={promo.id}>
                 <div className="p-1">
                   <Card className="bg-card border-border overflow-hidden">
-                    <div className="grid md:grid-cols-2">
-                        <div className="relative aspect-video md:aspect-auto">
+                    <div className="grid md:grid-cols-5 items-center">
+                        <div className="md:col-span-2 relative aspect-video md:aspect-[4/3] w-full h-full">
                            {promo.imageUrl && (
                              <Image
                                 src={promo.imageUrl}
@@ -87,33 +87,35 @@ export default function PromotionsBanner() {
                              />
                            )}
                         </div>
-                        <CardContent className="flex flex-col items-center justify-center p-6 gap-4 text-center">
-                          <Gift className="h-10 w-10 text-primary" />
-                          <div className="flex-grow">
-                              <h3 className="text-xl font-bold text-primary">{promo.name}</h3>
-                              <p className="text-muted-foreground">{promo.description}</p>
-                          </div>
-                          <CountdownTimer endDate={promo.endDate.toDate()} />
-                          <div className="flex flex-col items-center gap-2">
-                            <div className="flex items-center gap-2">
-                                  <p className="font-mono text-lg border-2 border-dashed border-primary/50 bg-background rounded-md px-4 py-2">
-                                      {promo.code}
-                                  </p>
-                                  <Button onClick={() => handleCopyCode(promo.code)}>
-                                      Copiar
-                                  </Button>
-                            </div>
-                            <p className="text-xs text-muted-foreground">Copia el cupón en tus compras para obtener un descuento</p>
-                          </div>
-                        </CardContent>
+                        <div className="md:col-span-3">
+                            <CardContent className="flex flex-col items-center justify-center p-6 gap-4 text-center">
+                              <Gift className="h-10 w-10 text-primary" />
+                              <div className="flex-grow">
+                                  <h3 className="text-xl font-bold text-primary">{promo.name}</h3>
+                                  <p className="text-muted-foreground text-sm">{promo.description}</p>
+                              </div>
+                              <CountdownTimer endDate={promo.endDate.toDate()} />
+                              <div className="flex flex-col items-center gap-2">
+                                <div className="flex items-center gap-2">
+                                      <p className="font-mono text-lg border-2 border-dashed border-primary/50 bg-background rounded-md px-4 py-2">
+                                          {promo.code}
+                                      </p>
+                                      <Button onClick={() => handleCopyCode(promo.code)}>
+                                          Copiar
+                                      </Button>
+                                </div>
+                                <p className="text-xs text-muted-foreground">Copia el cupón en tus compras para obtener un descuento</p>
+                              </div>
+                            </CardContent>
+                        </div>
                     </div>
                   </Card>
                 </div>
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="hidden md:flex" />
-          <CarouselNext className="hidden md:flex" />
+          <CarouselPrevious className="hidden md:flex left-[-40px]" />
+          <CarouselNext className="hidden md:flex right-[-40px]" />
         </Carousel>
       </div>
     </section>

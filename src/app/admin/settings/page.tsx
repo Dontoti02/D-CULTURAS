@@ -37,7 +37,7 @@ export default function SettingsPage() {
       if (currentUser) {
         setUser(currentUser);
         setEmail(currentUser.email || '');
-        const adminDocRef = doc(db, 'admins', currentUser.uid);
+        const adminDocRef = doc(db, 'admin', currentUser.uid);
         const adminDoc = await getDoc(adminDocRef);
         if (adminDoc.exists()) {
           const data = adminDoc.data();
@@ -58,7 +58,7 @@ export default function SettingsPage() {
     if (!user) return;
     setIsSubmitting(true);
     try {
-      const adminDocRef = doc(db, 'admins', user.uid);
+      const adminDocRef = doc(db, 'admin', user.uid);
       await updateDoc(adminDocRef, { firstName, lastName, photoURL });
       toast({
         title: 'Perfil Actualizado',
@@ -135,7 +135,7 @@ export default function SettingsPage() {
         const data = await response.json();
         setPhotoURL(data.secure_url);
         if (user) {
-            const adminDocRef = doc(db, 'admins', user.uid);
+            const adminDocRef = doc(db, 'admin', user.uid);
             await updateDoc(adminDocRef, { photoURL: data.secure_url });
         }
         toast({

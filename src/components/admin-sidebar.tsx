@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -92,7 +93,7 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
         if (user) {
-            const adminDocRef = doc(db, 'admins', user.uid);
+            const adminDocRef = doc(db, 'admin', user.uid);
             const adminDoc = await getDoc(adminDocRef);
             if (adminDoc.exists()) {
                 const data = adminDoc.data();

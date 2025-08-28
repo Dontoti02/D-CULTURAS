@@ -30,7 +30,7 @@ const fetchFirestoreData = ai.defineTool(
     name: 'fetchFirestoreData',
     description: 'Fetches data from a specified Firestore collection and returns the total count along with a sample of items. Use this to answer questions about products, orders, customers, finances, promotions, and inventory, especially when asked for counts (e.g., "how many products?").',
     inputSchema: z.object({
-      collectionName: z.enum(['products', 'orders', 'customers', 'promotions', 'admins']).describe('The name of the collection to fetch data from.'),
+      collectionName: z.enum(['products', 'orders', 'customers', 'promotions', 'admin']).describe('The name of the collection to fetch data from.'),
     }),
     outputSchema: z.object({
         totalCount: z.number().describe("The total number of documents in the collection."),
@@ -61,7 +61,7 @@ const fetchFirestoreData = ai.defineTool(
                 simplified.customerName = item.customerName;
                 break;
             case 'customers':
-            case 'admins':
+            case 'admin':
                 simplified.firstName = item.firstName;
                 simplified.lastName = item.lastName;
                 simplified.email = item.email;
@@ -98,12 +98,12 @@ const assistantPrompt = ai.definePrompt({
 
 Instrucciones:
 1.  Analiza la pregunta del usuario para determinar qué datos necesitas.
-2.  Llama a la herramienta 'fetchFirestoreData' con el nombre de la colección apropiada ('products', 'orders', 'customers', 'promotions', 'admins').
+2.  Llama a la herramienta 'fetchFirestoreData' con el nombre de la colección apropiada ('products', 'orders', 'customers', 'promotions', 'admin').
 3.  La herramienta te devolverá el conteo total de documentos y una muestra de ítems. Usa el 'totalCount' para responder preguntas sobre cantidades (ej. "¿Cuántos productos hay?").
 4.  Usa la lista de 'items' para responder preguntas sobre detalles específicos (ej. "¿Cuál es el producto más caro?").
 5.  Si la pregunta es sobre inventario, utiliza la colección 'products'.
 6.  Si la pregunta es sobre finanzas o ventas, utiliza la colección 'orders'.
-7.  Si la pregunta es sobre administradores o ayudantes, utiliza la colección 'admins'.
+7.  Si la pregunta es sobre administradores o ayudantes, utiliza la colección 'admin'.
 8.  No inventes datos. Si la información no está disponible a través de las herramientas, indícalo.
 9.  Sé breve y ve al grano. Proporciona solo la respuesta, sin saludos ni introducciones innecesarias.`,
   tools: [fetchFirestoreData],

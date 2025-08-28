@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -27,52 +26,64 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        // Try to fetch as an admin first
-        const adminDocRef = doc(db, 'admins', currentUser.uid);
-        const adminUnsubscribe = onSnapshot(adminDocRef, (adminDoc) => {
-            if (adminDoc.exists()) {
-                const data = adminDoc.data();
-                // Handle 'name' field for admins
-                const [firstName, ...lastNameParts] = (data.name || '').split(' ');
-                setUser({
-                    ...currentUser,
-                    ...data,
-                    firstName: data.firstName || firstName,
-                    lastName: data.lastName || lastNameParts.join(' '),
-                    photoURL: data.photoURL || currentUser.photoURL,
-                });
-                setLoading(false);
-            } else {
-                // If not an admin, try to fetch as a customer
-                const customerDocRef = doc(db, 'customers', currentUser.uid);
-                const customerUnsubscribe = onSnapshot(customerDocRef, (customerDoc) => {
-                    if (customerDoc.exists()) {
-                        const data = customerDoc.data();
-                        setUser({
-                            ...currentUser,
-                            ...data,
-                            photoURL: data.photoURL || currentUser.photoURL,
-                        });
-                    } else {
-                        // User exists in Auth, but not in any collection
-                        setUser(currentUser);
-                    }
-                    setLoading(false);
-                });
-                return () => customerUnsubscribe();
-            }
-        });
-        return () => adminUnsubscribe();
-      } else {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      if (!currentUser) {
         setUser(null);
         setLoading(false);
+        return;
       }
+
+      // 1. Try to fetch as an admin first
+      const adminDocRef = doc(db, 'admin', currentUser.uid);
+      const adminUnsubscribe = onSnapshot(adminDocRef, (adminDoc) => {
+        if (adminDoc.exists()) {
+          const data = adminDoc.data();
+          const [firstName, ...lastNameParts] = (data.name || '').split(' ');
+          setUser({
+            ...currentUser,
+            ...data,
+            firstName: data.firstName || firstName,
+            lastName: data.lastName || lastNameParts.join(' '),
+            photoURL: data.photoURL || currentUser.photoURL,
+          });
+          setLoading(false);
+          // Unsubscribe from customer listener if it exists to avoid conflicts
+          customerUnsubscribe && customerUnsubscribe();
+        } else {
+          // If not an admin, try to fetch as a customer
+          customerUnsubscribe = onSnapshot(customerDocRef, (customerDoc) => {
+            if (customerDoc.exists()) {
+              const data = customerDoc.data();
+              setUser({
+                ...currentUser,
+                ...data,
+                photoURL: data.photoURL || currentUser.photoURL,
+              });
+            } else {
+              setUser(currentUser); // User in Auth, but not in any collection
+            }
+            setLoading(false);
+          });
+        }
+      });
+
+      // 2. If not an admin, try to fetch as a customer
+      const customerDocRef = doc(db, 'customers', currentUser.uid);
+      let customerUnsubscribe = onSnapshot(customerDocRef, (customerDoc) => {
+        // This listener will only set the user if the admin one doesn't fire first
+      });
+
+      return () => {
+        unsubscribeAuth();
+        adminUnsubscribe();
+        customerUnsubscribe();
+      };
     });
 
     return () => unsubscribeAuth();
   }, []);
+
+
 
   if (loading) {
     return (

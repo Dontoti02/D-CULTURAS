@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from 'next/link';
@@ -67,44 +66,39 @@ export default function LoginPage() {
       const user = userCredential.user;
 
       if (user) {
-        // 1. Check if user is an admin
-        const adminDocRef = doc(db, 'admins', user.uid);
+        const adminDocRef = doc(db, 'admin', user.uid);
         const adminDoc = await getDoc(adminDocRef);
 
         if (adminDoc.exists()) {
-          router.push('/admin');
           toast({ title: '¡Bienvenido, Admin!', description: 'Has iniciado sesión correctamente.' });
-          return;
-        }
-
-        // 2. If not admin, check if user is a customer
-        const customerDocRef = doc(db, 'customers', user.uid);
-        const customerDoc = await getDoc(customerDocRef);
-        
-        if (customerDoc.exists()) {
-          const customerData = customerDoc.data();
-          if (customerData.status === 'inactive') {
-            await auth.signOut();
-            toast({
-              title: 'Cuenta Inhabilitada',
-              description: 'Tu cuenta ha sido inhabilitada. Por favor, contacta a soporte.',
-              variant: 'destructive',
-              duration: 7000,
-            });
+          router.push('/admin');
+        } else {
+          const customerDocRef = doc(db, 'customers', user.uid);
+          const customerDoc = await getDoc(customerDocRef);
+          
+          if (customerDoc.exists()) {
+            const customerData = customerDoc.data();
+            if (customerData.status === 'inactive') {
+              await auth.signOut();
+              toast({
+                title: 'Cuenta Inhabilitada',
+                description: 'Tu cuenta ha sido inhabilitada. Por favor, contacta a soporte.',
+                variant: 'destructive',
+                duration: 7000,
+              });
+            } else {
+              toast({ title: '¡Bienvenido!', description: 'Has iniciado sesión correctamente.' });
+              router.push('/');
+            }
           } else {
-            router.push('/');
-            toast({ title: '¡Bienvenido!', description: 'Has iniciado sesión correctamente.' });
+             await auth.signOut();
+             toast({
+                title: 'Acceso Denegado',
+                description: 'Tu cuenta no está registrada como cliente o administrador.',
+                variant: 'destructive',
+            });
           }
-          return;
         }
-        
-        // 3. If user is in Auth but not in any collection
-        await auth.signOut();
-        toast({
-            title: 'Acceso Denegado',
-            description: 'Tu cuenta no está registrada como cliente o administrador.',
-            variant: 'destructive',
-        });
       }
     } catch (error: any) {
       let errorMessage = 'Ocurrió un error al intentar iniciar sesión.';

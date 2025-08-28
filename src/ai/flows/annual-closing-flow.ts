@@ -54,7 +54,7 @@ const annualClosingFlow = ai.defineFlow(
       const endTimestamp = Timestamp.fromDate(endDate);
 
       // Collections to process
-      const collectionsToProcess = ['orders', 'customers', 'promotions', 'admins'];
+      const collectionsToProcess = ['orders', 'customers', 'promotions', 'admin'];
       const archiveData: { [key: string]: any[] } = {};
       const docsToDelete: { collection: string, id: string }[] = [];
       let totalArchivedCount = 0;

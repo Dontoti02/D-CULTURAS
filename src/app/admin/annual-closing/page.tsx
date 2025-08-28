@@ -47,6 +47,7 @@ interface ArchivedYear {
     orderCount: number;
     customerCount: number;
     promotionCount: number;
+    adminCount: number;
 }
 
 export default function AnnualClosingPage() {
@@ -89,6 +90,7 @@ export default function AnnualClosingPage() {
                 orderCount: docData.orders?.length || 0,
                 customerCount: docData.customers?.length || 0,
                 promotionCount: docData.promotions?.length || 0,
+                adminCount: docData.admin?.length || 0,
             }
         });
         setArchivedYears(data);
@@ -299,6 +301,7 @@ export default function AnnualClosingPage() {
                                     <p>{archive.orderCount} pedidos</p>
                                     <p>{archive.customerCount} clientes</p>
                                     <p>{archive.promotionCount} promociones</p>
+                                    <p>{archive.adminCount} admins</p>
                                 </div>
                                 <Button variant="outline" size="sm" onClick={() => setYearToRevert(archive.id)} disabled={revertCount <= 0 || isReverting}>
                                     <RotateCcw className="mr-2 h-4 w-4" />

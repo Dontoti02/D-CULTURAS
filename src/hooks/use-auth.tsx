@@ -28,27 +28,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
-        // Si hay un usuario, escucha cambios en su documento de Firestore
-        const customerDocRef = doc(db, 'customers', currentUser.uid);
-        const unsubscribeSnapshot = onSnapshot(customerDocRef, (docSnap) => {
-          if (docSnap.exists()) {
-            const customerData = docSnap.data();
-            // Combina los datos de Auth y Firestore
-            setUser({
-              ...currentUser,
-              ...customerData,
-              // Asegura que la photoURL de Firestore (la más actualizada) tenga prioridad
-              photoURL: customerData.photoURL || currentUser.photoURL,
+        // Listener unificado para ambas colecciones
+        let unsubscribeSnapshot: () => void;
+
+        const setupListener = (collectionName: string, isPrimary = true) => {
+            const docRef = doc(db, collectionName, currentUser.uid);
+            return onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const [firstName, ...lastNameParts] = (data.name || '').split(' ');
+                    setUser({
+                        ...currentUser,
+                        ...data,
+                        firstName: data.firstName || firstName,
+                        lastName: data.lastName || lastNameParts.join(' '),
+                        photoURL: data.photoURL || currentUser.photoURL,
+                    });
+                     // Si se encuentra, no es necesario seguir buscando
+                    if (unsubscribeSnapshot && collectionName === 'admins') {
+                       // Si encontramos un admin, no necesitamos seguir escuchando al cliente
+                    }
+                } else if (isPrimary) {
+                    // Si no se encuentra en la colección primaria (customers), busca en admins
+                    unsubscribeSnapshot = setupListener('admins', false);
+                } else {
+                    // Si no se encuentra en ninguna, usa solo los datos de Auth
+                    setUser(currentUser);
+                }
+                setLoading(false);
             });
-          } else {
-             // Si no hay datos en Firestore, usa solo los de Auth
-            setUser(currentUser);
-          }
-          setLoading(false);
-        });
-        
+        };
+
+        // Inicia la búsqueda en 'customers'
+        unsubscribeSnapshot = setupListener('customers');
+
         // Retorna la función para dejar de escuchar cuando el componente se desmonte
-        return () => unsubscribeSnapshot();
+        return () => {
+            if (unsubscribeSnapshot) {
+                unsubscribeSnapshot();
+            }
+        };
+
       } else {
         // No hay usuario logueado
         setUser(null);

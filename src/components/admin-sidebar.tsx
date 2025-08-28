@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -97,9 +96,10 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
             const adminDoc = await getDoc(adminDocRef);
             if (adminDoc.exists()) {
                 const data = adminDoc.data();
+                const [firstName, ...lastNameParts] = (data.name || '').split(' ');
                 setAdminData({
-                    firstName: data.firstName || '',
-                    lastName: data.lastName || '',
+                    firstName: data.firstName || firstName,
+                    lastName: data.lastName || lastNameParts.join(' '),
                     photoURL: data.photoURL || '',
                     email: user.email || '',
                 });

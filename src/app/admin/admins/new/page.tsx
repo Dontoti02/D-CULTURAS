@@ -89,98 +89,80 @@ export default function NewAdminPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <form onSubmit={handleSubmit}>
-        <div className="flex items-center gap-4 mb-8">
-            <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-                Agregar Nuevo Administrador
-            </h1>
-            <div className="hidden items-center gap-2 md:ml-auto md:flex">
-                <Button variant="outline" size="sm" type="button" onClick={() => router.push('/admin/admins')} disabled={isSubmitting}>
-                    Ir a la Lista
-                </Button>
-                <Button size="sm" type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? <Loader2 className="animate-spin" /> : 'Guardar Administrador'}
-                </Button>
-            </div>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Detalles del Usuario</CardTitle>
-            <CardDescription>
-              Ingresa la información para el nuevo administrador.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-6">
-            <div className="grid md:grid-cols-2 gap-4">
-                <div className="grid gap-3">
-                    <Label htmlFor="firstName">Nombre</Label>
+    <div className="flex items-center justify-center min-h-screen bg-muted/40">
+        <Card className="w-full max-w-md">
+            <CardHeader>
+                <CardTitle>Registro de Administrador</CardTitle>
+                <CardDescription>
+                Ingresa la información para el nuevo administrador.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleSubmit} className="grid gap-6">
+                    <div className="grid md:grid-cols-2 gap-4">
+                        <div className="grid gap-3">
+                            <Label htmlFor="firstName">Nombre</Label>
+                            <Input
+                            id="firstName"
+                            type="text"
+                            required
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
+                            disabled={isSubmitting}
+                            />
+                        </div>
+                        <div className="grid gap-3">
+                            <Label htmlFor="lastName">Apellido</Label>
+                            <Input
+                            id="lastName"
+                            type="text"
+                            required
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                            disabled={isSubmitting}
+                            />
+                        </div>
+                    </div>
+                    <div className="grid gap-3">
+                    <Label htmlFor="email">Correo Electrónico</Label>
                     <Input
-                    id="firstName"
-                    type="text"
-                    required
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    disabled={isSubmitting}
+                        id="email"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        disabled={isSubmitting}
                     />
-                </div>
-                <div className="grid gap-3">
-                    <Label htmlFor="lastName">Apellido</Label>
+                    </div>
+                    <div className="grid gap-3">
+                    <Label htmlFor="password">Contraseña</Label>
                     <Input
-                    id="lastName"
-                    type="text"
-                    required
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    disabled={isSubmitting}
+                        id="password"
+                        type="password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={isSubmitting}
                     />
-                </div>
-            </div>
-            <div className="grid gap-3">
-              <Label htmlFor="email">Correo Electrónico</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isSubmitting}
-              />
-            </div>
-            <div className="grid gap-3">
-              <Label htmlFor="password">Contraseña</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isSubmitting}
-              />
-            </div>
-            <div className="grid gap-3">
-                <Label htmlFor="rol">Rol</Label>
-                <Select required onValueChange={(value: 'Admin' | 'Ayudante') => setRol(value)} value={rol} disabled={isSubmitting}>
-                    <SelectTrigger id="rol" aria-label="Seleccionar rol">
-                    <SelectValue placeholder="Seleccionar rol" />
-                    </SelectTrigger>
-                    <SelectContent>
-                    <SelectItem value="Admin">Admin</SelectItem>
-                    <SelectItem value="Ayudante">Ayudante</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-          </CardContent>
+                    </div>
+                    <div className="grid gap-3">
+                        <Label htmlFor="rol">Rol</Label>
+                        <Select required onValueChange={(value: 'Admin' | 'Ayudante') => setRol(value)} value={rol} disabled={isSubmitting}>
+                            <SelectTrigger id="rol" aria-label="Seleccionar rol">
+                            <SelectValue placeholder="Seleccionar rol" />
+                            </SelectTrigger>
+                            <SelectContent>
+                            <SelectItem value="Admin">Admin</SelectItem>
+                            <SelectItem value="Ayudante">Ayudante</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <Button size="lg" type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="animate-spin" /> : 'Registrar Administrador'}
+                    </Button>
+                </form>
+            </CardContent>
         </Card>
-        
-        <div className="flex items-center justify-center gap-2 md:hidden mt-6">
-            <Button variant="outline" size="sm" type="button" onClick={() => router.push('/admin/admins')} disabled={isSubmitting}>Ir a la Lista</Button>
-            <Button size="sm" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="animate-spin" /> : 'Guardar Administrador'}
-            </Button>
-        </div>
-      </form>
     </div>
   );
 }

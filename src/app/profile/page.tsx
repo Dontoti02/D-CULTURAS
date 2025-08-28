@@ -47,8 +47,11 @@ export default function ProfilePage() {
         setPhotoURL(data.photoURL || '');
         setEmail(user.email || '');
       } else {
-        toast({ title: "Error", description: "No se encontraron datos del cliente.", variant: "destructive" });
+        // This can happen if an admin user logs in and navigates here.
+        // Redirect them to a safe page.
+        toast({ title: "Acceso no válido", description: "No tienes un perfil de cliente.", variant: "destructive" });
         router.push('/');
+        return;
       }
       setIsLoading(false);
     };

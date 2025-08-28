@@ -33,9 +33,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      // 1. Try to fetch as an admin first
+      // Chain of responsibility: admin -> customer -> null
       const adminDocRef = doc(db, 'admin', currentUser.uid);
-      const adminUnsubscribe = onSnapshot(adminDocRef, (adminDoc) => {
+      const customerDocRef = doc(db, 'customers', currentUser.uid);
+
+      getDoc(adminDocRef).then(adminDoc => {
         if (adminDoc.exists()) {
           const data = adminDoc.data();
           const [firstName, ...lastNameParts] = (data.name || '').split(' ');
@@ -47,11 +49,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             photoURL: data.photoURL || currentUser.photoURL,
           });
           setLoading(false);
-          // Unsubscribe from customer listener if it exists to avoid conflicts
-          customerUnsubscribe && customerUnsubscribe();
         } else {
-          // If not an admin, try to fetch as a customer
-          customerUnsubscribe = onSnapshot(customerDocRef, (customerDoc) => {
+          // If not an admin, check if they are a customer
+          getDoc(customerDocRef).then(customerDoc => {
             if (customerDoc.exists()) {
               const data = customerDoc.data();
               setUser({
@@ -60,29 +60,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 photoURL: data.photoURL || currentUser.photoURL,
               });
             } else {
-              setUser(currentUser); // User in Auth, but not in any collection
+              // User exists in Auth, but not in our DB collections
+              setUser(null); 
+              auth.signOut(); // Log out the user to prevent inconsistent states
             }
             setLoading(false);
           });
         }
       });
-
-      // 2. If not an admin, try to fetch as a customer
-      const customerDocRef = doc(db, 'customers', currentUser.uid);
-      let customerUnsubscribe = onSnapshot(customerDocRef, (customerDoc) => {
-        // This listener will only set the user if the admin one doesn't fire first
-      });
-
-      return () => {
-        unsubscribeAuth();
-        adminUnsubscribe();
-        customerUnsubscribe();
-      };
     });
 
     return () => unsubscribeAuth();
   }, []);
-
 
 
   if (loading) {

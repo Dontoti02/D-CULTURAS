@@ -1,15 +1,16 @@
+
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC5llb0VVYA7aVzEcK0LdB_EhQyTAtm7JU",
-  authDomain: "web-stylesup.firebaseapp.com",
-  projectId: "web-stylesup",
-  storageBucket: "web-stylesup.appspot.com",
-  messagingSenderId: "850316642898",
-  appId: "1:850316642898:web:62aea4830c81a6eb44ad8b"
+  apiKey: "AIzaSyALQZSXlmwjNZgLwloRJ2lStvbRbgp44CU",
+  authDomain: "stylesup-21f14.firebaseapp.com",
+  projectId: "stylesup-21f14",
+  storageBucket: "stylesup-21f14.appspot.com",
+  messagingSenderId: "879459866915",
+  appId: "1:879459866915:web:57cda699e01ddbf1b95496"
 };
 
 // Initialize Firebase

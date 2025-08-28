@@ -67,7 +67,7 @@ export default function LoginPage() {
       const user = userCredential.user;
 
       if (user) {
-        // Check if user is an admin
+        // 1. Check if user is an admin
         const adminDocRef = doc(db, 'admins', user.uid);
         const adminDoc = await getDoc(adminDocRef);
 
@@ -77,7 +77,7 @@ export default function LoginPage() {
           return;
         }
 
-        // Check if user is a customer
+        // 2. If not admin, check if user is a customer
         const customerDocRef = doc(db, 'customers', user.uid);
         const customerDoc = await getDoc(customerDocRef);
         
@@ -95,15 +95,16 @@ export default function LoginPage() {
             router.push('/');
             toast({ title: '¡Bienvenido!', description: 'Has iniciado sesión correctamente.' });
           }
-        } else {
-           // If user exists in Auth but not in Firestore admins or customers collections
-           await auth.signOut();
-           toast({
-             title: 'Acceso Denegado',
-             description: 'Tu cuenta no está registrada como cliente o administrador.',
-             variant: 'destructive',
-           });
+          return;
         }
+        
+        // 3. If user is in Auth but not in any collection
+        await auth.signOut();
+        toast({
+            title: 'Acceso Denegado',
+            description: 'Tu cuenta no está registrada como cliente o administrador.',
+            variant: 'destructive',
+        });
       }
     } catch (error: any) {
       let errorMessage = 'Ocurrió un error al intentar iniciar sesión.';

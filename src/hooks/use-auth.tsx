@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -26,57 +27,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        // Listener unificado para ambas colecciones
-        let unsubscribeSnapshot: () => void;
-
-        const setupListener = (collectionName: string, isPrimary = true) => {
-            const docRef = doc(db, collectionName, currentUser.uid);
-            return onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    const [firstName, ...lastNameParts] = (data.name || '').split(' ');
-                    setUser({
-                        ...currentUser,
-                        ...data,
-                        firstName: data.firstName || firstName,
-                        lastName: data.lastName || lastNameParts.join(' '),
-                        photoURL: data.photoURL || currentUser.photoURL,
-                    });
-                     // Si se encuentra, no es necesario seguir buscando
-                    if (unsubscribeSnapshot && collectionName === 'admins') {
-                       // Si encontramos un admin, no necesitamos seguir escuchando al cliente
-                    }
-                } else if (isPrimary) {
-                    // Si no se encuentra en la colección primaria (customers), busca en admins
-                    unsubscribeSnapshot = setupListener('admins', false);
-                } else {
-                    // Si no se encuentra en ninguna, usa solo los datos de Auth
-                    setUser(currentUser);
-                }
+        // Try to fetch as an admin first
+        const adminDocRef = doc(db, 'admins', currentUser.uid);
+        const adminUnsubscribe = onSnapshot(adminDocRef, (adminDoc) => {
+            if (adminDoc.exists()) {
+                const data = adminDoc.data();
+                // Handle 'name' field for admins
+                const [firstName, ...lastNameParts] = (data.name || '').split(' ');
+                setUser({
+                    ...currentUser,
+                    ...data,
+                    firstName: data.firstName || firstName,
+                    lastName: data.lastName || lastNameParts.join(' '),
+                    photoURL: data.photoURL || currentUser.photoURL,
+                });
                 setLoading(false);
-            });
-        };
-
-        // Inicia la búsqueda en 'customers'
-        unsubscribeSnapshot = setupListener('customers');
-
-        // Retorna la función para dejar de escuchar cuando el componente se desmonte
-        return () => {
-            if (unsubscribeSnapshot) {
-                unsubscribeSnapshot();
+            } else {
+                // If not an admin, try to fetch as a customer
+                const customerDocRef = doc(db, 'customers', currentUser.uid);
+                const customerUnsubscribe = onSnapshot(customerDocRef, (customerDoc) => {
+                    if (customerDoc.exists()) {
+                        const data = customerDoc.data();
+                        setUser({
+                            ...currentUser,
+                            ...data,
+                            photoURL: data.photoURL || currentUser.photoURL,
+                        });
+                    } else {
+                        // User exists in Auth, but not in any collection
+                        setUser(currentUser);
+                    }
+                    setLoading(false);
+                });
+                return () => customerUnsubscribe();
             }
-        };
-
+        });
+        return () => adminUnsubscribe();
       } else {
-        // No hay usuario logueado
         setUser(null);
         setLoading(false);
       }
     });
 
-    // Retorna la función para dejar de escuchar los cambios de autenticación
     return () => unsubscribeAuth();
   }, []);
 

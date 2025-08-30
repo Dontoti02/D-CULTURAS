@@ -10,7 +10,7 @@ export default function SiteFooter() {
           <div className="flex flex-col items-start gap-2">
             <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
                 <div className="h-14 w-14 rounded-full overflow-hidden flex items-center justify-center bg-white p-1.5 shadow-md">
-                    <Image src="https://res.cloudinary.com/dd7fku9br/image/upload/v1756517726/logo_f5ehnc.png" alt="Diseñando Culturas Logo" width={56} height={56} className="object-contain" />
+                    <Image src="https://res.cloudinary.com/dd7fku9br/image/upload/v1756519561/logo_bhuwcw.svg" alt="Diseñando Culturas Logo" width={56} height={56} className="object-contain" />
                 </div>
             </Link>
             <p className="text-sm text-muted-foreground">

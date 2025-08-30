@@ -19,6 +19,7 @@ import {
   Landmark,
   Archive,
   Bot,
+  Palette,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -138,7 +139,8 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
     <div className="flex h-full flex-col p-4">
       <div className="flex items-center gap-2 mb-6 px-2">
         <Link href="/" className="flex items-center gap-2 font-semibold" onClick={onLinkClick}>
-             <Image src="/assets/logo.svg" alt="Logo" width={140} height={40} className="h-auto w-32" />
+            <Palette className="h-6 w-6 text-primary" />
+            <span className="font-bold text-lg">Diseñando Culturas</span>
         </Link>
       </div>
 

@@ -11,7 +11,7 @@ import { CartProvider } from '@/context/cart-context';
 import { AuthProvider } from '@/hooks/use-auth';
 
 // export const metadata: Metadata = {
-//   title: 'StylesUP!',
+//   title: 'Diseñando Culturas',
 //   description: 'Ropa moderna para hombre y mujer.',
 // };
 
@@ -26,8 +26,8 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
-        <title>Tienda de Ropa</title>
-        <meta name="description" content="Ropa moderna para hombre y mujer." />
+        <title>Diseñando Culturas</title>
+        <meta name="description" content="Ropa moderna con un toque de cultura y diseño." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />

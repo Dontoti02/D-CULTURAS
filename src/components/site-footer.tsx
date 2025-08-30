@@ -1,6 +1,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { Palette } from 'lucide-react';
 
 export default function SiteFooter() {
   return (
@@ -8,11 +9,12 @@ export default function SiteFooter() {
       <div className="container mx-auto px-4 py-8 md:px-6">
         <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
           <div className="flex flex-col items-start gap-2">
-            <Link href="/" className="flex items-center gap-2">
-              <Image src="/assets/logo.svg" alt="Logo" width={140} height={40} className="h-auto w-32" />
+            <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
+                <Palette className="h-6 w-6 text-primary" />
+                Diseñando Culturas
             </Link>
             <p className="text-sm text-muted-foreground">
-              Tu destino para ropa moderna y con estilo.
+              Tu destino para ropa moderna con un toque de cultura y diseño.
             </p>
           </div>
           <div className="grid gap-2">
@@ -50,7 +52,7 @@ export default function SiteFooter() {
           </div>
         </div>
         <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Tu Tienda. Todos los derechos reservados.</p>
+          <p>&copy; {new Date().getFullYear()} Diseñando Culturas. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>

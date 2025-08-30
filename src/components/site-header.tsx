@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { 
     ShoppingCart, User, Search, Menu, LogOut, UserCircle, Settings, HelpCircle, ShoppingBag, 
-    ChevronDown, Sparkles, TrendingUp, Star, Percent, BookOpen, Diamond, Shirt, Briefcase
+    ChevronDown, Sparkles, TrendingUp, Star, Percent, BookOpen, Diamond, Shirt, Briefcase, Palette
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -137,8 +137,9 @@ export default function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="container mx-auto flex h-16 items-center px-4 md:px-6">
-        <Link href="/" className="mr-6 flex items-center gap-2">
-           <Image src="/assets/logo.svg" alt="Logo" width={140} height={40} className="h-auto w-28" />
+        <Link href="/" className="mr-6 flex items-center gap-2 font-semibold text-lg">
+           <Palette className="h-6 w-6 text-primary" />
+           Diseñando Culturas
         </Link>
 
         <nav className="hidden gap-4 md:flex">
@@ -317,7 +318,10 @@ export default function SiteHeader() {
             <SheetContent side="left">
               <SheetHeader>
                  <SheetTitle>
-                    <Image src="/assets/logo.svg" alt="Logo" width={140} height={40} className="h-auto w-32" />
+                    <div className="flex items-center gap-2 font-semibold text-lg">
+                       <Palette className="h-6 w-6 text-primary" />
+                       Diseñando Culturas
+                    </div>
                 </SheetTitle>
               </SheetHeader>
               <nav className="grid gap-4 text-base font-medium mt-4">

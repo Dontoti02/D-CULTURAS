@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = { id: docSnap.id, ...docSnap.data() } as Product;
 
   return {
-    title: `${product.name} - StylesUP!`,
+    title: product.name,
     description: product.description,
   };
 }

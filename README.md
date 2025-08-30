@@ -1,4 +1,4 @@
-# StylesUP!
+# Proyecto de E-commerce
 
 Este es un proyecto de comercio electrónico de ropa moderna para hombre y mujer.
 
@@ -33,4 +33,3 @@ La aplicación estará disponible en [http://localhost:9002](http://localhost:90
 ## Captura de pantalla
 
 ![Captura de pantalla de la aplicación](Screenshot_1.png)
-

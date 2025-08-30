@@ -138,7 +138,7 @@ export default function SiteHeader() {
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="container mx-auto flex h-16 items-center px-4 md:px-6">
         <Link href="/" className="mr-6 flex items-center gap-2">
-          <Image src="/logo.svg" alt="StylesUP! Logo" width={120} height={30} />
+          <Image src="/logo.svg" alt="Logo" width={120} height={30} />
         </Link>
 
         <nav className="hidden gap-4 md:flex">
@@ -316,7 +316,7 @@ export default function SiteHeader() {
             </SheetTrigger>
             <SheetContent side="left">
               <SheetHeader>
-                <SheetTitle>StylesUP!</SheetTitle>
+                <SheetTitle>Menú</SheetTitle>
               </SheetHeader>
               <nav className="grid gap-4 text-base font-medium mt-4">
                 {navLinks.map((link) => (

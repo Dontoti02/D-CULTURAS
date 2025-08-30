@@ -21,7 +21,7 @@ export default function PrivacyPolicyPage() {
         </CardHeader>
         <CardContent className="space-y-4 text-muted-foreground">
             <p>Última actualización: {new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            <p>Esta política de privacidad explica cómo stylesUP! recopila, utiliza y divulga tu información personal en relación con la operación de nuestra tienda en línea.</p>
+            <p>Esta política de privacidad explica cómo nuestra tienda recopila, utiliza y divulga tu información personal en relación con la operación de nuestra tienda en línea.</p>
             
             <h3 className="font-semibold text-lg text-foreground pt-4">1. Información que Recopilamos</h3>
             <p>Recopilamos varios tipos de información, incluyendo:</p>

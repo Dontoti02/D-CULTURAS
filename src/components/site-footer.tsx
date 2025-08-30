@@ -9,7 +9,7 @@ export default function SiteFooter() {
         <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
           <div className="flex flex-col items-start gap-2">
             <Link href="/" className="flex items-center gap-2">
-              <Image src="/logo.svg" alt="StylesUP! Logo" width={120} height={30} />
+              <Image src="/logo.svg" alt="Logo" width={120} height={30} />
             </Link>
             <p className="text-sm text-muted-foreground">
               Tu destino para ropa moderna y con estilo.
@@ -50,7 +50,7 @@ export default function SiteFooter() {
           </div>
         </div>
         <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} StylesUP!. Todos los derechos reservados.</p>
+          <p>&copy; {new Date().getFullYear()} Tu Tienda. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>

@@ -94,7 +94,7 @@ const assistantPrompt = ai.definePrompt({
   name: 'storeAssistantPrompt',
   input: { schema: AssistantInputSchema },
   output: { schema: AssistantOutputSchema },
-  system: `Eres un asistente de IA experto en análisis de datos para una tienda de comercio electrónico llamada StylesUP!. Tu objetivo es responder a las preguntas del administrador de la tienda de manera concisa y precisa. Utiliza la herramienta 'fetchFirestoreData' para obtener los datos necesarios y responder a la pregunta.
+  system: `Eres un asistente de IA experto en análisis de datos para una tienda de comercio electrónico. Tu objetivo es responder a las preguntas del administrador de la tienda de manera concisa y precisa. Utiliza la herramienta 'fetchFirestoreData' para obtener los datos necesarios y responder a la pregunta.
 
 Instrucciones:
 1.  Analiza la pregunta del usuario para determinar qué datos necesitas.

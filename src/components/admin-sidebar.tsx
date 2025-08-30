@@ -138,7 +138,7 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
     <div className="flex h-full flex-col p-4">
       <div className="flex items-center gap-2 mb-6 px-2">
         <Link href="/" className="flex items-center gap-2 font-semibold" onClick={onLinkClick}>
-            <Image src="/logo.svg" alt="StylesUP! Logo" width={120} height={30} />
+            <Image src="/logo.svg" alt="Logo" width={120} height={30} />
         </Link>
       </div>
 

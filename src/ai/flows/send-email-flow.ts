@@ -42,12 +42,12 @@ const sendOrderConfirmationEmailFlow = ai.defineFlow(
   async (input) => {
     console.log('--- SIMULATING SENDING ORDER CONFIRMATION EMAIL ---');
     console.log(`To: ${input.to}`);
-    console.log(`Subject: ¡Confirmación de tu pedido #${input.orderId.substring(0, 7)} en StylesUP!`);
+    console.log(`Subject: ¡Confirmación de tu pedido #${input.orderId.substring(0, 7)}!`);
     
     const emailBody = `
 Hola ${input.customerName},
 
-¡Gracias por tu compra en StylesUP!
+¡Gracias por tu compra!
 
 Hemos recibido tu pedido y ya lo estamos preparando. Aquí tienes un resumen de tu compra:
 
@@ -61,10 +61,10 @@ Total: S/ ${input.orderTotal.toFixed(2)}
 
 Te notificaremos de nuevo cuando tu pedido haya sido enviado.
 
-¡Gracias por elegir StylesUP!
+¡Gracias por elegirnos!
 
 Saludos,
-El equipo de StylesUP!
+El equipo de la tienda
     `;
     
     console.log('Body:');
@@ -96,12 +96,12 @@ const sendWelcomeEmailFlow = ai.defineFlow(
     async (input) => {
         console.log('--- SIMULATING SENDING WELCOME EMAIL ---');
         console.log(`To: ${input.to}`);
-        console.log(`Subject: ¡Bienvenido/a a StylesUP, ${input.customerName}!`);
+        console.log(`Subject: ¡Bienvenido/a, ${input.customerName}!`);
 
         const emailBody = `
 Hola ${input.customerName},
 
-¡Te damos la más cordial bienvenida a StylesUP!
+¡Te damos la más cordial bienvenida!
 
 Estamos muy contentos de que te unas a nuestra comunidad de amantes de la moda. Tu cuenta ha sido creada exitosamente.
 
@@ -115,7 +115,7 @@ A partir de ahora, podrás:
 ¡Felices compras!
 
 Saludos,
-El equipo de StylesUP!
+El equipo de la tienda
         `;
 
         console.log('Body:');

@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import Image from 'next/image';
+import Logo from '@/assets/logo.svg'
 
 export default function SiteFooter() {
   return (
@@ -9,7 +9,7 @@ export default function SiteFooter() {
         <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
           <div className="flex flex-col items-start gap-2">
             <Link href="/" className="flex items-center gap-2">
-              <Image src="/logo.svg" alt="Logo" width={120} height={30} />
+              <Logo className="h-auto w-32" />
             </Link>
             <p className="text-sm text-muted-foreground">
               Tu destino para ropa moderna y con estilo.

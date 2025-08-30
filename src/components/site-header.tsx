@@ -138,7 +138,7 @@ export default function SiteHeader() {
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="container mx-auto flex h-16 items-center px-4 md:px-6">
         <Link href="/" className="mr-6 flex items-center gap-2">
-           <Image src="/assets/logo.png" alt="Diseñando Culturas Logo" width={140} height={35} className="h-8 w-auto" />
+           <Image src="https://res.cloudinary.com/dd7fku9br/image/upload/v1756517726/logo_f5ehnc.png" alt="Diseñando Culturas Logo" width={140} height={35} className="h-8 w-auto" />
         </Link>
 
         <nav className="hidden gap-4 md:flex">
@@ -318,7 +318,7 @@ export default function SiteHeader() {
               <SheetHeader>
                  <SheetTitle>
                     <Link href="/" className="flex items-center gap-2">
-                        <Image src="/assets/logo.png" alt="Diseñando Culturas Logo" width={140} height={35} className="h-8 w-auto" />
+                        <Image src="https://res.cloudinary.com/dd7fku9br/image/upload/v1756517726/logo_f5ehnc.png" alt="Diseñando Culturas Logo" width={140} height={35} className="h-8 w-auto" />
                     </Link>
                 </SheetTitle>
               </SheetHeader>

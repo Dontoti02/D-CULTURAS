@@ -136,9 +136,11 @@ export default function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
-      <div className="container mx-auto flex h-16 items-center px-4 md:px-6">
+      <div className="container mx-auto flex h-20 items-center px-4 md:px-6">
         <Link href="/" className="mr-6 flex items-center gap-2">
-           <Image src="https://res.cloudinary.com/dd7fku9br/image/upload/v1756517726/logo_f5ehnc.png" alt="Diseñando Culturas Logo" width={140} height={35} className="h-8 w-auto" />
+           <div className="h-12 w-12 rounded-full overflow-hidden flex items-center justify-center bg-white p-1 shadow-md">
+             <Image src="https://res.cloudinary.com/dd7fku9br/image/upload/v1756517726/logo_f5ehnc.png" alt="Diseñando Culturas Logo" width={48} height={48} className="object-contain" />
+           </div>
         </Link>
 
         <nav className="hidden gap-4 md:flex">
@@ -318,7 +320,9 @@ export default function SiteHeader() {
               <SheetHeader>
                  <SheetTitle>
                     <Link href="/" className="flex items-center gap-2">
-                        <Image src="https://res.cloudinary.com/dd7fku9br/image/upload/v1756517726/logo_f5ehnc.png" alt="Diseñando Culturas Logo" width={140} height={35} className="h-8 w-auto" />
+                       <div className="h-12 w-12 rounded-full overflow-hidden flex items-center justify-center bg-white p-1 shadow-md">
+                         <Image src="https://res.cloudinary.com/dd7fku9br/image/upload/v1756517726/logo_f5ehnc.png" alt="Diseñando Culturas Logo" width={48} height={48} className="object-contain" />
+                       </div>
                     </Link>
                 </SheetTitle>
               </SheetHeader>

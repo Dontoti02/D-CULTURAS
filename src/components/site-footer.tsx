@@ -9,7 +9,9 @@ export default function SiteFooter() {
         <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
           <div className="flex flex-col items-start gap-2">
             <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
-                <Image src="https://res.cloudinary.com/dd7fku9br/image/upload/v1756517726/logo_f5ehnc.png" alt="Diseñando Culturas Logo" width={140} height={35} className="h-8 w-auto" />
+                <div className="h-14 w-14 rounded-full overflow-hidden flex items-center justify-center bg-white p-1.5 shadow-md">
+                    <Image src="https://res.cloudinary.com/dd7fku9br/image/upload/v1756517726/logo_f5ehnc.png" alt="Diseñando Culturas Logo" width={56} height={56} className="object-contain" />
+                </div>
             </Link>
             <p className="text-sm text-muted-foreground">
               Tu destino para ropa moderna con un toque de cultura y diseño.

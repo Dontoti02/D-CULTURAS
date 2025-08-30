@@ -47,7 +47,7 @@ import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Skeleton } from './ui/skeleton';
-import Logo from '@/assets/logo.svg'
+import Image from 'next/image';
 
 const navLinks = [
   {
@@ -138,7 +138,7 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
     <div className="flex h-full flex-col p-4">
       <div className="flex items-center gap-2 mb-6 px-2">
         <Link href="/" className="flex items-center gap-2 font-semibold" onClick={onLinkClick}>
-             <Logo className="h-auto w-32" />
+             <Image src="/assets/logo.svg" alt="Logo" width={140} height={40} className="h-auto w-32" />
         </Link>
       </div>
 

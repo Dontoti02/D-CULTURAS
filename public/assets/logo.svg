@@ -1,0 +1,16 @@
+<svg width="200" height="50" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .text {
+      font-family: 'Inter', sans-serif;
+      font-size: 32px;
+      font-weight: bold;
+      fill: hsl(var(--primary));
+    }
+     @media (prefers-color-scheme: dark) {
+      .text {
+        fill: hsl(var(--primary-foreground));
+      }
+    }
+  </style>
+  <text x="0" y="35" class="text">Verano Style</text>
+</svg>

@@ -23,7 +23,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Product } from '@/lib/types';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import Image from 'next/image';
-import Logo from '@/assets/logo.svg'
 
 const navLinks = [
   { href: '/?filter=new', label: 'Lo nuevo', icon: Sparkles },
@@ -139,7 +138,7 @@ export default function SiteHeader() {
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="container mx-auto flex h-16 items-center px-4 md:px-6">
         <Link href="/" className="mr-6 flex items-center gap-2">
-           <Logo className="h-auto w-28" />
+           <Image src="/assets/logo.svg" alt="Logo" width={140} height={40} className="h-auto w-28" />
         </Link>
 
         <nav className="hidden gap-4 md:flex">
@@ -318,7 +317,7 @@ export default function SiteHeader() {
             <SheetContent side="left">
               <SheetHeader>
                  <SheetTitle>
-                    <Logo className="h-auto w-32" />
+                    <Image src="/assets/logo.svg" alt="Logo" width={140} height={40} className="h-auto w-32" />
                 </SheetTitle>
               </SheetHeader>
               <nav className="grid gap-4 text-base font-medium mt-4">

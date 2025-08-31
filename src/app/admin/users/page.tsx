@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import {
@@ -12,17 +13,10 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, doc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { Loader2, MoreHorizontal, UserX, CheckCircle, Trash2, PlusCircle, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { collection, getDocs, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
+import { Loader2, PlusCircle, ShieldCheck, ShieldAlert, Edit, Trash2 } from 'lucide-react';
 import { Admin } from '@/lib/types';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,14 +31,15 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function UsersPage() {
     const [admins, setAdmins] = useState<Admin[]>([]);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
-    const [isUpdating, setIsUpdating] = useState<string | null>(null);
-    const [userToUpdate, setUserToUpdate] = useState<Admin | null>(null);
-    const [dialogAction, setDialogAction] = useState<'delete' | 'toggle' | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [userToDelete, setUserToDelete] = useState<Admin | null>(null);
+    const router = useRouter();
 
 
     const fetchAdmins = async () => {
@@ -66,45 +61,37 @@ export default function UsersPage() {
       fetchAdmins();
     }, []);
     
-    const handleToggleStatus = async () => {
-        if (!userToUpdate) return;
-        setIsUpdating(userToUpdate.id);
-        const newStatus = userToUpdate.status === 'active' ? 'inactive' : 'active';
-        try {
-            const adminRef = doc(db, 'admin', userToUpdate.id);
-            await updateDoc(adminRef, { status: newStatus });
-            toast({
-                title: "Estado Actualizado",
-                description: `El usuario ${userToUpdate.firstName} ha sido ${newStatus === 'active' ? 'habilitado' : 'inhabilitado'}.`,
-            });
-            await fetchAdmins();
-        } catch (error) {
-            console.error("Error updating status: ", error);
-            toast({ title: "Error", description: "No se pudo actualizar el estado del usuario.", variant: "destructive" });
-        } finally {
-            setIsUpdating(null);
-            setUserToUpdate(null);
-            setDialogAction(null);
-        }
-    };
-    
     const handleDeleteUser = async () => {
-        if (!userToUpdate) return;
-        setIsUpdating(userToUpdate.id);
+        if (!userToDelete) return;
+        
+        // Safety check: Don't delete the currently logged-in user or a superadmin
+        if (userToDelete.id === auth.currentUser?.uid) {
+            toast({ title: "Acción no permitida", description: "No puedes eliminar tu propia cuenta.", variant: "destructive" });
+            setUserToDelete(null);
+            return;
+        }
+         if (userToDelete.rol === 'superadmin') {
+            toast({ title: "Acción no permitida", description: "No se puede eliminar a un superadministrador.", variant: "destructive" });
+            setUserToDelete(null);
+            return;
+        }
+
+        setIsDeleting(true);
         try {
-            await deleteDoc(doc(db, 'admin', userToUpdate.id));
+            // Note: This only deletes the Firestore record. The user still exists in Firebase Auth.
+            // A production app would use a Cloud Function to delete the user from Auth.
+            await deleteDoc(doc(db, 'admin', userToDelete.id));
             toast({
                 title: "Usuario Eliminado",
-                description: `El usuario ${userToUpdate.firstName} ha sido eliminado.`,
+                description: `El usuario ${userToDelete.firstName} ha sido eliminado de la lista de administradores.`,
             });
             await fetchAdmins();
         } catch (error) {
             console.error("Error deleting user: ", error);
             toast({ title: "Error", description: "No se pudo eliminar el usuario.", variant: "destructive" });
         } finally {
-            setIsUpdating(null);
-            setUserToUpdate(null);
-            setDialogAction(null);
+            setIsDeleting(false);
+            setUserToDelete(null);
         }
     };
 
@@ -160,36 +147,32 @@ export default function UsersPage() {
                                     </TableCell>
                                     <TableCell>{admin.email}</TableCell>
                                     <TableCell>
-                                        <Badge variant={admin.rol === 'admin' ? 'default' : 'secondary'} className="capitalize">
-                                            {admin.rol === 'admin' ? <ShieldCheck className="mr-1.5 h-3 w-3" /> : <ShieldAlert className="mr-1.5 h-3 w-3" />}
+                                        <Badge variant={admin.rol === 'superadmin' ? 'default' : 'secondary'} className="capitalize">
+                                            {admin.rol === 'superadmin' ? <ShieldCheck className="mr-1.5 h-3 w-3" /> : <ShieldAlert className="mr-1.5 h-3 w-3" />}
                                             {admin.rol}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant={admin.status === 'active' ? 'default' : 'destructive'} className="capitalize">
-                                            {admin.status === 'active' ? 'Activo' : 'Inhabilitado'}
+                                            {admin.status === 'active' ? 'Activo' : 'Inactivo'}
                                         </Badge>
                                     </TableCell>
                                      <TableCell>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button aria-haspopup="true" size="icon" variant="ghost" disabled={isUpdating === admin.id}>
-                                                    {isUpdating === admin.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
-                                                    <span className="sr-only">Menú</span>
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={() => { setUserToUpdate(admin); setDialogAction('toggle'); }}>
-                                                    {admin.status === 'active' ? <UserX className="mr-2 h-4 w-4"/> : <CheckCircle className="mr-2 h-4 w-4" />}
-                                                    <span>{admin.status === 'active' ? 'Inhabilitar' : 'Habilitar'}</span>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => { setUserToUpdate(admin); setDialogAction('delete'); }} className="text-destructive">
-                                                    <Trash2 className="mr-2 h-4 w-4"/>
-                                                    <span>Eliminar</span>
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        <div className="flex gap-2">
+                                            <Button variant="outline" size="sm" onClick={() => router.push(`/admin/users/edit/${admin.id}`)}>
+                                                <Edit className="mr-2 h-3 w-3" />
+                                                Editar
+                                            </Button>
+                                            <Button 
+                                                variant="destructive" 
+                                                size="sm" 
+                                                onClick={() => setUserToDelete(admin)}
+                                                disabled={isDeleting || admin.rol === 'superadmin'}
+                                            >
+                                                <Trash2 className="mr-2 h-3 w-3" />
+                                                Eliminar
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -197,30 +180,24 @@ export default function UsersPage() {
                     </Table>
                 </CardContent>
             </Card>
-            <AlertDialog open={!!dialogAction} onOpenChange={(open) => !open && setDialogAction(null)}>
+            <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                    <AlertDialogTitle>
-                        {dialogAction === 'delete' && '¿Estás seguro de eliminar este usuario?'}
-                        {dialogAction === 'toggle' && `¿Estás seguro de ${userToUpdate?.status === 'active' ? 'inhabilitar' : 'habilitar'} este usuario?`}
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                         {dialogAction === 'delete' && `Esta acción no se puede deshacer. Se eliminará al usuario ${userToUpdate?.firstName} ${userToUpdate?.lastName}.`}
-                         {dialogAction === 'toggle' && `Se ${userToUpdate?.status === 'active' ? 'inhabilitará' : 'habilitará'} el acceso al panel para este usuario.`}
-                    </AlertDialogDescription>
+                        <AlertDialogTitle>¿Estás seguro de eliminar este usuario?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta acción eliminará al usuario <span className="font-bold">{userToDelete?.firstName} {userToDelete?.lastName}</span> del panel. 
+                            Esta acción no se puede deshacer.
+                        </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                    <AlertDialogCancel disabled={!!isUpdating}>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction 
-                        onClick={() => {
-                            if (dialogAction === 'delete') handleDeleteUser();
-                            if (dialogAction === 'toggle') handleToggleStatus();
-                        }} 
-                        disabled={!!isUpdating} 
-                        className={dialogAction === 'delete' ? 'bg-destructive hover:bg-destructive/90' : ''}
-                    >
-                        {isUpdating ? <Loader2 className="animate-spin" /> : "Confirmar"}
-                    </AlertDialogAction>
+                        <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction 
+                            onClick={handleDeleteUser} 
+                            disabled={isDeleting} 
+                            className={'bg-destructive hover:bg-destructive/90'}
+                        >
+                            {isDeleting ? <Loader2 className="animate-spin" /> : "Confirmar Eliminación"}
+                        </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

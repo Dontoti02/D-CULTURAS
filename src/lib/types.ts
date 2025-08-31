@@ -39,15 +39,36 @@ export interface Customer {
     };
 }
 
+export type AdminPermission = 'dashboard' | 'products' | 'inventory' | 'orders' | 'customers' | 'promotions' | 'finance' | 'closing' | 'assistant' | 'settings' | 'users' | 'billing';
+
+export const ALL_PERMISSIONS: Record<AdminPermission, string> = {
+  dashboard: 'Panel Principal',
+  products: 'Productos',
+  inventory: 'Inventario',
+  orders: 'Pedidos',
+  customers: 'Clientes',
+  promotions: 'Promociones',
+  finance: 'Finanzas',
+  closing: 'Cierre Anual',
+  assistant: 'Asistente IA',
+  settings: 'Ajustes de Perfil',
+  users: 'Gestionar Usuarios',
+  billing: 'Facturación'
+};
+
+
 export interface Admin {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
-  rol: 'admin' | 'ayudante';
+  rol: 'superadmin' | 'admin';
   status: 'active' | 'inactive';
   photoURL?: string;
   createdAt: Timestamp;
+  permissions: {
+    [key in AdminPermission]?: boolean;
+  };
 }
 
 export interface OrderItem {

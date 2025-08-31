@@ -45,49 +45,33 @@ import {
 } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { auth, db } from '@/lib/firebase';
-import { signOut, onAuthStateChanged } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Skeleton } from './ui/skeleton';
 import Image from 'next/image';
+import { useAuth } from '@/hooks/use-auth';
+import { Admin, AdminPermission } from '@/lib/types';
 
-const navLinks = [
-  {
-    href: '/admin',
-    label: 'Panel',
-    icon: Home,
-  },
-  {
-    href: '/admin/products',
-    label: 'Productos',
-    icon: Package,
-    subItems: [
-      { href: '/admin/products', label: 'Ver Todos' },
-      { href: '/admin/products/new', label: 'Agregar Nuevo' },
-    ],
-  },
-  { href: '/admin/inventory', label: 'Inventario', icon: Warehouse },
-  { href: '/admin/orders', label: 'Pedidos', icon: ShoppingCart },
-  { href: '/admin/customers', label: 'Clientes', icon: Users },
-  { href: '/admin/promotions', label: 'Promociones', icon: Award },
-  { href: '/admin/finance', label: 'Finanzas', icon: Landmark },
-  { href: '/admin/annual-closing', label: 'Cierre Anual', icon: Archive },
-  { href: '/admin/ai-assistant', label: 'Asistente IA', icon: Bot },
+
+const navLinks: { href: string; label: string; icon: React.ElementType, permission: AdminPermission }[] = [
+  { href: '/admin', label: 'Panel', icon: Home, permission: 'dashboard' },
+  { href: '/admin/products', label: 'Productos', icon: Package, permission: 'products' },
+  { href: '/admin/inventory', label: 'Inventario', icon: Warehouse, permission: 'inventory' },
+  { href: '/admin/orders', label: 'Pedidos', icon: ShoppingCart, permission: 'orders' },
+  { href: '/admin/customers', label: 'Clientes', icon: Users, permission: 'customers' },
+  { href: '/admin/promotions', label: 'Promociones', icon: Award, permission: 'promotions' },
+  { href: '/admin/finance', label: 'Finanzas', icon: Landmark, permission: 'finance' },
+  { href: '/admin/annual-closing', label: 'Cierre Anual', icon: Archive, permission: 'closing' },
+  { href: '/admin/ai-assistant', label: 'Asistente IA', icon: Bot, permission: 'assistant' },
 ];
 
-const settingsLinks = [
-  { href: '/admin/settings', label: 'Mi Perfil', icon: Settings },
-  { href: '/admin/users', label: 'Usuarios', icon: Users2 },
-  { href: '/admin/billing', label: 'Facturación', icon: CreditCard },
+const settingsLinks: { href: string; label: string; icon: React.ElementType, permission: AdminPermission }[] = [
+  { href: '/admin/settings', label: 'Mi Perfil', icon: Settings, permission: 'settings' },
+  { href: '/admin/users', label: 'Usuarios', icon: Users2, permission: 'users' },
+  { href: '/admin/billing', label: 'Facturación', icon: CreditCard, permission: 'billing' },
 ];
 
-
-interface AdminData {
-    firstName: string;
-    lastName: string;
-    photoURL: string;
-    email: string;
-}
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -97,36 +81,8 @@ interface AdminSidebarProps {
 const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const [adminData, setAdminData] = useState<AdminData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user: adminData, loading } = useAuth();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            const adminDocRef = doc(db, 'admin', user.uid);
-            const adminDoc = await getDoc(adminDocRef);
-            if (adminDoc.exists()) {
-                const data = adminDoc.data();
-                const [firstName, ...lastNameParts] = (data.name || '').split(' ');
-                setAdminData({
-                    firstName: data.firstName || firstName,
-                    lastName: data.lastName || lastNameParts.join(' '),
-                    photoURL: data.photoURL || '',
-                    email: user.email || '',
-                });
-            } else {
-                setAdminData(null);
-                router.push('/login');
-            }
-        } else {
-            setAdminData(null);
-            router.push('/login');
-        }
-        setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [router]);
 
   const handleSignOut = async () => {
     try {
@@ -142,6 +98,12 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
     onLinkClick?.();
   };
 
+  const userCanAccess = (permission: AdminPermission) => {
+    if (!adminData) return false;
+    if (adminData.rol === 'superadmin') return true;
+    return adminData.permissions?.[permission] ?? false;
+  };
+
 
   return (
     <div className="flex h-full flex-col p-4">
@@ -154,42 +116,7 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
       </div>
 
       <nav className="flex flex-col gap-1 flex-grow overflow-y-auto pr-2 -mr-2">
-        {navLinks.map((link) =>
-          link.subItems ? (
-            <Collapsible
-              key={link.href}
-              defaultOpen={pathname.startsWith(link.href)}
-            >
-              <CollapsibleTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-3 px-3 font-medium"
-                >
-                  <link.icon className="h-4 w-4" />
-                  {link.label}
-                  <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]:rotate-90" />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="pl-8 pt-1">
-                  {link.subItems.map((subItem) => (
-                    <button
-                      key={subItem.href}
-                      onClick={() => handleLinkClick(subItem.href)}
-                      className={cn(
-                        'flex w-full text-left items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-sm',
-                        {
-                          'text-primary': pathname === subItem.href,
-                        }
-                      )}
-                    >
-                      {subItem.label}
-                    </button>
-                  ))}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          ) : (
+        {navLinks.map((link) => userCanAccess(link.permission) && (
             <button
               key={link.href}
               onClick={() => handleLinkClick(link.href)}
@@ -221,7 +148,7 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
               </CollapsibleTrigger>
               <CollapsibleContent>
                   <div className="pl-8 pt-1">
-                      {settingsLinks.map((link) => (
+                      {settingsLinks.map((link) => userCanAccess(link.permission) && (
                           <button
                             key={link.href}
                             onClick={() => handleLinkClick(link.href)}
@@ -244,7 +171,7 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
               className="w-full justify-start gap-2 px-2 h-14"
               disabled={loading}
             >
-              {loading ? (
+              {loading || !adminData ? (
                 <div className="flex items-center gap-2 w-full">
                     <Skeleton className="h-8 w-8 rounded-full" />
                     <div className="flex flex-col gap-1">
@@ -266,11 +193,7 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                   </div>
                   <MoreHorizontal className="ml-auto h-4 w-4 flex-shrink-0" />
                 </>
-              ) : (
-                 <div className="text-left">
-                    <p className="text-sm font-medium">No autenticado</p>
-                 </div>
-              )}
+              ) : null}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -280,7 +203,7 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
           >
             <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-             {settingsLinks.map((link) => (
+             {settingsLinks.map((link) => userCanAccess(link.permission) && (
                 <DropdownMenuItem key={link.href} asChild>
                      <button className="w-full" onClick={() => handleLinkClick(link.href)}>
                         <link.icon className="mr-2 h-4 w-4" />

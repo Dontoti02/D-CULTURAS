@@ -1,40 +1,79 @@
 
-
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, Eye, EyeOff, ShieldCheck, ShieldAlert } from 'lucide-react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Loader2, ArrowLeft, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { Admin, ALL_PERMISSIONS, AdminPermission } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/hooks/use-auth';
 
 
-export default function NewUserPage() {
+export default function EditUserPage() {
   const router = useRouter();
+  const params = useParams();
   const { toast } = useToast();
+  const { id } = params;
+  const { user: currentUser } = useAuth();
+
+
+  const [loading, setLoading] = useState(true);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [rol, setRol] = useState<'admin' | 'superadmin'>('admin');
-  const [showPassword, setShowPassword] = useState(false);
+  const [status, setStatus] = useState<'active' | 'inactive'>('active');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [permissions, setPermissions] = useState<Record<AdminPermission, boolean>>(() => {
     const initialPerms = {} as Record<AdminPermission, boolean>;
     Object.keys(ALL_PERMISSIONS).forEach(key => {
-        initialPerms[key as AdminPermission] = true; // Start with all permissions enabled for a new user
+        initialPerms[key as AdminPermission] = false;
     });
     return initialPerms;
   });
+
+  const isEditingSelf = currentUser?.uid === id;
+  const isTargetSuperAdmin = rol === 'superadmin';
+
+  useEffect(() => {
+    if (!id) return;
+    const fetchUser = async () => {
+      setLoading(true);
+      try {
+        const docRef = doc(db, 'admin', id as string);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const userData = docSnap.data() as Admin;
+          setFirstName(userData.firstName);
+          setLastName(userData.lastName);
+          setEmail(userData.email);
+          setRol(userData.rol);
+          setStatus(userData.status);
+          if (userData.permissions) {
+             setPermissions(userData.permissions as Record<AdminPermission, boolean>);
+          }
+        } else {
+          toast({ title: "Error", description: "Usuario no encontrado.", variant: "destructive" });
+          router.push('/admin/users');
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        toast({ title: "Error", description: "No se pudo cargar el usuario.", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, [id, router, toast]);
 
   const handlePermissionChange = (permission: AdminPermission, checked: boolean) => {
     setPermissions(prev => ({ ...prev, [permission]: checked }));
@@ -42,62 +81,34 @@ export default function NewUserPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firstName || !lastName || !email || !password || !rol) {
-        toast({
-            title: 'Campos Incompletos',
-            description: 'Por favor, completa todos los campos requeridos.',
-            variant: 'destructive',
-        });
-        return;
+    if (!firstName || !lastName) {
+      toast({ title: 'Campos Incompletos', description: 'Por favor, completa nombre y apellido.', variant: 'destructive' });
+      return;
     }
-    
+
     setIsSubmitting(true);
     try {
-        // A more secure approach would use a Cloud Function to create users.
-        // This client-side method is for demonstration. It logs out the current admin.
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        
-        await setDoc(doc(db, 'admin', user.uid), {
-            firstName,
-            lastName,
-            email,
-            rol,
-            status: 'active',
-            photoURL: '',
-            createdAt: serverTimestamp(),
-            permissions: rol === 'superadmin' ? {} : permissions, // Superadmin has all permissions implicitly
-        } as Omit<Admin, 'id'>);
-
-        toast({
-            title: 'Usuario Creado',
-            description: `El usuario ${firstName} ${lastName} ha sido creado exitosamente.`,
-        });
-
-        // IMPORTANT: Because we used the main `auth` instance, the current admin is now
-        // logged out and the new user is logged in. We need to redirect.
-        await auth.signOut();
-        toast({
-            title: "Sesión cerrada",
-            description: "Por seguridad, tu sesión ha sido cerrada. Por favor, vuelve a iniciar sesión.",
-            duration: 7000,
-        });
-
-        router.push('/login');
-
-    } catch (error: any) {
-        let description = 'Ocurrió un error inesperado.';
-        if (error.code === 'auth/email-already-in-use') {
-            description = 'El correo electrónico ya está en uso.';
-        } else if (error.code === 'auth/weak-password') {
-            description = 'La contraseña debe tener al menos 6 caracteres.';
-        }
-        console.error("Error creating admin user:", error);
-        toast({ title: "Error al Crear Usuario", description, variant: 'destructive' });
+      const userRef = doc(db, 'admin', id as string);
+      await updateDoc(userRef, {
+        firstName,
+        lastName,
+        rol,
+        status,
+        permissions: rol === 'superadmin' ? {} : permissions,
+      });
+      toast({ title: 'Usuario Actualizado', description: 'Los datos del usuario han sido guardados.' });
+      router.push('/admin/users');
+    } catch (error) {
+      console.error("Error al actualizar el usuario: ", error);
+      toast({ title: 'Error al Actualizar', description: 'No se pudo guardar la información.', variant: 'destructive' });
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return <Skeleton className="h-[600px] w-full" />;
+  }
 
   return (
     <form onSubmit={handleSubmit}>
@@ -109,14 +120,12 @@ export default function NewUserPage() {
                 <span className="sr-only">Volver</span>
               </Button>
             <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-              Agregar Nuevo Usuario
+              Editar Usuario
             </h1>
             <div className="hidden items-center gap-2 md:ml-auto md:flex">
-              <Button variant="outline" size="sm" onClick={() => router.back()} disabled={isSubmitting}>
-                Cancelar
-              </Button>
+              <Button variant="outline" size="sm" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
               <Button size="sm" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="animate-spin" /> : 'Guardar Usuario'}
+                {isSubmitting ? <Loader2 className="animate-spin" /> : 'Guardar Cambios'}
               </Button>
             </div>
           </div>
@@ -139,28 +148,8 @@ export default function NewUserPage() {
                   </div>
                   <div className="grid gap-3">
                         <Label htmlFor="email">Correo Electrónico</Label>
-                        <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                        <Input id="email" type="email" required value={email} disabled />
                   </div>
-                  <div className="grid gap-3">
-                        <Label htmlFor="password">Contraseña</Label>
-                        <div className="relative">
-                            <Input 
-                                id="password" 
-                                type={showPassword ? 'text' : 'password'}
-                                required 
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground"
-                                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                            >
-                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                            </button>
-                        </div>
-                   </div>
                 </CardContent>
               </Card>
                <Card>
@@ -204,7 +193,12 @@ export default function NewUserPage() {
                     <CardContent className="grid gap-6">
                        <div className="grid gap-3">
                             <Label htmlFor="rol">Rol</Label>
-                            <Select required onValueChange={(v: 'admin' | 'superadmin') => setRol(v)} value={rol}>
+                            <Select 
+                              required 
+                              onValueChange={(v: 'admin' | 'superadmin') => setRol(v)} 
+                              value={rol}
+                              disabled={isEditingSelf || isTargetSuperAdmin}
+                            >
                             <SelectTrigger>
                                 <SelectValue placeholder="Seleccionar rol" />
                             </SelectTrigger>
@@ -217,7 +211,30 @@ export default function NewUserPage() {
                                 </SelectItem>
                             </SelectContent>
                             </Select>
+                            {(isEditingSelf || isTargetSuperAdmin) && (
+                                <p className="text-xs text-muted-foreground italic">No puedes cambiar el rol de tu propia cuenta o de un superadmin.</p>
+                            )}
                       </div>
+                      <div className="grid gap-3">
+                            <Label htmlFor="status">Estado</Label>
+                            <Select 
+                                required 
+                                onValueChange={(v: 'active' | 'inactive') => setStatus(v)} 
+                                value={status}
+                                disabled={isEditingSelf}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccionar estado" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="active">Activo</SelectItem>
+                                    <SelectItem value="inactive">Inactivo</SelectItem>
+                                </SelectContent>
+                            </Select>
+                             {isEditingSelf && (
+                                <p className="text-xs text-muted-foreground italic">No puedes inhabilitar tu propia cuenta.</p>
+                            )}
+                        </div>
                     </CardContent>
                 </Card>
             </div>
@@ -225,7 +242,7 @@ export default function NewUserPage() {
           <div className="flex items-center justify-center gap-2 md:hidden">
             <Button variant="outline" size="sm" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
             <Button size="sm" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="animate-spin" /> : 'Guardar Usuario'}
+                {isSubmitting ? <Loader2 className="animate-spin" /> : 'Guardar Cambios'}
             </Button>
           </div>
         </div>

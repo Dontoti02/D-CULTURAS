@@ -136,10 +136,10 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
 
   return (
     <div className="flex h-full flex-col p-4">
-      <div className="flex items-center gap-2 mb-6 px-2">
+      <div className="flex justify-center mb-6">
         <Link href="/" className="flex items-center gap-2 font-semibold" onClick={onLinkClick}>
-            <div className="h-14 w-14 rounded-full overflow-hidden flex items-center justify-center bg-white p-1.5 shadow-md">
-                <Image src="https://res.cloudinary.com/dd7fku9br/image/upload/v1756519561/logo_bhuwcw.svg" alt="Diseñando Culturas Logo" width={56} height={56} className="object-contain" />
+            <div className="h-20 w-20 rounded-full overflow-hidden flex items-center justify-center bg-white p-2 shadow-md">
+                <Image src="https://res.cloudinary.com/dd7fku9br/image/upload/v1756519561/logo_bhuwcw.svg" alt="Diseñando Culturas Logo" width={72} height={72} className="object-contain" />
             </div>
         </Link>
       </div>

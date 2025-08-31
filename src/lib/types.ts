@@ -31,6 +31,7 @@ export interface Customer {
     photoURL?: string;
     createdAt: Timestamp;
     status: 'active' | 'inactive';
+    isOnline?: boolean;
     shippingAddress?: {
         address: string;
         city: string;
@@ -64,6 +65,7 @@ export interface Admin {
   email: string;
   rol: 'admin' | 'subadmin';
   status: 'active' | 'inactive';
+  isOnline?: boolean;
   photoURL?: string;
   createdAt: Timestamp;
   permissions: {

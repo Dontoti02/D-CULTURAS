@@ -1,18 +1,16 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { Admin, Customer } from '@/lib/types';
 
-// Combina el tipo de usuario de Firebase Auth con los campos personalizados de Firestore
-export type AuthUser = User & {
-  firstName?: string;
-  lastName?: string;
-  photoURL?: string; // photoURL de Firestore tiene prioridad
-};
+
+export type AuthUser = User & Admin & Customer;
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -26,51 +24,62 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+    const handleBeforeUnload = () => {
+        if (auth.currentUser) {
+            const userId = auth.currentUser.uid;
+            // Attempt to determine if it's an admin or customer to set the correct doc path
+            // This is a simplification; a more robust system might know the user's role
+            const adminRef = doc(db, 'admin', userId);
+            const customerRef = doc(db, 'customers', userId);
+            
+            // Try to update both, one will fail silently if the doc doesn't exist
+            updateDoc(adminRef, { isOnline: false }).catch(() => {});
+            updateDoc(customerRef, { isOnline: false }).catch(() => {});
+        }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
         setUser(null);
         setLoading(false);
         return;
       }
-
-      // Chain of responsibility: admin -> customer -> null
+      
       const adminDocRef = doc(db, 'admin', currentUser.uid);
       const customerDocRef = doc(db, 'customers', currentUser.uid);
 
-      getDoc(adminDocRef).then(adminDoc => {
+      try {
+        const adminDoc = await getDoc(adminDocRef);
         if (adminDoc.exists()) {
-          const data = adminDoc.data();
-          const [firstName, ...lastNameParts] = (data.name || '').split(' ');
-          setUser({
-            ...currentUser,
-            ...data,
-            firstName: data.firstName || firstName,
-            lastName: data.lastName || lastNameParts.join(' '),
-            photoURL: data.photoURL || currentUser.photoURL,
-          });
-          setLoading(false);
+            await updateDoc(adminDocRef, { isOnline: true });
+            const data = adminDoc.data() as Admin;
+            setUser({ ...currentUser, ...data, isOnline: true } as AuthUser);
         } else {
-          // If not an admin, check if they are a customer
-          getDoc(customerDocRef).then(customerDoc => {
+            const customerDoc = await getDoc(customerDocRef);
             if (customerDoc.exists()) {
-              const data = customerDoc.data();
-              setUser({
-                ...currentUser,
-                ...data,
-                photoURL: data.photoURL || currentUser.photoURL,
-              });
+                await updateDoc(customerDocRef, { isOnline: true });
+                const data = customerDoc.data() as Customer;
+                setUser({ ...currentUser, ...data, isOnline: true } as AuthUser);
             } else {
-              // User exists in Auth, but not in our DB collections
-              setUser(null); 
-              auth.signOut(); // Log out the user to prevent inconsistent states
+                setUser(null); 
+                auth.signOut();
             }
-            setLoading(false);
-          });
         }
-      });
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setUser(null);
+        auth.signOut();
+      } finally {
+        setLoading(false);
+      }
     });
 
-    return () => unsubscribeAuth();
+    return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        unsubscribeAuth();
+    }
   }, []);
 
 

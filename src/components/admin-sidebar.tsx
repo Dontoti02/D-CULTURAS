@@ -181,10 +181,13 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
                 </div>
               ) : adminData ? (
                 <>
-                  <Avatar className="h-8 w-8">
-                     {adminData.photoURL && <AvatarImage src={adminData.photoURL} alt="Foto de perfil" />}
-                     <AvatarFallback>{adminData.firstName?.charAt(0)}{adminData.lastName?.charAt(0)}</AvatarFallback>
-                  </Avatar>
+                  <div className="relative">
+                     <Avatar className="h-8 w-8">
+                       {adminData.photoURL && <AvatarImage src={adminData.photoURL} alt="Foto de perfil" />}
+                       <AvatarFallback>{adminData.firstName?.charAt(0)}{adminData.lastName?.charAt(0)}</AvatarFallback>
+                     </Avatar>
+                     <span className={`absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ${adminData.isOnline ? 'bg-green-500' : 'bg-gray-400'} ring-2 ring-background`} />
+                  </div>
                   <div className="text-left overflow-hidden">
                     <p className="text-sm font-medium truncate">{`${adminData.firstName} ${adminData.lastName}`}</p>
                     <p className="text-xs text-muted-foreground truncate">

@@ -13,7 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useEffect, useState, useMemo } from 'react';
-import { collection, getDocs, doc, updateDoc, deleteDoc, query, orderBy, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, deleteDoc, query, orderBy, writeBatch, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Loader2, MoreHorizontal, UserX, CheckCircle, Trash2, Search, UserCheck, UserMinus } from 'lucide-react';
 import { format } from 'date-fns';
@@ -40,6 +40,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 
 export default function CustomersPage() {
@@ -53,24 +54,21 @@ export default function CustomersPage() {
     const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
     const [dialogAction, setDialogAction] = useState<'delete' | 'bulk-delete' | 'bulk-enable' | 'bulk-disable' | null>(null);
 
-    const fetchCustomers = async () => {
-      setLoading(true);
-      try {
-        const q = query(collection(db, "customers"), orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
-        const customersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer));
-        setCustomers(customersData);
-      } catch (error) {
-        console.error("Error fetching customers: ", error);
-        toast({ title: "Error", description: "No se pudieron cargar los clientes.", variant: "destructive" });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     useEffect(() => {
-      fetchCustomers();
-    }, []);
+        setLoading(true);
+        const q = query(collection(db, "customers"), orderBy('createdAt', 'desc'));
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const customersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer));
+            setCustomers(customersData);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching customers: ", error);
+            toast({ title: "Error", description: "No se pudieron cargar los clientes.", variant: "destructive" });
+            setLoading(false);
+        });
+
+        return () => unsubscribe(); // Cleanup listener on component unmount
+    }, [toast]);
     
     const filteredCustomers = useMemo(() => {
       return customers.filter(customer =>
@@ -107,7 +105,6 @@ export default function CustomersPage() {
                 title: "Estado Actualizado",
                 description: `El cliente ${customer.firstName} ha sido ${newStatus === 'active' ? 'habilitado' : 'inhabilitado'}.`,
             });
-            await fetchCustomers();
         } catch (error) {
             console.error("Error updating status: ", error);
             toast({ title: "Error", description: "No se pudo actualizar el estado del cliente.", variant: "destructive" });
@@ -128,7 +125,6 @@ export default function CustomersPage() {
 
             toast({ title: "Clientes Actualizados", description: `Se han ${status === 'active' ? 'habilitado' : 'inhabilitado'} ${selectedCustomers.length} clientes.` });
             setSelectedCustomers([]);
-            await fetchCustomers();
         } catch (error) {
             console.error("Error updating statuses: ", error);
             toast({ title: "Error", description: "No se pudo actualizar el estado de los clientes.", variant: "destructive" });
@@ -148,7 +144,6 @@ export default function CustomersPage() {
                 description: `El cliente ${customerToDelete.firstName} ha sido eliminado de la base de datos.`,
             });
             setCustomerToDelete(null);
-            await fetchCustomers();
         } catch (error) {
             console.error("Error deleting customer: ", error);
             toast({ title: "Error", description: "No se pudo eliminar el cliente.", variant: "destructive" });
@@ -170,7 +165,6 @@ export default function CustomersPage() {
             
             toast({ title: "Clientes Eliminados", description: `${selectedCustomers.length} clientes han sido eliminados.` });
             setSelectedCustomers([]);
-            await fetchCustomers();
         } catch (error) {
             console.error("Error deleting customers: ", error);
             toast({ title: "Error", description: "No se pudieron eliminar los clientes.", variant: "destructive" });
@@ -259,7 +253,19 @@ export default function CustomersPage() {
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="grid gap-0.5">
-                                                <p className="font-medium">{customer.firstName} {customer.lastName}</p>
+                                                <div className="flex items-center gap-1.5">
+                                                    <p className="font-medium">{customer.firstName} {customer.lastName}</p>
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger>
+                                                                <span className={`h-2 w-2 rounded-full ${customer.isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                <p>{customer.isOnline ? 'En línea' : 'Fuera de línea'}</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                </div>
                                             </div>
                                         </div>
                                     </TableCell>

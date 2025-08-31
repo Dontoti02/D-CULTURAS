@@ -13,7 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { collection, doc, deleteDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { Loader2, PlusCircle, ShieldCheck, ShieldAlert, Edit, Trash2 } from 'lucide-react';
 import { Admin } from '@/lib/types';
@@ -32,6 +32,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+
 
 export default function UsersPage() {
     const [admins, setAdmins] = useState<Admin[]>([]);
@@ -42,24 +44,21 @@ export default function UsersPage() {
     const router = useRouter();
 
 
-    const fetchAdmins = async () => {
-      setLoading(true);
-      try {
-        const q = query(collection(db, "admin"), orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
-        const adminsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Admin));
-        setAdmins(adminsData);
-      } catch (error) {
-        console.error("Error fetching admins: ", error);
-        toast({ title: "Error", description: "No se pudieron cargar los administradores.", variant: "destructive" });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     useEffect(() => {
-      fetchAdmins();
-    }, []);
+        setLoading(true);
+        const q = query(collection(db, "admin"), orderBy('createdAt', 'desc'));
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const adminsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Admin));
+            setAdmins(adminsData);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching admins: ", error);
+            toast({ title: "Error", description: "No se pudieron cargar los administradores.", variant: "destructive" });
+            setLoading(false);
+        });
+
+        return () => unsubscribe(); // Cleanup listener
+    }, [toast]);
     
     const handleDeleteUser = async () => {
         if (!userToDelete) return;
@@ -85,7 +84,6 @@ export default function UsersPage() {
                 title: "Usuario Eliminado",
                 description: `El usuario ${userToDelete.firstName} ha sido eliminado de la lista de administradores.`,
             });
-            await fetchAdmins();
         } catch (error) {
             console.error("Error deleting user: ", error);
             toast({ title: "Error", description: "No se pudo eliminar el usuario.", variant: "destructive" });
@@ -141,7 +139,19 @@ export default function UsersPage() {
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="grid gap-0.5">
-                                                <p className="font-medium">{admin.firstName} {admin.lastName}</p>
+                                               <div className="flex items-center gap-1.5">
+                                                    <p className="font-medium">{admin.firstName} {admin.lastName}</p>
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger>
+                                                                <span className={`h-2 w-2 rounded-full ${admin.isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                <p>{admin.isOnline ? 'En línea' : 'Fuera de línea'}</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                </div>
                                             </div>
                                         </div>
                                     </TableCell>

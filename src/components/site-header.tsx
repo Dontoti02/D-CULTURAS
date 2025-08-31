@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { 
     ShoppingCart, User, Search, Menu, LogOut, UserCircle, Settings, HelpCircle, ShoppingBag, 
-    ChevronDown, Sparkles, TrendingUp, Star, Percent, BookOpen, Diamond, Shirt, Briefcase
+    ChevronDown, Sparkles, TrendingUp, Star, Percent, BookOpen, Diamond, Shirt, Briefcase, Baby, Home, Scissors, Heart, Footprints
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { useCart } from '@/context/cart-context';
 import { Badge } from './ui/badge';
 import { useAuth } from '@/hooks/use-auth';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuGroup } from './ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuGroup, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuPortal } from './ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
@@ -31,17 +31,18 @@ const navLinks = [
   { href: '/?filter=sale', label: 'Rebajas', icon: Percent },
 ];
 
-const categoryIcons: { [key: string]: React.ElementType } = {
-    'Conjuntos': ShoppingBag,
-    'Vestidos': Diamond,
-    'Faldas': BookOpen,
-    'Blusas': Shirt,
-    'Ternos': Briefcase,
-    'Camisas': Shirt,
-    'Pantalones': UserCircle,
-    'Corbatas': UserCircle,
-    'default': ShoppingBag,
-};
+const ropaSubcategories = [
+    { key: 'Bebés', label: 'Bebés', icon: Baby },
+    { key: 'Casual', label: 'Casual', icon: Shirt },
+    { key: 'Sport', label: 'Sport', icon: Briefcase },
+    { key: 'Ejecutiva', label: 'Ejecutiva', icon: Briefcase },
+    { key: 'Artesanal', label: 'Artesanal', icon: Heart },
+];
+
+const hogarSubcategories = [
+    { key: 'Fundas', label: 'Fundas', icon: BookOpen },
+    { key: 'Cojines', label: 'Cojines', icon: Diamond },
+];
 
 
 export default function SiteHeader() {
@@ -57,37 +58,15 @@ export default function SiteHeader() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   
-  const [categories, setCategories] = useState<{ damas: string[], caballeros: string[] }>({ damas: [], caballeros: [] });
-  const [loadingCategories, setLoadingCategories] = useState(true);
-
   useEffect(() => {
-    const fetchProductsAndCategories = async () => {
-      setLoadingCategories(true);
+    const fetchProducts = async () => {
       const productsRef = collection(db, 'products');
       const q = query(productsRef, orderBy('name'));
       const querySnapshot = await getDocs(q);
       const productsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-      
       setAllProducts(productsData);
-
-      const damasCategories = new Set<string>();
-      const caballerosCategories = new Set<string>();
-
-      productsData.forEach(product => {
-        if (product.gender === 'Damas') {
-          damasCategories.add(product.category);
-        } else if (product.gender === 'Caballeros') {
-          caballerosCategories.add(product.category);
-        }
-      });
-      
-      setCategories({
-          damas: Array.from(damasCategories),
-          caballeros: Array.from(caballerosCategories)
-      });
-      setLoadingCategories(false);
     };
-    fetchProductsAndCategories();
+    fetchProducts();
   }, []);
 
 
@@ -165,37 +144,60 @@ export default function SiteHeader() {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-64">
-                     <DropdownMenuGroup>
-                        <DropdownMenuLabel>Damas</DropdownMenuLabel>
-                        <DropdownMenuSeparator/>
-                        {categories.damas.map(cat => {
-                            const Icon = categoryIcons[cat] || categoryIcons.default;
-                            return (
-                                <DropdownMenuItem key={cat} asChild>
-                                    <Link href={`/?category=${cat}`}>
-                                        <Icon className="mr-2 h-4 w-4"/>
-                                        <span>{cat}</span>
-                                    </Link>
-                                </DropdownMenuItem>
-                            )
-                        })}
-                    </DropdownMenuGroup>
-                    <DropdownMenuSeparator/>
-                    <DropdownMenuGroup>
-                        <DropdownMenuLabel>Caballeros</DropdownMenuLabel>
-                         <DropdownMenuSeparator/>
-                        {categories.caballeros.map(cat => {
-                           const Icon = categoryIcons[cat] || categoryIcons.default;
-                           return (
-                                <DropdownMenuItem key={cat} asChild>
-                                    <Link href={`/?category=${cat}`}>
-                                        <Icon className="mr-2 h-4 w-4"/>
-                                        <span>{cat}</span>
-                                    </Link>
-                                </DropdownMenuItem>
-                           )
-                        })}
-                    </DropdownMenuGroup>
+                     <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                            <Shirt className="mr-2 h-4 w-4"/>
+                            <span>Ropa</span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                            <DropdownMenuSubContent>
+                                {ropaSubcategories.map(sub => (
+                                    <DropdownMenuItem key={sub.key} asChild>
+                                        <Link href={`/?category=Ropa&subcategory=${sub.key}`}>
+                                            <sub.icon className="mr-2 h-4 w-4" />
+                                            <span>{sub.label}</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                     </DropdownMenuSub>
+                     <DropdownMenuItem asChild>
+                         <Link href="/?category=Accesorios">
+                            <Scissors className="mr-2 h-4 w-4"/>
+                            <span>Accesorios Artesanales</span>
+                         </Link>
+                     </DropdownMenuItem>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                            <Home className="mr-2 h-4 w-4"/>
+                            <span>Línea de Hogar</span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                            <DropdownMenuSubContent>
+                                {hogarSubcategories.map(sub => (
+                                    <DropdownMenuItem key={sub.key} asChild>
+                                        <Link href={`/?category=Hogar&subcategory=${sub.key}`}>
+                                            <sub.icon className="mr-2 h-4 w-4" />
+                                            <span>{sub.label}</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                     </DropdownMenuSub>
+                    <DropdownMenuItem asChild>
+                         <Link href="/?category=Calzado">
+                            <Footprints className="mr-2 h-4 w-4"/>
+                            <span>Calzado</span>
+                         </Link>
+                     </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                         <Link href="/?category=Carteras">
+                            <ShoppingBag className="mr-2 h-4 w-4"/>
+                            <span>Carteras</span>
+                         </Link>
+                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         </nav>
@@ -339,28 +341,7 @@ export default function SiteHeader() {
                 ))}
                  <div className="grid gap-2">
                     <h3 className="font-semibold px-3">Categorías</h3>
-                    <div className="grid gap-2 pl-6">
-                        <h4 className="font-semibold text-sm text-muted-foreground">Damas</h4>
-                        {categories.damas.map(cat => {
-                            const Icon = categoryIcons[cat] || categoryIcons.default;
-                            return (
-                                <Link key={cat} href={`/?category=${cat}`} className="flex items-center gap-3 text-muted-foreground hover:text-foreground text-sm">
-                                    <Icon className="h-4 w-4"/>
-                                    {cat}
-                                </Link>
-                            )
-                        })}
-                         <h4 className="font-semibold text-sm text-muted-foreground mt-2">Caballeros</h4>
-                        {categories.caballeros.map(cat => {
-                           const Icon = categoryIcons[cat] || categoryIcons.default;
-                           return (
-                                <Link key={cat} href={`/?category=${cat}`} className="flex items-center gap-3 text-muted-foreground hover:text-foreground text-sm">
-                                    <Icon className="h-4 w-4"/>
-                                    {cat}
-                                </Link>
-                           )
-                        })}
-                    </div>
+                    {/* Add mobile categories here */}
                  </div>
               </nav>
             </SheetContent>

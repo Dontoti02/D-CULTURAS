@@ -2,8 +2,8 @@
 'use server';
 
 /**
- * @fileOverview A flow that generates a personalized promotional message for a new customer based on their gender.
- * - promoteByGender: The main function that orchestrates the promotion generation.
+ * @fileOverview A flow that generates a personalized promotional message for a new customer.
+ * - generateWelcomePromotion: The main function that orchestrates the promotion generation.
  */
 
 import { ai } from '@/ai/genkit';
@@ -12,16 +12,16 @@ import { collection, doc, getDoc, getDocs, limit, query, where } from 'firebase/
 import { db } from '@/lib/firebase';
 import { Product } from '@/lib/types';
 
-const PromoteByGenderInputSchema = z.object({
+const WelcomePromotionInputSchema = z.object({
   customerId: z.string().describe('The ID of the new customer.'),
 });
-export type PromoteByGenderInput = z.infer<typeof PromoteByGenderInputSchema>;
+export type WelcomePromotionInput = z.infer<typeof WelcomePromotionInputSchema>;
 
-const PromoteByGenderOutputSchema = z.object({
+const WelcomePromotionOutputSchema = z.object({
   success: z.boolean(),
   message: z.string(),
 });
-export type PromoteByGenderOutput = z.infer<typeof PromoteByGenderOutputSchema>;
+export type WelcomePromotionOutput = z.infer<typeof WelcomePromotionOutputSchema>;
 
 
 const ProductSuggestionSchema = z.object({
@@ -30,20 +30,20 @@ const ProductSuggestionSchema = z.object({
 });
 
 const PromotionPromptInputSchema = z.object({
-  customerGender: z.string(),
+  customerName: z.string(),
   products: z.array(ProductSuggestionSchema),
 });
 
 
-export async function promoteByGender(input: PromoteByGenderInput): Promise<PromoteByGenderOutput> {
-  return promoteByGenderFlow(input);
+export async function generateWelcomePromotion(input: WelcomePromotionInput): Promise<WelcomePromotionOutput> {
+  return generateWelcomePromotionFlow(input);
 }
 
 const promotionPrompt = ai.definePrompt({
     name: 'promotionPrompt',
     input: { schema: PromotionPromptInputSchema },
     prompt: `Eres un experto en marketing de moda. 
-    Basado en el género del cliente ({{customerGender}}) y la siguiente lista de productos, crea un mensaje promocional corto y atractivo (2-3 frases) para un correo de bienvenida.
+    Basado en la siguiente lista de productos recién llegados, crea un mensaje promocional corto y atractivo (2-3 frases) para un correo de bienvenida para {{customerName}}.
     Menciona al menos uno de los productos por su nombre.
 
     Productos:
@@ -54,41 +54,41 @@ const promotionPrompt = ai.definePrompt({
 });
 
 
-const promoteByGenderFlow = ai.defineFlow(
+const generateWelcomePromotionFlow = ai.defineFlow(
   {
-    name: 'promoteByGenderFlow',
-    inputSchema: PromoteByGenderInputSchema,
-    outputSchema: PromoteByGenderOutputSchema,
+    name: 'generateWelcomePromotionFlow',
+    inputSchema: WelcomePromotionInputSchema,
+    outputSchema: WelcomePromotionOutputSchema,
   },
   async ({ customerId }) => {
-    // 1. Fetch customer data to get their gender
+    // 1. Fetch customer data to get their name
     const customerRef = doc(db, 'customers', customerId);
     const customerSnap = await getDoc(customerRef);
 
-    if (!customerSnap.exists() || !customerSnap.data().gender) {
-      console.log(`Customer ${customerId} not found or has no gender specified. Skipping promotion.`);
-      return { success: false, message: 'Customer not found or no gender specified.' };
+    if (!customerSnap.exists()) {
+      console.log(`Customer ${customerId} not found. Skipping promotion.`);
+      return { success: false, message: 'Customer not found.' };
     }
-    const customerGender = customerSnap.data().gender;
+    const customerName = customerSnap.data().firstName;
 
-    // 2. Fetch recent products based on gender
+    // 2. Fetch recent products (any category)
     const productsRef = collection(db, 'products');
     const q = query(
         productsRef, 
-        where('gender', '==', customerGender), 
+        orderBy('createdAt', 'desc'),
         limit(3)
     );
     const productsSnap = await getDocs(q);
     const products = productsSnap.docs.map(doc => doc.data() as Product);
     
     if (products.length === 0) {
-        console.log(`No products found for gender: ${customerGender}. Skipping promotion.`);
-        return { success: false, message: `No products found for gender: ${customerGender}.` };
+        console.log(`No products found. Skipping promotion.`);
+        return { success: false, message: `No products found.` };
     }
 
     // 3. Generate the promotional message
     const { output: promotionalMessage } = await promotionPrompt({
-        customerGender,
+        customerName,
         products: products.map(p => ({ name: p.name, description: p.description })),
     });
 

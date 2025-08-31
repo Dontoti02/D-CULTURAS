@@ -2,18 +2,22 @@
 
 import { Timestamp } from "firebase/firestore";
 
+export type Category = 'Ropa' | 'Accesorios' | 'Hogar' | 'Calzado' | 'Carteras';
+export type RopaSubcategory = 'Bebés' | 'Casual' | 'Sport' | 'Ejecutiva' | 'Artesanal';
+export type HogarSubcategory = 'Fundas' | 'Cojines';
+
 export type Product = {
   id: string;
   name: string;
   description: string;
   price: number;
-  cost?: number; // Costo del producto para calcular la ganancia
+  cost?: number; 
   images: string[];
-  gender: 'Damas' | 'Caballeros';
-  category: 'Conjuntos' | 'Vestidos' | 'Faldas' | 'Blusas' | 'Ternos' | 'Camisas' | 'Pantalones' | 'Corbatas';
-  sizes: ('XS' | 'S' | 'M' | 'L' | 'XL')[];
-  ratingSum: number; // Suma de todas las calificaciones
-  ratingCount: number; // Cantidad de calificaciones
+  category: Category;
+  subcategory?: RopaSubcategory | HogarSubcategory | string; 
+  sizes: ('XS' | 'S' | 'M' | 'L' | 'XL' | 'Única' | string)[];
+  ratingSum: number; 
+  ratingCount: number; 
   stock: number;
   createdAt?: Timestamp;
 };

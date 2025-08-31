@@ -120,8 +120,7 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
 
    useEffect(() => {
     const fetchRecommendations = async () => {
-      // FIX: Ensure category and gender are defined before querying
-      if (!product.category || !product.gender) {
+      if (!product.category) {
         setLoadingRecommendations(false);
         return;
       }
@@ -131,7 +130,6 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
         const q = query(
             productsRef,
             where('category', '==', product.category),
-            where('gender', '==', product.gender),
             limit(5)
         );
         const querySnapshot = await getDocs(q);
@@ -148,7 +146,7 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
     };
 
     fetchRecommendations();
-  }, [product.id, product.category, product.gender]);
+  }, [product.id, product.category]);
 
   const handleRatingSubmit = async (rating: number) => {
     if (!user || isSubmittingRating || hasRated || !hasPurchased) return;
@@ -406,7 +404,7 @@ export default function ProductClientPage({ product: initialProduct }: ProductCl
                            <DialogHeader>
                                <DialogTitle>Guía de Tallas</DialogTitle>
                            </DialogHeader>
-                           <SizeGuide gender={product.gender} />
+                           <SizeGuide gender={product.category === 'Ropa' ? 'Damas' : undefined} />
                         </DialogContent>
                     </Dialog>
                   </div>

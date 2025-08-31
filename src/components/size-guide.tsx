@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/table';
 
 interface SizeGuideProps {
-    gender: 'Damas' | 'Caballeros';
+    gender?: 'Damas' | 'Caballeros'; // Make gender optional
 }
 
 const menSizes = [
@@ -32,7 +32,7 @@ export default function SizeGuide({ gender }: SizeGuideProps) {
 
   return (
     <div className="w-full">
-        <h3 className="text-lg font-semibold mb-4 text-center">Guía de Tallas para {gender}</h3>
+        <h3 className="text-lg font-semibold mb-4 text-center">Guía de Tallas para {gender || 'Prendas'}</h3>
         <Table>
           <TableHeader>
             <TableRow>

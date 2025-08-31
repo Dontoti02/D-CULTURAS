@@ -15,7 +15,7 @@ import { auth, db } from '@/lib/firebase';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { sendWelcomeEmail } from '@/ai/flows/send-email-flow';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { promoteByGender } from '@/ai/flows/promote-by-gender-flow';
+import { generateWelcomePromotion } from '@/ai/flows/promote-by-gender-flow';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -80,10 +80,10 @@ export default function SignupPage() {
       
       // 4. Trigger AI promotion flow in the background
       try {
-        promoteByGender({ customerId: user.uid });
+        generateWelcomePromotion({ customerId: user.uid });
       } catch (aiError) {
           // Also log this but don't block
-          console.error("Failed to trigger gender promotion AI flow:", aiError);
+          console.error("Failed to trigger welcome promotion AI flow:", aiError);
       }
 
       toast({

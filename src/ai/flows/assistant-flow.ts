@@ -52,7 +52,7 @@ const fetchFirestoreData = ai.defineTool(
                 simplified.price = item.price;
                 simplified.stock = item.stock;
                 simplified.category = item.category;
-                simplified.gender = item.gender;
+                if(item.subcategory) simplified.subcategory = item.subcategory;
                 break;
             case 'orders':
                 simplified.total = item.total;

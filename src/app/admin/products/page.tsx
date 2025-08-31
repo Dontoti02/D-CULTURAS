@@ -136,21 +136,21 @@ export default function ProductsPage() {
                 let productsAdded = 0;
 
                 json.forEach((row: any) => {
-                    if (!row.name || !row.price || !row.cost || !row.stock || !row.gender || !row.category) {
+                    if (!row.name || !row.price || !row.cost || !row.stock || !row.category || !row.sizes) {
                         console.warn("Fila omitida por datos faltantes:", row);
                         return; // Omitir filas sin datos esenciales
                     }
                     const newProductRef = doc(collection(db, 'products'));
-                    const newProduct: Omit<Product, 'id' | 'rating' | 'ratingSum' | 'ratingCount' | 'createdAt'> = {
+                    const newProduct: Omit<Product, 'id' | 'ratingSum' | 'ratingCount' | 'createdAt'> = {
                         name: row.name,
                         description: row.description || '',
                         price: parseFloat(row.price),
                         cost: parseFloat(row.cost),
                         stock: parseInt(row.stock, 10),
-                        gender: row.gender,
                         category: row.category,
+                        subcategory: row.subcategory || null,
                         images: [], // Las imágenes se suben después
-                        sizes: row.sizes ? (row.sizes as string).split(',').map(s => s.trim() as any) : ['S', 'M', 'L'],
+                        sizes: row.sizes ? (row.sizes as string).split(',').map(s => s.trim()) : ['Única'],
                         ratingSum: 0,
                         ratingCount: 0,
                         createdAt: serverTimestamp() as any,
@@ -178,15 +178,15 @@ export default function ProductsPage() {
     };
 
     const handleDownloadTemplate = () => {
-        const headers = ["name", "description", "price", "cost", "stock", "gender", "category", "sizes"];
+        const headers = ["name", "description", "price", "cost", "stock", "category", "subcategory", "sizes"];
         const exampleData = [{
             name: "Camisa de Lino Azul",
             description: "Camisa fresca y ligera, ideal para el verano.",
             price: 120.50,
             cost: 45.00,
             stock: 50,
-            gender: "Caballeros",
-            category: "Camisas",
+            category: "Ropa",
+            subcategory: "Casual",
             sizes: "S, M, L, XL"
         }];
 
@@ -201,8 +201,8 @@ export default function ProductsPage() {
             { wch: 10 }, // price
             { wch: 10 }, // cost
             { wch: 10 }, // stock
-            { wch: 15 }, // gender
             { wch: 15 }, // category
+            { wch: 15 }, // subcategory
             { wch: 20 }, // sizes
         ];
         worksheet["!cols"] = colWidths;
@@ -333,7 +333,6 @@ export default function ProductsPage() {
                                     <span className="sr-only">Imagen</span>
                                 </TableHead>
                                 <TableHead>Nombre</TableHead>
-                                <TableHead>Género</TableHead>
                                 <TableHead>Categoría</TableHead>
                                 <TableHead className="hidden md:table-cell">Precio</TableHead>
                                 <TableHead className="hidden md:table-cell">Stock</TableHead>
@@ -373,10 +372,10 @@ export default function ProductsPage() {
                                     </TableCell>
                                     <TableCell className="font-medium">{product.name}</TableCell>
                                     <TableCell>
-                                        <Badge variant="outline">{product.gender}</Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="secondary">{product.category}</Badge>
+                                        <div className="flex flex-col">
+                                            <Badge variant="outline">{product.category}</Badge>
+                                            {product.subcategory && <Badge variant="secondary" className="mt-1">{product.subcategory}</Badge>}
+                                        </div>
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell">S/ {product.price.toFixed(2)}</TableCell>
                                     <TableCell className="hidden md:table-cell">{product.stock}</TableCell>

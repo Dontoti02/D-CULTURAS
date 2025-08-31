@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { Product } from '@/lib/types';
+import { Product, Category, RopaSubcategory, HogarSubcategory } from '@/lib/types';
 import ProductCard from '@/components/product-card';
 import { Separator } from '@/components/ui/separator';
 import { collection, getDocs, orderBy, query, where } from 'firebase/firestore';
@@ -20,7 +20,6 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 
-type Category = 'Conjuntos' | 'Vestidos' | 'Faldas' | 'Blusas' | 'Ternos' | 'Camisas' | 'Pantalones' | 'Corbatas';
 const PRODUCTS_PER_PAGE = 40;
 
 export default function Home() {
@@ -31,6 +30,7 @@ export default function Home() {
   const pathname = usePathname();
   
   const category = searchParams.get('category') as Category | null;
+  const subcategory = searchParams.get('subcategory') as RopaSubcategory | HogarSubcategory | null;
   const currentPage = Number(searchParams.get('page')) || 1;
 
   useEffect(() => {
@@ -38,15 +38,18 @@ export default function Home() {
       setLoading(true);
       try {
         const productsRef = collection(db, 'products');
-        let q;
-
-        if (category) {
-            q = query(productsRef, where('category', '==', category), orderBy('createdAt', 'desc'));
-        } else {
-            q = query(productsRef, orderBy('createdAt', 'desc'));
-        }
+        let constraints = [];
         
-        const querySnapshot = await getDocs(q);
+        if (category) {
+            constraints.push(where('category', '==', category));
+        }
+        if (subcategory) {
+            constraints.push(where('subcategory', '==', subcategory));
+        }
+
+        const finalQuery = query(productsRef, ...constraints, orderBy('createdAt', 'desc'));
+        
+        const querySnapshot = await getDocs(finalQuery);
         const productsData = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
@@ -60,7 +63,7 @@ export default function Home() {
     };
 
     fetchProducts();
-  }, [category]);
+  }, [category, subcategory]);
   
   const totalPages = Math.ceil(allProducts.length / PRODUCTS_PER_PAGE);
 
@@ -144,6 +147,12 @@ export default function Home() {
 
     return pageNumbers;
   };
+  
+  const pageTitle = useMemo(() => {
+    if (subcategory) return subcategory;
+    if (category) return category;
+    return 'Todos los Productos';
+  }, [category, subcategory]);
 
 
   return (
@@ -153,7 +162,7 @@ export default function Home() {
       <section className="container mx-auto px-4 md:px-6 py-12">
           <main>
             <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">{category || 'Todos los Productos'}</h2>
+                <h2 className="text-2xl font-bold">{pageTitle}</h2>
                 <p className="text-muted-foreground">{allProducts.length} artículos</p>
             </div>
             <Separator className="mb-8" />

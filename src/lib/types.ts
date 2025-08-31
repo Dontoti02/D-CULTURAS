@@ -62,7 +62,7 @@ export interface Admin {
   firstName: string;
   lastName: string;
   email: string;
-  rol: 'superadmin' | 'admin';
+  rol: 'admin' | 'subadmin';
   status: 'active' | 'inactive';
   photoURL?: string;
   createdAt: Timestamp;

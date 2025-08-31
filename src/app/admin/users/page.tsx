@@ -64,14 +64,14 @@ export default function UsersPage() {
     const handleDeleteUser = async () => {
         if (!userToDelete) return;
         
-        // Safety check: Don't delete the currently logged-in user or a superadmin
+        // Safety check: Don't delete the currently logged-in user or an admin
         if (userToDelete.id === auth.currentUser?.uid) {
             toast({ title: "Acción no permitida", description: "No puedes eliminar tu propia cuenta.", variant: "destructive" });
             setUserToDelete(null);
             return;
         }
-         if (userToDelete.rol === 'superadmin') {
-            toast({ title: "Acción no permitida", description: "No se puede eliminar a un superadministrador.", variant: "destructive" });
+         if (userToDelete.rol === 'admin') {
+            toast({ title: "Acción no permitida", description: "No se puede eliminar a un administrador principal.", variant: "destructive" });
             setUserToDelete(null);
             return;
         }
@@ -147,9 +147,9 @@ export default function UsersPage() {
                                     </TableCell>
                                     <TableCell>{admin.email}</TableCell>
                                     <TableCell>
-                                        <Badge variant={admin.rol === 'superadmin' ? 'default' : 'secondary'} className="capitalize">
-                                            {admin.rol === 'superadmin' ? <ShieldCheck className="mr-1.5 h-3 w-3" /> : <ShieldAlert className="mr-1.5 h-3 w-3" />}
-                                            {admin.rol}
+                                        <Badge variant={admin.rol === 'admin' ? 'default' : 'secondary'} className="capitalize">
+                                            {admin.rol === 'admin' ? <ShieldCheck className="mr-1.5 h-3 w-3" /> : <ShieldAlert className="mr-1.5 h-3 w-3" />}
+                                            {admin.rol === 'admin' ? 'Admin' : 'Subadmin'}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
@@ -167,7 +167,7 @@ export default function UsersPage() {
                                                 variant="destructive" 
                                                 size="sm" 
                                                 onClick={() => setUserToDelete(admin)}
-                                                disabled={isDeleting || admin.rol === 'superadmin'}
+                                                disabled={isDeleting || admin.rol === 'admin'}
                                             >
                                                 <Trash2 className="mr-2 h-3 w-3" />
                                                 Eliminar

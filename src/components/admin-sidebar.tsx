@@ -100,7 +100,7 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
 
   const userCanAccess = (permission: AdminPermission) => {
     if (!adminData) return false;
-    if (adminData.rol === 'superadmin') return true;
+    if (adminData.rol === 'admin') return true; // admin tiene acceso a todo
     return adminData.permissions?.[permission] ?? false;
   };
 

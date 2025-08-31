@@ -25,7 +25,7 @@ export default function NewUserPage() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rol, setRol] = useState<'admin' | 'superadmin'>('admin');
+  const [rol, setRol] = useState<'subadmin' | 'admin'>('subadmin');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [permissions, setPermissions] = useState<Record<AdminPermission, boolean>>(() => {
@@ -66,7 +66,7 @@ export default function NewUserPage() {
             status: 'active',
             photoURL: '',
             createdAt: serverTimestamp(),
-            permissions: rol === 'superadmin' ? {} : permissions, // Superadmin has all permissions implicitly
+            permissions: rol === 'admin' ? {} : permissions,
         } as Omit<Admin, 'id'>);
 
         toast({
@@ -168,11 +168,11 @@ export default function NewUserPage() {
                     <CardTitle>Permisos de Acceso</CardTitle>
                     <CardDescription>
                       Selecciona las secciones a las que este usuario tendrá acceso. 
-                      Los superadministradores siempre tienen todos los permisos.
+                      Los administradores siempre tienen todos los permisos.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                     {rol === 'admin' ? (
+                     {rol === 'subadmin' ? (
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                         {Object.entries(ALL_PERMISSIONS).map(([key, label]) => (
                             <div key={key} className="flex items-center space-x-2">
@@ -191,7 +191,7 @@ export default function NewUserPage() {
                         ))}
                         </div>
                      ) : (
-                        <p className="text-sm text-muted-foreground italic">Los superadministradores tienen acceso a todas las secciones.</p>
+                        <p className="text-sm text-muted-foreground italic">Los administradores tienen acceso a todas las secciones.</p>
                      )}
                   </CardContent>
                 </Card>
@@ -204,16 +204,16 @@ export default function NewUserPage() {
                     <CardContent className="grid gap-6">
                        <div className="grid gap-3">
                             <Label htmlFor="rol">Rol</Label>
-                            <Select required onValueChange={(v: 'admin' | 'superadmin') => setRol(v)} value={rol}>
+                            <Select required onValueChange={(v: 'admin' | 'subadmin') => setRol(v)} value={rol}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Seleccionar rol" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="admin">
-                                    <div className="flex items-center gap-2"><ShieldAlert /> Admin</div>
+                                    <div className="flex items-center gap-2"><ShieldCheck /> Admin</div>
                                 </SelectItem>
-                                <SelectItem value="superadmin">
-                                    <div className="flex items-center gap-2"><ShieldCheck /> Superadmin</div>
+                                <SelectItem value="subadmin">
+                                    <div className="flex items-center gap-2"><ShieldAlert /> Subadmin</div>
                                 </SelectItem>
                             </SelectContent>
                             </Select>

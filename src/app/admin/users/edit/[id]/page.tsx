@@ -30,7 +30,7 @@ export default function EditUserPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [rol, setRol] = useState<'admin' | 'superadmin'>('admin');
+  const [rol, setRol] = useState<'admin' | 'subadmin'>('subadmin');
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [permissions, setPermissions] = useState<Record<AdminPermission, boolean>>(() => {
@@ -42,7 +42,7 @@ export default function EditUserPage() {
   });
 
   const isEditingSelf = currentUser?.uid === id;
-  const isTargetSuperAdmin = rol === 'superadmin';
+  const isTargetAdmin = rol === 'admin';
 
   useEffect(() => {
     if (!id) return;
@@ -94,7 +94,7 @@ export default function EditUserPage() {
         lastName,
         rol,
         status,
-        permissions: rol === 'superadmin' ? {} : permissions,
+        permissions: rol === 'admin' ? {} : permissions,
       });
       toast({ title: 'Usuario Actualizado', description: 'Los datos del usuario han sido guardados.' });
       router.push('/admin/users');
@@ -157,11 +157,11 @@ export default function EditUserPage() {
                     <CardTitle>Permisos de Acceso</CardTitle>
                     <CardDescription>
                       Selecciona las secciones a las que este usuario tendrá acceso. 
-                      Los superadministradores siempre tienen todos los permisos.
+                      Los administradores siempre tienen todos los permisos.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                     {rol === 'admin' ? (
+                     {rol === 'subadmin' ? (
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                         {Object.entries(ALL_PERMISSIONS).map(([key, label]) => (
                             <div key={key} className="flex items-center space-x-2">
@@ -180,7 +180,7 @@ export default function EditUserPage() {
                         ))}
                         </div>
                      ) : (
-                        <p className="text-sm text-muted-foreground italic">Los superadministradores tienen acceso a todas las secciones.</p>
+                        <p className="text-sm text-muted-foreground italic">Los administradores tienen acceso a todas las secciones.</p>
                      )}
                   </CardContent>
                 </Card>
@@ -195,24 +195,24 @@ export default function EditUserPage() {
                             <Label htmlFor="rol">Rol</Label>
                             <Select 
                               required 
-                              onValueChange={(v: 'admin' | 'superadmin') => setRol(v)} 
+                              onValueChange={(v: 'admin' | 'subadmin') => setRol(v)} 
                               value={rol}
-                              disabled={isEditingSelf || isTargetSuperAdmin}
+                              disabled={isEditingSelf || isTargetAdmin}
                             >
                             <SelectTrigger>
                                 <SelectValue placeholder="Seleccionar rol" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="admin">
-                                    <div className="flex items-center gap-2"><ShieldAlert /> Admin</div>
+                                    <div className="flex items-center gap-2"><ShieldCheck /> Admin</div>
                                 </SelectItem>
-                                <SelectItem value="superadmin">
-                                    <div className="flex items-center gap-2"><ShieldCheck /> Superadmin</div>
+                                <SelectItem value="subadmin">
+                                    <div className="flex items-center gap-2"><ShieldAlert /> Subadmin</div>
                                 </SelectItem>
                             </SelectContent>
                             </Select>
-                            {(isEditingSelf || isTargetSuperAdmin) && (
-                                <p className="text-xs text-muted-foreground italic">No puedes cambiar el rol de tu propia cuenta o de un superadmin.</p>
+                            {(isEditingSelf || isTargetAdmin) && (
+                                <p className="text-xs text-muted-foreground italic">No puedes cambiar el rol de tu propia cuenta o de un admin.</p>
                             )}
                       </div>
                       <div className="grid gap-3">

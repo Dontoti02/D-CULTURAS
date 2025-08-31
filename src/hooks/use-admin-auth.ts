@@ -27,12 +27,12 @@ const useAdminAuth = (requiredPermission: AdminPermission) => {
       return;
     }
     
-    // Superadmins have access to everything
-    if (user.rol === 'superadmin') {
+    // Admins have access to everything
+    if (user.rol === 'admin') {
       return;
     }
 
-    // Check for specific permission
+    // Check for specific permission for subadmins
     const hasPermission = user.permissions?.[requiredPermission];
 
     if (!hasPermission) {

@@ -24,9 +24,10 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { AlertTriangle, Archive, BookOpen, Loader2, RotateCcw } from 'lucide-react';
+import { AlertTriangle, Archive, BookOpen, Loader2, RotateCcw, Trash2 } from 'lucide-react';
 import { performAnnualClosing, AnnualClosingInput } from '@/ai/flows/annual-closing-flow';
 import { revertAnnualClosing } from '@/ai/flows/revert-annual-closing-flow';
+import { deleteClosingArchive } from '@/ai/flows/delete-closing-archive-flow';
 import { getRevertCount, decrementRevertCount } from '@/ai/flows/revert-counter-flow';
 import {
   Select,
@@ -40,6 +41,8 @@ import { Input } from '@/components/ui/input';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TooltipContent } from '@radix-ui/react-tooltip';
 
 interface ArchivedYear {
     id: string;
@@ -50,14 +53,19 @@ interface ArchivedYear {
     adminCount: number;
 }
 
+type DialogAction = 'revert' | 'delete';
+
 export default function AnnualClosingPage() {
   const { toast } = useToast();
   const [isClosing, setIsClosing] = useState(false);
-  const [isReverting, setIsReverting] = useState(false);
+  const [isUpdatingArchive, setIsUpdatingArchive] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [confirmationText, setConfirmationText] = useState('');
-  const [revertConfirmationText, setRevertConfirmationText] = useState('');
-  const [yearToRevert, setYearToRevert] = useState<string | null>(null);
+  
+  const [dialogAction, setDialogAction] = useState<DialogAction | null>(null);
+  const [yearToUpdate, setYearToUpdate] = useState<string | null>(null);
+  const [dialogConfirmationText, setDialogConfirmationText] = useState('');
+
   const [archivedYears, setArchivedYears] = useState<ArchivedYear[]>([]);
   const [loadingArchives, setLoadingArchives] = useState(true);
   const [revertCount, setRevertCount] = useState(0);
@@ -144,43 +152,52 @@ export default function AnnualClosingPage() {
     }
   };
 
-  const handleRevert = async () => {
-    if (!yearToRevert || revertConfirmationText !== 'REVERTIR') {
+  const handleUpdateArchiveAction = async () => {
+    if (!yearToUpdate || !dialogAction) return;
+
+    const correctConfirmation = dialogAction === 'revert' ? 'REVERTIR' : 'ELIMINAR';
+    if (dialogConfirmationText !== correctConfirmation) {
         toast({
             title: 'Confirmación incorrecta',
-            description: 'Debes escribir "REVERTIR" para confirmar.',
+            description: `Debes escribir "${correctConfirmation}" para confirmar.`,
             variant: 'destructive',
         });
         return;
     }
-    
-    setIsReverting(true);
+
+    setIsUpdatingArchive(true);
     try {
-        await revertAnnualClosing({ year: parseInt(yearToRevert, 10) });
-        await decrementRevertCount();
+        if (dialogAction === 'revert') {
+            await revertAnnualClosing({ year: parseInt(yearToUpdate, 10) });
+            await decrementRevertCount();
+            toast({ title: '¡Reversión Exitosa!', description: `Los datos del año ${yearToUpdate} han sido restaurados.` });
+            await fetchRevertCount();
+        } else if (dialogAction === 'delete') {
+            await deleteClosingArchive({ year: parseInt(yearToUpdate, 10) });
+            toast({ title: '¡Archivo Eliminado!', description: `El archivo de cierre del año ${yearToUpdate} ha sido eliminado.` });
+        }
 
-        toast({
-            title: '¡Reversión Exitosa!',
-            description: `Los datos del año ${yearToRevert} han sido restaurados.`,
-            duration: 7000,
-        });
-
-        setYearToRevert(null);
-        setRevertConfirmationText('');
         await fetchArchivedYears();
-        await fetchRevertCount();
 
     } catch (error: any) {
-        console.error('Error durante la reversión:', error);
+        console.error(`Error durante la acción de ${dialogAction}:`, error);
         toast({
-            title: 'Error en la Reversión',
+            title: `Error en la ${dialogAction === 'revert' ? 'Reversión' : 'Eliminación'}`,
             description: error.message || 'Ocurrió un error inesperado.',
             variant: 'destructive',
             duration: 7000,
         });
     } finally {
-        setIsReverting(false);
+        setIsUpdatingArchive(false);
+        setYearToUpdate(null);
+        setDialogAction(null);
+        setDialogConfirmationText('');
     }
+  };
+
+  const openUpdateDialog = (year: string, action: DialogAction) => {
+    setYearToUpdate(year);
+    setDialogAction(action);
   };
 
 
@@ -285,6 +302,7 @@ export default function AnnualClosingPage() {
                 </div>
             ) : archivedYears.length > 0 ? (
                 <div className="space-y-4">
+                    <TooltipProvider>
                     {archivedYears.map(archive => (
                         <div key={archive.id} className="border p-4 rounded-lg flex items-center justify-between">
                             <div className="flex items-center gap-4">
@@ -296,20 +314,39 @@ export default function AnnualClosingPage() {
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
                                 <div className="text-right text-sm">
                                     <p>{archive.orderCount} pedidos</p>
                                     <p>{archive.customerCount} clientes</p>
                                     <p>{archive.promotionCount} promociones</p>
                                     <p>{archive.adminCount} admins</p>
                                 </div>
-                                <Button variant="outline" size="sm" onClick={() => setYearToRevert(archive.id)} disabled={revertCount <= 0 || isReverting}>
-                                    <RotateCcw className="mr-2 h-4 w-4" />
-                                    Revertir
-                                </Button>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="outline" size="sm" onClick={() => openUpdateDialog(archive.id, 'revert')} disabled={revertCount <= 0 || isUpdatingArchive}>
+                                            <RotateCcw className="mr-2 h-4 w-4" />
+                                            Revertir
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Restaura los datos de este año. Consume un intento.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                                 <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="destructive" size="sm" onClick={() => openUpdateDialog(archive.id, 'delete')} disabled={isUpdatingArchive}>
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Eliminar
+                                        </Button>
+                                    </TooltipTrigger>
+                                     <TooltipContent side="bottom">
+                                        <p>Elimina permanentemente este archivo de cierre. Esta acción es irreversible.</p>
+                                    </TooltipContent>
+                                </Tooltip>
                             </div>
                         </div>
                     ))}
+                    </TooltipProvider>
                 </div>
             ) : (
                 <p className="text-sm text-muted-foreground text-center py-8">Aún no se han realizado cierres anuales.</p>
@@ -317,29 +354,38 @@ export default function AnnualClosingPage() {
         </CardContent>
       </Card>
       
-      <AlertDialog open={!!yearToRevert} onOpenChange={(open) => !open && setYearToRevert(null)}>
+      <AlertDialog open={!!yearToUpdate} onOpenChange={(open) => !open && setYearToUpdate(null)}>
         <AlertDialogContent>
             <AlertDialogHeader>
-                <AlertDialogTitle>Revertir Cierre de {yearToRevert}</AlertDialogTitle>
+                <AlertDialogTitle>
+                    {dialogAction === 'revert' ? `Revertir Cierre de ${yearToUpdate}` : `Eliminar Archivo de ${yearToUpdate}`}
+                </AlertDialogTitle>
                 <AlertDialogDescription>
-                    Esta acción restaurará TODOS los datos del año {yearToRevert} y consumirá 1 de tus {revertCount} intentos de reversión. Esta acción es irreversible. Para confirmar, escribe "REVERTIR".
+                    {dialogAction === 'revert' && `Esta acción restaurará TODOS los datos del año ${yearToUpdate} y consumirá 1 de tus ${revertCount} intentos de reversión. Esta acción es irreversible. Para confirmar, escribe "REVERTIR".`}
+                    {dialogAction === 'delete' && `Esta acción eliminará permanentemente el archivo de cierre del año ${yearToUpdate}. Los datos ya eliminados de las colecciones principales no serán afectados. Esta acción es irreversible. Para confirmar, escribe "ELIMINAR".`}
                 </AlertDialogDescription>
             </AlertDialogHeader>
              <div className="py-4">
-                <Label htmlFor="revert-confirmation">Escribe "REVERTIR" para confirmar</Label>
+                <Label htmlFor="dialog-confirmation">
+                   Escribe "{dialogAction === 'revert' ? 'REVERTIR' : 'ELIMINAR'}" para confirmar
+                </Label>
                 <Input
-                    id="revert-confirmation"
-                    value={revertConfirmationText}
-                    onChange={(e) => setRevertConfirmationText(e.target.value)}
-                    placeholder="REVERTIR"
-                    disabled={isReverting}
+                    id="dialog-confirmation"
+                    value={dialogConfirmationText}
+                    onChange={(e) => setDialogConfirmationText(e.target.value.toUpperCase())}
+                    placeholder={dialogAction === 'revert' ? 'REVERTIR' : 'ELIMINAR'}
+                    disabled={isUpdatingArchive}
                     autoFocus
                 />
             </div>
             <AlertDialogFooter>
-                <AlertDialogCancel disabled={isReverting}>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleRevert} disabled={isReverting || revertConfirmationText !== 'REVERTIR'}>
-                     {isReverting ? <Loader2 className="animate-spin" /> : "Confirmar y Revertir"}
+                <AlertDialogCancel disabled={isUpdatingArchive} onClick={() => setYearToUpdate(null)}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleUpdateArchiveAction} 
+                  disabled={isUpdatingArchive || dialogConfirmationText !== (dialogAction === 'revert' ? 'REVERTIR' : 'ELIMINAR')}
+                  className={dialogAction === 'delete' ? 'bg-destructive hover:bg-destructive/90' : ''}
+                >
+                     {isUpdatingArchive ? <Loader2 className="animate-spin" /> : `Confirmar y ${dialogAction === 'revert' ? 'Revertir' : 'Eliminar'}`}
                 </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>

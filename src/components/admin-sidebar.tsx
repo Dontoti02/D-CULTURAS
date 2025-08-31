@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -19,6 +20,7 @@ import {
   Landmark,
   Archive,
   Bot,
+  Users2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -72,6 +74,13 @@ const navLinks = [
   { href: '/admin/annual-closing', label: 'Cierre Anual', icon: Archive },
   { href: '/admin/ai-assistant', label: 'Asistente IA', icon: Bot },
 ];
+
+const settingsLinks = [
+  { href: '/admin/settings', label: 'Mi Perfil', icon: Settings },
+  { href: '/admin/users', label: 'Usuarios', icon: Users2 },
+  { href: '/admin/billing', label: 'Facturación', icon: CreditCard },
+];
+
 
 interface AdminData {
     firstName: string;
@@ -199,11 +208,35 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
       </nav>
 
       <div className="mt-auto flex flex-col gap-2 pt-4 border-t">
-        <Button variant="outline" className="w-full justify-start" onClick={() => handleLinkClick('/')}>
-
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Ir a la Tienda
-        </Button>
+         <Collapsible>
+              <CollapsibleTrigger asChild>
+                 <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-3 px-3 font-medium"
+                >
+                  <Settings className="h-4 w-4" />
+                  Ajustes
+                  <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]:rotate-90" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                  <div className="pl-8 pt-1">
+                      {settingsLinks.map((link) => (
+                          <button
+                            key={link.href}
+                            onClick={() => handleLinkClick(link.href)}
+                            className={cn(
+                                'flex w-full text-left items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-sm',
+                                {'text-primary': pathname === link.href}
+                            )}
+                            >
+                            <link.icon className="h-4 w-4" />
+                            {link.label}
+                          </button>
+                      ))}
+                  </div>
+              </CollapsibleContent>
+          </Collapsible>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -247,18 +280,14 @@ const SidebarContent = ({ onLinkClick }: { onLinkClick?: () => void }) => {
           >
             <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <button className="w-full" onClick={() => handleLinkClick('/admin/settings')}>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Ajustes</span>
-              </button>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <button className="w-full" onClick={() => handleLinkClick('/admin/billing')}>
-                <CreditCard className="mr-2 h-4 w-4" />
-                <span>Facturación</span>
-              </button>
-            </DropdownMenuItem>
+             {settingsLinks.map((link) => (
+                <DropdownMenuItem key={link.href} asChild>
+                     <button className="w-full" onClick={() => handleLinkClick(link.href)}>
+                        <link.icon className="mr-2 h-4 w-4" />
+                        <span>{link.label}</span>
+                    </button>
+                </DropdownMenuItem>
+             ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut}>
               <LogOut className="mr-2 h-4 w-4" />

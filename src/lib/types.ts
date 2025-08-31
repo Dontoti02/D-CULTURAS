@@ -39,6 +39,17 @@ export interface Customer {
     };
 }
 
+export interface Admin {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  rol: 'admin' | 'ayudante';
+  status: 'active' | 'inactive';
+  photoURL?: string;
+  createdAt: Timestamp;
+}
+
 export interface OrderItem {
     productId: string;
     name: string;

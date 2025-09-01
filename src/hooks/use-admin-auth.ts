@@ -31,8 +31,9 @@ const useAdminAuth = (requiredPermission: AdminPermission) => {
     if (user.rol === 'admin') {
       return;
     }
-
-    // Check for specific permission for subadmins
+    
+    // If user is not an admin, they are a subadmin. Check permissions.
+    // The user object is a mix of Admin and Customer types, so we check for permissions property.
     const hasPermission = user.permissions?.[requiredPermission];
 
     if (!hasPermission) {

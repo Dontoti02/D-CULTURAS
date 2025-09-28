@@ -32,6 +32,6 @@ La aplicación estará disponible en [http://localhost:9002](http://localhost:90
 
 ## Captura de pantalla
 
-![Captura de pantalla de la aplicación](Screenshot_1.png)
+![Captura de pantalla de la aplicación](capture1.png)
 # D-CULTURAS
 

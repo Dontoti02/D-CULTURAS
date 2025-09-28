@@ -1,0 +1,68 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Función para verificar si un usuario es administrador o subadministrador
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/admin/$(request.auth.uid));
+    }
+
+    // Los productos son de lectura pública para todos, pero solo los admins pueden modificarlos.
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      // Calificaciones y comentarios son de lectura pública, pero solo usuarios autenticados pueden crear.
+      match /ratings/{userId} {
+        allow read: if true;
+        allow create: if request.auth.uid == userId;
+      }
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if request.auth.uid != null;
+      }
+    }
+
+    // Los clientes solo pueden acceder a su propia información. Los admins pueden ver a todos.
+    match /customers/{userId} {
+      allow read, update: if request.auth.uid == userId || isAdmin();
+      allow create: if request.auth.uid == userId;
+
+      // Los cupones usados son privados para cada cliente.
+       match /usedCoupons/{couponId} {
+        allow read, write: if request.auth.uid == userId;
+      }
+    }
+
+    // Los pedidos pueden ser creados por clientes y leídos/actualizados por el cliente o un admin.
+    match /orders/{orderId} {
+      allow read, update: if request.auth.uid == resource.data.customerId || isAdmin();
+      allow create: if request.auth.uid == request.resource.data.customerId;
+    }
+
+    // Las promociones son de lectura pública, pero solo los admins pueden modificarlas.
+    match /promotions/{promoId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Solo los admins pueden leer la lista de otros admins
+    match /admin/{userId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin(); // Permite a los admins actualizar su estado (isOnline)
+      allow create: if request.auth.uid != null; // Permite la creación de nuevos admins/subadmins (con riesgo de seguridad como se señaló)
+    }
+    
+    // Colecciones de estado de la app y cierres solo accesibles por admins.
+    match /appState/{docId} {
+        allow read, write: if isAdmin();
+    }
+    
+    match /annualClosings/{year} {
+       allow read, write, delete: if isAdmin();
+    }
+
+  }
+}
